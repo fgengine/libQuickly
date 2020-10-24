@@ -24,7 +24,7 @@ extension QInputToolbarView {
             }
             get { return QFloat(self.frame.height) }
         }
-        var qItems: [QInputToolbarItem]! {
+        var qItems: [IQInputToolbarItem]! {
             didSet {
                 let items = self.qItems.compactMap({ return $0.barItem })
                 for item in items {
@@ -59,7 +59,7 @@ extension QInputToolbarView {
                 x: 0,
                 y: 0,
                 width: UIScreen.main.bounds.width,
-                height: 0
+                height: 44
             ))
 
             self.clipsToBounds = true

@@ -4,7 +4,17 @@
 
 import Foundation
 
+protocol InputListViewDelegate : AnyObject {
+    
+    func beginEditing()
+    func select(item: QInputListView.Item)
+    func endEditing()
+    
+}
+
 public class QInputListView : IQView {
+    
+    public typealias SimpleClosure = (_ inputListView: QInputListView) -> Void
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?
@@ -27,10 +37,12 @@ public class QInputListView : IQView {
         }
     }
     public var selectedItem: Item? {
-        didSet {
+        set(value) {
+            self._selectedItem = value
             guard self.isLoaded == true else { return }
-            self._view.qSelectedItem = self.selectedItem
+            self._view.qSelectedItem = self._selectedItem
         }
+        get { return self._selectedItem }
     }
     public var font: QFont {
         didSet {
@@ -83,6 +95,9 @@ public class QInputListView : IQView {
         }
     }
     #endif
+    public var onBeginEditing: SimpleClosure?
+    public var onSelected: SimpleClosure
+    public var onEndEditing: SimpleClosure?
     public var isLoaded: Bool {
         return self._reuseView.isLoaded
     }
@@ -93,7 +108,8 @@ public class QInputListView : IQView {
     public var native: QNativeView {
         return self._view
     }
-
+    
+    private var _selectedItem: Item?
     private var _view: InputListView {
         if self.isLoaded == false { self._reuseView.load(view: self) }
         return self._reuseView.item!
@@ -113,12 +129,15 @@ public class QInputListView : IQView {
         placeholderInset: QInset? = nil,
         alignment: QTextAlignment = .left,
         alpha: QFloat = 1,
-        toolbar: QInputToolbarView? = nil
+        toolbar: QInputToolbarView? = nil,
+        onBeginEditing: SimpleClosure? = nil,
+        onSelected: @escaping SimpleClosure,
+        onEndEditing: SimpleClosure? = nil
     ) {
         self.width = width
         self.height = height
         self.items = items
-        self.selectedItem = selectedItem
+        self._selectedItem = selectedItem
         self.font = font
         self.color = color
         self.inset = inset
@@ -127,6 +146,9 @@ public class QInputListView : IQView {
         self.alignment = alignment
         self.alpha = alpha
         self.toolbar = toolbar
+        self.onBeginEditing = onBeginEditing
+        self.onSelected = onSelected
+        self.onEndEditing = onEndEditing
         self._reuseView = QReuseView()
         toolbar?.delegate = self
     }
@@ -142,12 +164,15 @@ public class QInputListView : IQView {
         placeholder: QInputPlaceholder,
         placeholderInset: QInset? = nil,
         alignment: QTextAlignment = .left,
-        alpha: QFloat = 1
+        alpha: QFloat = 1,
+        onBeginEditing: SimpleClosure? = nil,
+        onSelected: @escaping SimpleClosure,
+        onEndEditing: SimpleClosure? = nil
     ) {
         self.width = width
         self.height = height
         self.items = items
-        self.selectedItem = selectedItem
+        self._selectedItem = selectedItem
         self.font = font
         self.color = color
         self.inset = inset
@@ -155,6 +180,9 @@ public class QInputListView : IQView {
         self.placeholderInset = placeholderInset
         self.alignment = alignment
         self.alpha = alpha
+        self.onBeginEditing = onBeginEditing
+        self.onSelected = onSelected
+        self.onEndEditing = onEndEditing
         self._reuseView = QReuseView()
     }
     #endif
@@ -216,9 +244,9 @@ public extension QInputListView {
 
 extension QInputListView : QInputToolbarDelegate {
     
-    public func pressed(_ toolbar: QInputToolbarView, item: QInputToolbarItem) {
+    public func pressed(_ toolbar: QInputToolbarView, item: IQInputToolbarItem) {
         guard self.toolbar === toolbar else { return }
-        if let actionItem = item as? ToolbarAction {
+        if let actionItem = item as? QInputToolbarActionItem< QInputListView > {
             actionItem.callback(self)
         }
     }
@@ -226,3 +254,20 @@ extension QInputListView : QInputToolbarDelegate {
 }
 
 #endif
+
+extension QInputListView: InputListViewDelegate {
+    
+    func beginEditing() {
+        self.onBeginEditing?(self)
+    }
+    
+    func select(item: QInputListView.Item) {
+        self._selectedItem = item
+        self.onSelected(self)
+    }
+    
+    func endEditing() {
+        self.onEndEditing?(self)
+    }
+    
+}

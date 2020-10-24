@@ -6,13 +6,50 @@
 
 import UIKit
 
-public protocol QInputToolbarItem {
+protocol InputToolbarViewDelegate : AnyObject {
+    
+    func pressed(barItem: UIBarButtonItem)
+    
+}
+
+public protocol IQInputToolbarItem {
     
     var barItem: UIBarButtonItem { get }
     
 }
 
-public struct QInputToolbarSpaceItem : QInputToolbarItem {
+public struct QInputToolbarActionItem< SenderType > : IQInputToolbarItem {
+    
+    public var callback: (_ sender: SenderType) -> Void
+    public var barItem: UIBarButtonItem
+    
+    public init(
+        text: String,
+        callback: @escaping (_ sender: SenderType) -> Void
+    ) {
+        self.callback = callback
+        self.barItem = UIBarButtonItem(title: text, style: .plain, target: nil, action: nil)
+    }
+    
+    public init(
+        image: QImage,
+        callback: @escaping (_ sender: SenderType) -> Void
+    ) {
+        self.callback = callback
+        self.barItem = UIBarButtonItem(image: image.native, style: .plain, target: nil, action: nil)
+    }
+    
+    public init(
+        systemItem: UIBarButtonItem.SystemItem,
+        callback: @escaping (_ sender: SenderType) -> Void
+    ) {
+        self.callback = callback
+        self.barItem = UIBarButtonItem(barButtonSystemItem: systemItem, target: nil, action: nil)
+    }
+    
+}
+
+public struct QInputToolbarFlexibleSpaceItem : IQInputToolbarItem {
     
     public var barItem: UIBarButtonItem
     
@@ -24,7 +61,7 @@ public struct QInputToolbarSpaceItem : QInputToolbarItem {
 
 public protocol QInputToolbarDelegate : AnyObject {
     
-    func pressed(_ toolbar: QInputToolbarView, item: QInputToolbarItem)
+    func pressed(_ toolbar: QInputToolbarView, item: IQInputToolbarItem)
     
 }
 
@@ -38,7 +75,7 @@ public class QInputToolbarView : IQAccessoryView {
             self._view.qSize = self.size
         }
     }
-    public var items: [QInputToolbarItem] {
+    public var items: [IQInputToolbarItem] {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.qItems = self.items
@@ -87,11 +124,11 @@ public class QInputToolbarView : IQAccessoryView {
     
     public init(
         size: QFloat = 55,
-        items: [QInputToolbarItem],
+        items: [IQInputToolbarItem],
         alpha: QFloat = 1,
         isTranslucent: Bool = false,
         tintColor: QColor? = nil,
-        contentTintColor: QColor = QColor(.systemBlue)
+        contentTintColor: QColor = QColor(rgb: 0xffffff)
     ) {
         self.size = size
         self.items = items
@@ -117,12 +154,6 @@ public class QInputToolbarView : IQAccessoryView {
             height: self.size
         )
     }
-    
-}
-
-protocol InputToolbarViewDelegate : AnyObject {
-    
-    func pressed(barItem: UIBarButtonItem)
     
 }
 

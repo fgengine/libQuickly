@@ -6,43 +6,6 @@
 
 import UIKit
 
-public extension QInputStringView {
-    
-    struct ToolbarAction : QInputToolbarItem {
-        
-        public var callback: (_ sender: QInputStringView) -> Void
-        public var barItem: UIBarButtonItem
-        
-        public init(
-            text: String,
-            callback: @escaping (_ sender: QInputStringView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem()
-            self.barItem.title = text
-        }
-        
-        public init(
-            image: QImage,
-            callback: @escaping (_ sender: QInputStringView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem()
-            self.barItem.image = image.native
-        }
-        
-        public init(
-            systemItem: UIBarButtonItem.SystemItem,
-            callback: @escaping (_ sender: QInputStringView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem(barButtonSystemItem: systemItem, target: nil, action: nil)
-        }
-        
-    }
-    
-}
-
 extension QInputStringView {
     
     final class InputStringView : UITextField {

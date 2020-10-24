@@ -4,6 +4,14 @@
 
 import Foundation
 
+protocol InputStringViewDelegate : AnyObject {
+    
+    func beginEditing()
+    func editing(text: String)
+    func endEditing()
+    
+}
+
 public class QInputStringView : IQView {
     
     public typealias SimpleClosure = (_ inputStringView: QInputStringView) -> Void
@@ -218,9 +226,9 @@ public class QInputStringView : IQView {
 
 extension QInputStringView : QInputToolbarDelegate {
     
-    public func pressed(_ toolbar: QInputToolbarView, item: QInputToolbarItem) {
+    public func pressed(_ toolbar: QInputToolbarView, item: IQInputToolbarItem) {
         guard self.toolbar === toolbar else { return }
-        if let actionItem = item as? ToolbarAction {
+        if let actionItem = item as? QInputToolbarActionItem< QInputStringView > {
             actionItem.callback(self)
         }
     }
@@ -228,14 +236,6 @@ extension QInputStringView : QInputToolbarDelegate {
 }
 
 #endif
-
-protocol InputStringViewDelegate : AnyObject {
-    
-    func beginEditing()
-    func editing(text: String)
-    func endEditing()
-    
-}
 
 extension QInputStringView: InputStringViewDelegate {
     

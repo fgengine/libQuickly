@@ -6,47 +6,11 @@
 
 import UIKit
 
-public extension QInputListView {
-    
-    struct ToolbarAction : QInputToolbarItem {
-        
-        public var callback: (_ sender: QInputListView) -> Void
-        public var barItem: UIBarButtonItem
-        
-        public init(
-            text: String,
-            callback: @escaping (_ sender: QInputListView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem()
-            self.barItem.title = text
-        }
-        
-        public init(
-            image: QImage,
-            callback: @escaping (_ sender: QInputListView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem()
-            self.barItem.image = image.native
-        }
-        
-        public init(
-            systemItem: UIBarButtonItem.SystemItem,
-            callback: @escaping (_ sender: QInputListView) -> Void
-        ) {
-            self.callback = callback
-            self.barItem = UIBarButtonItem(barButtonSystemItem: systemItem, target: nil, action: nil)
-        }
-        
-    }
-    
-}
-
 extension QInputListView {
     
     final class InputListView : UITextField {
         
+        weak var qDelegate: InputListViewDelegate?
         var qItems: [QInputListView.Item] {
             didSet {
                 self._picker.reloadAllComponents()
@@ -91,14 +55,14 @@ extension QInputListView {
             set(value) { self.textAlignment = value.nsTextAlignment }
             get { return QTextAlignment(self.textAlignment) }
         }
+        var qAlpha: QFloat {
+            set(value) { self.alpha = CGFloat(value) }
+            get { return QFloat(self.alpha) }
+        }
         var qToolbar: IQAccessoryView? {
             didSet {
                 self.inputAccessoryView = self.qToolbar?.native
             }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
         }
         var qIsAppeared: Bool {
             return self.superview != nil
@@ -157,15 +121,21 @@ extension QInputListView {
 extension QInputListView.InputListView : UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        self.qDelegate?.beginEditing()
         if self.qSelectedItem == nil {
             if let firstItem = self.qItems.first {
                 self.qSelectedItem = firstItem
+                self.qDelegate?.select(item: firstItem)
             }
         }
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         return false
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        self.qDelegate?.endEditing()
     }
     
 }
@@ -189,7 +159,11 @@ extension QInputListView.InputListView : UIPickerViewDelegate {
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        self.qSelectedItem = self.qItems[row]
+        let selectedItem = self.qItems[row]
+        if self.qSelectedItem !== selectedItem {
+            self.qSelectedItem = selectedItem
+            self.qDelegate?.select(item: selectedItem)
+        }
     }
     
 }
@@ -227,6 +201,7 @@ extension QInputListView.InputListView : IQReusable {
     }
     
     static func configureReuseItem(view: View, item: Item) {
+        item.qDelegate = view
         item.qItems = view.items
         item.qSelectedItem = view.selectedItem
         item.qFont = view.font
