@@ -12,12 +12,6 @@ protocol InputDateViewDelegate : AnyObject {
     
 }
 
-public protocol IQInputDateFormatter {
-
-    func text(_ date: Date) -> String
-
-}
-
 public class QInputDateView : IQView {
     
     public typealias SimpleClosure = (_ inputDateView: QInputDateView) -> Void
@@ -62,10 +56,28 @@ public class QInputDateView : IQView {
         }
         get { return self._selectedDate }
     }
-    public var formatter: IQInputDateFormatter {
+    public var formatter: DateFormatter {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.qFormatter = self.formatter
+        }
+    }
+    public var locale: Locale {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.qLocale = self.locale
+        }
+    }
+    public var calendar: Calendar {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.qCalendar = self.calendar
+        }
+    }
+    public var timeZone: TimeZone? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.qTimeZone = self.timeZone
         }
     }
     public var font: QFont {
@@ -148,7 +160,10 @@ public class QInputDateView : IQView {
         minimumDate: Date? = nil,
         maximumDate: Date? = nil,
         selectedDate: Date? = nil,
-        formatter: IQInputDateFormatter,
+        formatter: DateFormatter,
+        locale: Locale = Locale.current,
+        calendar: Calendar = Calendar.current,
+        timeZone: TimeZone? = nil,
         font: QFont,
         color: QColor,
         inset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -168,6 +183,9 @@ public class QInputDateView : IQView {
         self.maximumDate = maximumDate
         self._selectedDate = selectedDate
         self.formatter = formatter
+        self.locale = locale
+        self.calendar = calendar
+        self.timeZone = timeZone
         self.font = font
         self.color = color
         self.inset = inset
@@ -189,7 +207,10 @@ public class QInputDateView : IQView {
         minimumDate: Date? = nil,
         maximumDate: Date? = nil,
         selectedDate: Date? = nil,
-        formatter: IQInputDateFormatter,
+        formatter: DateFormatter,
+        locale: Locale = Locale.current,
+        calendar: Calendar = Calendar.current,
+        timeZone: TimeZone? = nil,
         font: QFont,
         color: QColor,
         inset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -208,6 +229,9 @@ public class QInputDateView : IQView {
         self.maximumDate = maximumDate
         self._selectedDate = selectedDate
         self.formatter = formatter
+        self.locale = locale
+        self.calendar = calendar
+        self.timeZone = timeZone
         self.font = font
         self.color = color
         self.inset = inset
@@ -243,25 +267,6 @@ public extension QInputDateView {
         case time
         case date
         case dateTime
-    }
-    
-    struct Formatter : IQInputDateFormatter {
-        
-        private var _formatter: DateFormatter
-        
-        public init(formatter: DateFormatter) {
-            self._formatter = formatter
-        }
-
-        public init(dateFormat: String) {
-            self._formatter = DateFormatter()
-            self._formatter.dateFormat = dateFormat
-        }
-        
-        public func text(_ date: Date) -> String {
-            return self._formatter.string(from: date)
-        }
-        
     }
     
 }

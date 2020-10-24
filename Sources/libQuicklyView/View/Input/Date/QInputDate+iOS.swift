@@ -25,21 +25,33 @@ extension QInputDateView {
         var qSelectedDate: Date? {
             didSet {
                 if let formatter = self.qFormatter, let selectedDate = self.qSelectedDate {
-                    self.text = formatter.text(selectedDate)
+                    self.text = formatter.string(from: selectedDate)
                     self._picker.date = selectedDate
                 } else {
                     self.text = ""
                 }
             }
         }
-        var qFormatter: IQInputDateFormatter? {
+        var qFormatter: DateFormatter? {
             didSet {
                 if let formatter = self.qFormatter, let selectedDate = self.qSelectedDate {
-                    self.text = formatter.text(selectedDate)
+                    self.text = formatter.string(from: selectedDate)
                 } else {
                     self.text = ""
                 }
             }
+        }
+        var qLocale: Locale {
+            set(value) { self._picker.locale = value }
+            get { return self._picker.locale ?? Locale.current }
+        }
+        var qCalendar: Calendar {
+            set(value) { self._picker.calendar = value }
+            get { return self._picker.calendar ?? Calendar.current }
+        }
+        var qTimeZone: TimeZone? {
+            set(value) { self._picker.timeZone = value }
+            get { return self._picker.timeZone }
         }
         var qFont: QFont {
             set(value) { self.font = value.native }
@@ -86,11 +98,19 @@ extension QInputDateView {
         
         private var _picker: UIDatePicker
         
-        init(mode: QInputDateView.Mode) {
+        init(
+            mode: QInputDateView.Mode,
+            locale: Locale,
+            calendar: Calendar,
+            timeZone: TimeZone?
+        ) {
             self.qMode = mode
 
             self._picker = UIDatePicker()
-            self._picker.datePickerMode = self.qMode.datePickerMode
+            self._picker.datePickerMode = mode.datePickerMode
+            self._picker.locale = locale
+            self._picker.calendar = calendar
+            self._picker.timeZone = timeZone
             if #available(iOS 13.4, *) {
                 self._picker.preferredDatePickerStyle = .wheels
             }
@@ -197,7 +217,12 @@ extension QInputDateView.InputDateView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item(mode: view.mode)
+        return Item(
+            mode: view.mode,
+            locale: view.locale,
+            calendar: view.calendar,
+            timeZone: view.timeZone
+        )
     }
     
     static func configureReuseItem(view: View, item: Item) {
@@ -207,6 +232,9 @@ extension QInputDateView.InputDateView : IQReusable {
         item.qMaximumDate = view.maximumDate
         item.qSelectedDate = view.selectedDate
         item.qFormatter = view.formatter
+        item.qLocale = view.locale
+        item.qCalendar = view.calendar
+        item.qTimeZone = view.timeZone
         item.qFont = view.font
         item.qColor = view.color
         item.qInset = view.inset
