@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import libQuicklyCore
 
 protocol CustomViewDelegate : AnyObject {
     
@@ -18,7 +19,7 @@ open class QControlView : IQView {
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?
-    public var layout: IQDynamicLayout {
+    public var layout: IQLayout {
         willSet {
             self.layout.parentView = nil
         }
@@ -76,7 +77,7 @@ open class QControlView : IQView {
     private var _reuseView: QReuseView< ControlView >
     
     public init(
-        layout: IQDynamicLayout,
+        layout: IQLayout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
         shouldPressed: Bool = false,

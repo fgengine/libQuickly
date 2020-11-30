@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QButtonView< BackgroundView: IQView > : QControlView {
+open class QButtonView< BackgroundView: IQView > : QControlView {
     
     public typealias SimpleClosure = (_ buttonView: QButtonView) -> Void
     
@@ -114,12 +115,12 @@ public class QButtonView< BackgroundView: IQView > : QControlView {
 
 public extension QButtonView {
     
-    enum SpinnerPosition : Int {
+    enum SpinnerPosition {
         case fill
         case image
     }
     
-    enum ImagePosition : Int {
+    enum ImagePosition {
         case top
         case left
         case right
@@ -130,7 +131,7 @@ public extension QButtonView {
 
 extension QButtonView {
     
-    class Layout : IQDynamicLayout {
+    class Layout : IQLayout {
         
         weak var delegate: IQLayoutDelegate?
         weak var parentView: IQView?

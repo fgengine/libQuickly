@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QSpinnerView : IQSpinnerView {
+open class QSpinnerView : IQSpinnerView {
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?

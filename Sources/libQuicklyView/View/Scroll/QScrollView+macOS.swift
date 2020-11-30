@@ -5,6 +5,7 @@
 #if os(OSX)
 
 import AppKit
+import libQuicklyCore
 
 extension QScrollView {
     
@@ -21,15 +22,13 @@ extension QScrollView {
                 }
             }
         }
-        var qLayout: IQDynamicLayout! {
+        var qLayout: IQLayout! {
             willSet(newValue) {
                 if self.qLayout !== newValue {
                     if let layout = self.qLayout {
                         layout.delegate = nil
                     }
-                    if self.superview != nil {
-                        self._disappear()
-                    }
+                    self._disappear()
                 }
             }
             didSet(oldValue) {
@@ -37,10 +36,8 @@ extension QScrollView {
                     if let layout = self.qLayout {
                         layout.delegate = self
                     }
-                    if self.superview != nil {
-                        self._documentView.needsLayout = true
-                        self._contentView.needsLayout = true
-                    }
+                    self._documentView.needsLayout = true
+                    self._contentView.needsLayout = true
                 }
             }
         }
@@ -103,10 +100,12 @@ extension QScrollView {
             self.documentView = nil
         }
 
-        override func viewWillMove(toSuperview newSuperview: NSView?) {
-            super.viewWillMove(toSuperview: newSuperview)
+        override func viewWillMove(toSuperview superview: NSView?) {
+            super.viewWillMove(toSuperview: superview)
 
-            if newSuperview == nil {
+            if superview != nil {
+                self.needsLayout = true
+            } else {
                 self._disappear()
             }
         }
@@ -135,8 +134,6 @@ extension QScrollView {
                         self._appear(view: item.view)
                     }
                 }
-                self._visibleItems = visibleItems
-            } else {
                 self._visibleItems = visibleItems
             }
         }

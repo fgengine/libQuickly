@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QRectView : IQView {
+open class QRectView : IQView {
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?

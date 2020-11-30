@@ -5,13 +5,14 @@
 #if os(OSX)
 
 import AppKit
+import libQuicklyCore
 
 extension QControlView {
     
     final class ControlView : NSView {
         
         unowned var qDelegate: CustomViewDelegate!
-        var qLayout: IQDynamicLayout! {
+        var qLayout: IQLayout! {
             willSet(newValue) {
                 if self.qLayout !== newValue {
                     if let content = self.qLayout {

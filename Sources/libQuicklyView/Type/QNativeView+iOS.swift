@@ -1,5 +1,5 @@
 //
-//  libQuicklyView
+//  libQuicklyCore
 //
 
 #if os(iOS)
@@ -21,7 +21,7 @@ extension UIView {
     public func updateBlending() {
         guard let superview = self as? QNativeView else { return }
         for view in self.subviews {
-            guard let view = view as? QNativeView else { continue }
+            guard let view = view as? IQNativeBlendingView else { continue }
             view.updateBlending(superview: superview)
         }
     }

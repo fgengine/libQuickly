@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import libQuicklyCore
 
 public extension NSAttributedString {
     

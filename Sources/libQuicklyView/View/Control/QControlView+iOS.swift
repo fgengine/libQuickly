@@ -5,13 +5,14 @@
 #if os(iOS)
 
 import UIKit
+import libQuicklyCore
 
 extension QControlView {
     
     final class ControlView : UIControl {
         
         unowned var qDelegate: CustomViewDelegate!
-        var qLayout: IQDynamicLayout! {
+        var qLayout: IQLayout! {
             willSet(newValue) {
                 if self.qLayout !== newValue {
                     if let layout = self.qLayout {
@@ -232,11 +233,7 @@ extension QControlView.ControlView : IQNativeBlendingView {
 extension QControlView.ControlView : IQLayoutDelegate {
     
     func bounds(_ parentLayout: IQLayout) -> QRect {
-        if #available(iOS 11.0, *) {
-            return QRect(self.bounds.inset(by: self.safeAreaInsets))
-        } else {
-            return QRect(self.bounds)
-        }
+        return QRect(self.bounds)
     }
     
     func setNeedUpdate(_ parentLayout: IQLayout) {

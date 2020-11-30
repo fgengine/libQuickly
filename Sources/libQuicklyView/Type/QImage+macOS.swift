@@ -5,6 +5,7 @@
 #if os(OSX)
 
 import AppKit
+import libQuicklyCore
 
 public struct QImage {
 

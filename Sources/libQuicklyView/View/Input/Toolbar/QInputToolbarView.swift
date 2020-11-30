@@ -5,6 +5,7 @@
 #if os(iOS)
 
 import UIKit
+import libQuicklyCore
 
 protocol InputToolbarViewDelegate : AnyObject {
     
@@ -65,7 +66,7 @@ public protocol QInputToolbarDelegate : AnyObject {
     
 }
 
-public class QInputToolbarView : IQAccessoryView {
+open class QInputToolbarView : IQAccessoryView {
     
     public private(set) weak var parentView: IQView?
     public weak var delegate: QInputToolbarDelegate?

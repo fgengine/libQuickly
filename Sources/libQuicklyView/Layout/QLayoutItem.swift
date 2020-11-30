@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import libQuicklyCore
 
 public class QLayoutItem : IQLayoutItem {
     

@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QScrollView : IQView {
+open class QScrollView : IQView {
     
     public typealias SimpleClosure = (_ scrollView: QScrollView) -> Void
     public typealias EndScrollingClosure = (_ scrollView: QScrollView, _ decelerating: Bool) -> Void
@@ -17,7 +18,7 @@ public class QScrollView : IQView {
             self._view.qDirection = self.direction
         }
     }
-    public var layout: IQDynamicLayout {
+    public var layout: IQLayout {
         willSet {
             self.layout.parentView = nil
         }
@@ -38,6 +39,12 @@ public class QScrollView : IQView {
     public var onEndScrolling: EndScrollingClosure?
     public var onBeginDecelerating: SimpleClosure?
     public var onEndDecelerating: SimpleClosure?
+    public var contentInset: QInset {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.qContentInset = self.contentInset
+        }
+    }
     public private(set) var contentOffset: QPoint
     public private(set) var contentSize: QSize
     public private(set) var isScrolling: Bool
@@ -61,8 +68,9 @@ public class QScrollView : IQView {
     
     public init(
         direction: Direction = [ .vertical ],
-        layout: IQDynamicLayout,
+        layout: IQLayout,
         alpha: QFloat = 1,
+        contentInset: QInset = QInset(),
         onBeginScrolling: SimpleClosure? = nil,
         onScrolling: SimpleClosure? = nil,
         onEndScrolling: EndScrollingClosure? = nil,
@@ -77,6 +85,7 @@ public class QScrollView : IQView {
         self.onEndScrolling = onEndScrolling
         self.onBeginDecelerating = onBeginDecelerating
         self.onEndDecelerating = onEndDecelerating
+        self.contentInset = contentInset
         self.contentOffset = QPoint()
         self.contentSize = QSize()
         self.isScrolling = false
@@ -96,6 +105,11 @@ public class QScrollView : IQView {
     
     public func size(_ available: QSize) -> QSize {
         return self.layout.size(available)
+    }
+    
+    public func scroll(to point: QPoint) {
+        guard self.isLoaded == true else { return }
+        self._view.contentOffset = point.cgPoint
     }
     
 }

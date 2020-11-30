@@ -5,6 +5,7 @@
 #if os(iOS)
 
 import UIKit
+import libQuicklyCore
 
 extension QScrollView {
     
@@ -21,14 +22,11 @@ extension QScrollView {
                 }
             }
         }
-        var qLayout: IQDynamicLayout! {
+        var qLayout: IQLayout! {
             willSet(newValue) {
                 if self.qLayout !== newValue {
                     if let layout = self.qLayout {
                         layout.delegate = nil
-                    }
-                    if self.superview != nil {
-                        self._disappear()
                     }
                 }
             }
@@ -37,16 +35,18 @@ extension QScrollView {
                     if let layout = self.qLayout {
                         layout.delegate = self
                     }
-                    if self.superview != nil {
-                        self._contentView.needLayoutContent = true
-                        self.setNeedsLayout()
-                    }
+                    self._contentView.needLayoutContent = true
+                    self.setNeedsLayout()
                 }
             }
         }
         var qAlpha: QFloat {
             set(value) { self.alpha = CGFloat(value) }
             get { return QFloat(self.alpha) }
+        }
+        var qContentInset: QInset {
+            set(value) { self.contentInset = value.uiEdgeInsets }
+            get { return QInset(self.contentInset) }
         }
         var qContentOffset: QPoint {
             set(value) { self.contentOffset = value.cgPoint }
@@ -85,7 +85,7 @@ extension QScrollView {
 
             self.delegate = self
             if #available(iOS 11.0, *) {
-                self.contentInsetAdjustmentBehavior = .always
+                self.contentInsetAdjustmentBehavior = .never
             }
             self.clipsToBounds = true
             
@@ -94,6 +94,17 @@ extension QScrollView {
         
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+        
+        override func willMove(toSuperview superview: UIView?) {
+            super.willMove(toSuperview: superview)
+            
+            if superview != nil {
+                self._contentView.needLayoutContent = true
+                self.setNeedsLayout()
+            } else {
+                self._disappear()
+            }
         }
         
         override func layoutSubviews() {
@@ -208,8 +219,6 @@ private extension QScrollView.ScrollView {
                     self._appear(view: item.view)
                 }
             }
-            self._visibleItems = visibleItems
-        } else {
             self._visibleItems = visibleItems
         }
     }
@@ -341,6 +350,7 @@ extension QScrollView.ScrollView : IQReusable {
         item.qDirection = view.direction
         item.qLayout = view.layout
         item.qAlpha = view.alpha
+        item.qContentInset = view.contentInset
         item.qContentOffset = view.contentOffset
     }
     

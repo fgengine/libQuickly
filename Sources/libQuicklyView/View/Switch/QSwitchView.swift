@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import libQuicklyCore
 
 protocol SwitchViewDelegate : AnyObject {
     
@@ -10,7 +11,7 @@ protocol SwitchViewDelegate : AnyObject {
     
 }
 
-public class QSwitchView : IQView {
+open class QSwitchView : IQView {
     
     public typealias SimpleClosure = (_ switchView: QSwitchView) -> Void
     

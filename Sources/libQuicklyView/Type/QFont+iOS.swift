@@ -5,6 +5,7 @@
 #if os(iOS)
 
 import UIKit
+import libQuicklyCore
 
 public struct QFont {
 

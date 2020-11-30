@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QProgressView : IQProgressView {
+open class QProgressView : IQProgressView {
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?

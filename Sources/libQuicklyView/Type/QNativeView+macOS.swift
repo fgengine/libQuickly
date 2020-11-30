@@ -1,5 +1,5 @@
 //
-//  libQuicklyView
+//  libQuicklyCore
 //
 
 #if os(OSX)

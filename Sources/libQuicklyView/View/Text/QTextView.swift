@@ -3,8 +3,9 @@
 //
 
 import Foundation
+import libQuicklyCore
 
-public class QTextView : IQView {
+open class QTextView : IQView {
     
     public private(set) weak var parentLayout: IQLayout?
     public weak var item: IQLayoutItem?
