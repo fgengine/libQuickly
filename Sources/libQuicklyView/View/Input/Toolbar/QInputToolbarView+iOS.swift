@@ -11,57 +11,12 @@ extension QInputToolbarView {
     
     final class InputToolbarView : UIToolbar {
         
-        weak var qDelegate: InputToolbarViewDelegate?
-        var qSize: QFloat {
-            set(value) {
-                let frame = super.frame
-                super.frame = CGRect(
-                    origin: frame.origin,
-                    size: CGSize(
-                        width: frame.width,
-                        height: CGFloat(value)
-                    )
-                )
-            }
-            get { return QFloat(self.frame.height) }
-        }
-        var qItems: [IQInputToolbarItem]! {
-            didSet {
-                let items = self.qItems.compactMap({ return $0.barItem })
-                for item in items {
-                    item.target = self
-                    item.action = #selector(self._pressed(_:))
-                }
-                self.items = items
-            }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qIsTranslucent: Bool {
-            set(value) { self.isTranslucent = value }
-            get { return self.isTranslucent }
-        }
-        var qTintColor: QColor? {
-            set(value) { self.barTintColor = value?.native }
-            get { return self.barTintColor == nil ? nil : QColor(self.barTintColor!) }
-        }
-        var qContentTintColor: QColor {
-            set(value) { self.tintColor = value.native }
-            get { return QColor(self.tintColor!) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
-        }
+        private var customDelegate: InputToolbarViewDelegate?
+        
+        private unowned var _view: QInputToolbarView?
                 
-        init() {
-            super.init(frame: CGRect(
-                x: 0,
-                y: 0,
-                width: UIScreen.main.bounds.width,
-                height: 44
-            ))
+        override init(frame: CGRect) {
+            super.init(frame: frame)
 
             self.clipsToBounds = true
         }
@@ -74,29 +29,56 @@ extension QInputToolbarView {
     
 }
 
-private extension QInputToolbarView.InputToolbarView {
+extension QInputToolbarView.InputToolbarView {
     
-    @objc
-    func _pressed(_ sender: UIBarButtonItem) {
-        self.qDelegate?.pressed(barItem: sender)
+    func update(view: QInputToolbarView) {
+        self._view = view
+        self.update(items: view.items)
+        self.update(size: view.size)
+        self.update(translucent: view.isTranslucent)
+        self.update(tintColor: view.tintColor)
+        self.update(contentTintColor: view.contentTintColor)
+        self.update(color: view.color)
+    }
+    
+    func update(items: [IQInputToolbarItem]) {
+        let barItems = items.compactMap({ return $0.barItem })
+        for barItem in barItems {
+            barItem.target = self
+            barItem.action = #selector(self._pressed(_:))
+        }
+        self.items = barItems
+    }
+    
+    func update(size: QFloat) {
+        self.frame = CGRect(
+            origin: frame.origin,
+            size: CGSize(
+                width: frame.width,
+                height: CGFloat(size)
+            )
+        )
+    }
+    
+    func update(translucent: Bool) {
+        self.isTranslucent = translucent
+    }
+    
+    func update(tintColor: QColor?) {
+        self.barTintColor = tintColor?.native
+    }
+    
+    func update(contentTintColor: QColor) {
+        self.tintColor = contentTintColor.native
     }
     
 }
 
-extension QInputToolbarView.InputToolbarView : IQNativeBlendingView {
+private extension QInputToolbarView.InputToolbarView {
     
-    func allowBlending() -> Bool {
-        return self.alpha < 1
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
+    @objc
+    func _pressed(_ sender: UIBarButtonItem) {
+        self.customDelegate?.pressed(barItem: sender)
     }
     
 }
@@ -111,20 +93,21 @@ extension QInputToolbarView.InputToolbarView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: CGRect(
+            x: 0,
+            y: 0,
+            width: UIScreen.main.bounds.width,
+            height: 44
+        ))
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qDelegate = view
-        item.qSize = view.size
-        item.qItems = view.items
-        item.qAlpha = view.alpha
-        item.qIsTranslucent = view.isTranslucent
-        item.qTintColor = view.tintColor
-        item.qContentTintColor = view.contentTintColor
+        item.update(view: view)
+        item.customDelegate = view
     }
     
     static func cleanupReuseItem(view: View, item: Item) {
+        item.customDelegate = nil
     }
     
 }

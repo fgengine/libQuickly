@@ -65,15 +65,6 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
         }
     }
     public private(set) var valueItem: IQLayoutItem
-    public var items: [IQLayoutItem] {
-        return [
-            self.iconItem,
-            self.contentItem,
-            self.detailItem,
-            self.valueItem
-        ]
-    }
-    public private(set) var size: QSize
     
     public init(
         iconInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -97,31 +88,24 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
         self.valueInset = valueInset
         self.valueView = valueView
         self.valueItem = QLayoutItem(view: valueView)
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            size = bounds.size
-            let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
-            let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
-            let iconContentValue = bounds.split(
-                left: self.iconInset.left + iconSize.width + self.iconInset.right,
-                right: self.valueInset.left + valueSize.width + self.valueInset.right
-            )
-            let contentSize = self.contentItem.size(iconContentValue.middle.size.apply(inset: self.contentInset))
-            let contentDetail = iconContentValue.middle.split(
-                top: self.contentInset.top + contentSize.height + self.contentInset.bottom
-            )
-            self.iconItem.frame = iconContentValue.left.apply(inset: self.iconInset)
-            self.contentItem.frame = contentDetail.top.apply(inset: self.contentInset)
-            self.detailItem.frame = contentDetail.bottom.apply(inset: self.detailInset)
-            self.valueItem.frame = iconContentValue.right.apply(inset: self.valueInset)
-        } else {
-            size = QSize()
-        }
-        self.size = size
+    public func layout(bounds: QRect) -> QSize {
+        let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
+        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let iconContentValue = bounds.split(
+            left: self.iconInset.left + iconSize.width + self.iconInset.right,
+            right: self.valueInset.left + valueSize.width + self.valueInset.right
+        )
+        let contentSize = self.contentItem.size(iconContentValue.middle.size.apply(inset: self.contentInset))
+        let contentDetail = iconContentValue.middle.split(
+            top: self.contentInset.top + contentSize.height + self.contentInset.bottom
+        )
+        self.iconItem.frame = iconContentValue.left.apply(inset: self.iconInset)
+        self.contentItem.frame = contentDetail.top.apply(inset: self.contentInset)
+        self.detailItem.frame = contentDetail.bottom.apply(inset: self.detailInset)
+        self.valueItem.frame = iconContentValue.right.apply(inset: self.valueInset)
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -141,6 +125,11 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
             width: iconBounds.width + max(contentBounds.width, detailBounds.width) + valueBounds.width,
             height: max(iconBounds.height, contentBounds.height + detailBounds.height, valueBounds.height)
         )
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        let items = [ self.iconItem, self.contentItem, self.detailItem, self.valueItem ]
+        return self.visible(items: items, for: bounds)
     }
     
 }

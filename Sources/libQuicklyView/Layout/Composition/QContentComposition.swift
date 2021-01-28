@@ -23,12 +23,6 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
         }
     }
     public private(set) var contentItem: IQLayoutItem
-    public var items: [IQLayoutItem] {
-        return [
-            self.contentItem
-        ]
-    }
-    public private(set) var size: QSize
 
     public init(
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -37,24 +31,22 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
         self.contentInset = contentInset
         self.contentView = contentView
         self.contentItem = QLayoutItem(view: contentView)
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            size = bounds.size
-            self.contentItem.frame = bounds.apply(inset: self.contentInset)
-        } else {
-            size = QSize()
-        }
-        self.size = size
+    public func layout(bounds: QRect) -> QSize {
+        self.contentItem.frame = bounds.apply(inset: self.contentInset)
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
         let contentSize = self.contentItem.size(available.apply(inset: self.contentInset))
         let contentBounds = contentSize.apply(inset: -self.contentInset)
         return contentBounds
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        let items = [ self.contentItem ]
+        return self.visible(items: items, for: bounds)
     }
     
 }

@@ -7,17 +7,11 @@ import libQuicklyCore
 
 public protocol IQScreenPageable : AnyObject {
     
-    associatedtype PageBarItem : IQView & IQViewSelectable
+    associatedtype PageItemView : IQView & IQViewSelectable
     
-    var pageBarSize: QFloat { get }
-    var pageBarItemView: PageBarItem { get }
+    var pageItemView: PageItemView { get }
     
 }
 
 public extension IQScreenPageable {
-    
-    var pageBarSize: QFloat {
-        return 50
-    }
-    
 }

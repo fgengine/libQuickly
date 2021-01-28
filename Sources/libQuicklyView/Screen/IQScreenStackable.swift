@@ -7,12 +7,12 @@ import libQuicklyCore
 
 public protocol IQScreenStackable : AnyObject {
     
-    associatedtype StackBarItem : IQView
+    associatedtype StackBar : IQStackBarView
     
+    var stackBarView: StackBar { get }
     var stackBarSize: QFloat { get }
     var stackBarVisibility: QFloat { get }
     var stackBarHidden: Bool { get }
-    var stackBarItemView: StackBarItem { get }
     
 }
 

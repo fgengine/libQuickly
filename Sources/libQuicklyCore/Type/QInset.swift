@@ -29,10 +29,10 @@ public struct QInset : Hashable {
         horizontal: QFloat = 0,
         vertical: QFloat = 0
     ) {
-        self.top = horizontal
-        self.left = vertical
-        self.right = vertical
-        self.bottom = horizontal
+        self.top = vertical
+        self.left = horizontal
+        self.right = horizontal
+        self.bottom = vertical
     }
     
 }

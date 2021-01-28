@@ -6,24 +6,22 @@
 
 import UIKit
 
-public protocol IQNativeBlendingView : AnyObject {
-    
-    func allowBlending() -> Bool
-    
-    func updateBlending(superview: QNativeView)
-    
-}
+public typealias QNativeView = UIView
 
-public typealias QNativeView = UIView & IQNativeBlendingView
-
-extension UIView {
+public extension UIView {
     
-    public func updateBlending() {
-        guard let superview = self as? QNativeView else { return }
-        for view in self.subviews {
-            guard let view = view as? IQNativeBlendingView else { continue }
-            view.updateBlending(superview: superview)
+    func isChild(of view: UIView, recursive: Bool) -> Bool {
+        for subview in self.subviews {
+            if subview === view {
+                return true
+            } else if recursive == true {
+                if subview.isChild(of: view, recursive: recursive) == true {
+                    return true
+                }
+            }
+            
         }
+        return false
     }
     
 }

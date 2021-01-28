@@ -25,7 +25,7 @@ public extension IQScreenViewable {
 public extension IQScreenViewable where Self : IQScreen, View : QScrollView {
     
     func didChangeInsets() {
-        self.view.contentInset = self.inheritedInsets
+        self.view.contentInset(self.inheritedInsets)
     }
     
 }

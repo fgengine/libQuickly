@@ -51,14 +51,6 @@ public class QContentDetailValueComposition< ContentView: IQView, DetailView: IQ
         }
     }
     public private(set) var valueItem: IQLayoutItem
-    public var items: [IQLayoutItem] {
-        return [
-            self.contentItem,
-            self.detailItem,
-            self.valueItem
-        ]
-    }
-    public private(set) var size: QSize
     
     public init(
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -77,28 +69,21 @@ public class QContentDetailValueComposition< ContentView: IQView, DetailView: IQ
         self.valueInset = valueInset
         self.valueView = valueView
         self.valueItem = QLayoutItem(view: valueView)
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            size = bounds.size
-            let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
-            let contentDetailValue = bounds.split(
-                right: self.valueInset.left + valueSize.width + self.valueInset.right
-            )
-            let contentSize = self.contentItem.size(contentDetailValue.left.size.apply(inset: self.contentInset))
-            let contentDetail = contentDetailValue.left.split(
-                top: self.contentInset.top + contentSize.height + self.contentInset.bottom
-            )
-            self.contentItem.frame = contentDetail.top.apply(inset: self.contentInset)
-            self.detailItem.frame = contentDetail.bottom.apply(inset: self.detailInset)
-            self.valueItem.frame = contentDetailValue.right.apply(inset: self.valueInset)
-        } else {
-            size = QSize()
-        }
-        self.size = size
+    public func layout(bounds: QRect) -> QSize {
+        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let contentDetailValue = bounds.split(
+            right: self.valueInset.left + valueSize.width + self.valueInset.right
+        )
+        let contentSize = self.contentItem.size(contentDetailValue.left.size.apply(inset: self.contentInset))
+        let contentDetail = contentDetailValue.left.split(
+            top: self.contentInset.top + contentSize.height + self.contentInset.bottom
+        )
+        self.contentItem.frame = contentDetail.top.apply(inset: self.contentInset)
+        self.detailItem.frame = contentDetail.bottom.apply(inset: self.detailInset)
+        self.valueItem.frame = contentDetailValue.right.apply(inset: self.valueInset)
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -116,6 +101,11 @@ public class QContentDetailValueComposition< ContentView: IQView, DetailView: IQ
             width: max(contentBounds.width, detailBounds.width) + valueBounds.width,
             height: max(contentBounds.height + detailBounds.height, valueBounds.height)
         )
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        let items = [ self.contentItem, self.detailItem, self.valueItem ]
+        return self.visible(items: items, for: bounds)
     }
     
 }

@@ -7,7 +7,7 @@ let package = Package(
     name: "libQuickly",
     platforms: [
         .iOS(.v9),
-        .macOS(.v10_11)
+        .macOS(.v10_12)
     ],
     products: [
         .library(
@@ -54,27 +54,39 @@ let package = Package(
         ),
         .target(
             name: "libQuicklyObserver",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         ),
         .target(
             name: "libQuicklyJson",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         ),
         .target(
             name: "libQuicklyKeychain",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         ),
         .target(
             name: "libQuicklyApi",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         ),
         .target(
             name: "libQuicklyDataSource",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         ),
         .target(
             name: "libQuicklyView",
-            dependencies: [ .target(name: "libQuicklyCore") ]
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
         )
     ]
 )

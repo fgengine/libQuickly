@@ -11,36 +11,14 @@ extension QSpinnerView {
     
     final class SpinnerView : UIActivityIndicatorView {
         
-        var qColor: QColor {
-            set(value) { self.color = value.native }
-            get { return QColor(self.color) }
-        }
-        var qIsAnimating: Bool {
-            set(value) {
-                guard self.isAnimating != value else { return }
-                if value == true {
-                    self.startAnimating()
-                } else {
-                    self.stopAnimating()
-                }
-            }
-            get { return self.isAnimating }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
-        }
+        private unowned var _view: QSpinnerView?
         
-        init() {
+        override init(style: Style) {
             if #available(iOS 13.0, *) {
                 super.init(style: .large)
             } else {
                 super.init(style: .whiteLarge)
             }
-            
             self.isUserInteractionEnabled = false
             self.hidesWhenStopped = true
             self.clipsToBounds = true
@@ -54,19 +32,29 @@ extension QSpinnerView {
     
 }
 
-extension QSpinnerView.SpinnerView : IQNativeBlendingView {
+extension QSpinnerView.SpinnerView {
     
-    func allowBlending() -> Bool {
-        return self.alpha < 1
+    func update(view: QSpinnerView) {
+        self._view = view
+        self.update(activityColor: view.activityColor)
+        self.update(isAnimating: view.isAnimating)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
     }
     
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
+    func update(activityColor: QColor) {
+        self.color = activityColor.native
+    }
+    
+    func update(isAnimating: Bool) {
+        if isAnimating == true {
+            self.startAnimating()
         } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
+            self.stopAnimating()
         }
     }
     
@@ -82,13 +70,14 @@ extension QSpinnerView.SpinnerView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        if #available(iOS 13.0, *) {
+            return Item(style: .large)
+        }
+        return Item(style: .whiteLarge)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qColor = view.color
-        item.qIsAnimating = view.isAnimating
-        item.qAlpha = view.alpha
+        item.update(view: view)
     }
     
     static func cleanupReuseItem(view: View, item: Item) {

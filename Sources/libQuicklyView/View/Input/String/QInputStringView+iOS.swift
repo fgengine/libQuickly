@@ -11,99 +11,20 @@ extension QInputStringView {
     
     final class InputStringView : UITextField {
         
-        weak var qDelegate: InputStringViewDelegate?
-        var qText: String {
-            set(value) { self.text = value }
-            get { return self.text ?? "" }
-        }
-        var qFont: QFont {
-            set(value) { self.font = value.native }
-            get { return QFont(self.font!) }
-        }
-        var qColor: QColor {
-            set(value) { self.textColor = value.native }
-            get { return QColor(self.textColor!) }
-        }
-        var qInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qEditingColor: QColor {
-            set(value) { self.tintColor = value.native }
-            get { return QColor(self.tintColor!) }
-        }
-        var qPlaceholder: QInputPlaceholder? {
-            didSet {
-                if let placeholder = self.qPlaceholder {
-                    self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
-                        .font: placeholder.font.native,
-                        .foregroundColor: placeholder.color.native
-                    ])
-                } else {
-                    self.attributedPlaceholder = nil
-                }
+        unowned var customDelegate: InputStringViewDelegate?
+        override var frame: CGRect {
+            didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
             }
-        }
-        var qPlaceholderInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qAlignment: QTextAlignment {
-            set(value) { self.textAlignment = value.nsTextAlignment }
-            get { return QTextAlignment(self.textAlignment) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qToolbar: IQAccessoryView? {
-            didSet {
-                self.inputAccessoryView = self.qToolbar?.native
-            }
-        }
-        var qKeyboard: QInputKeyboard {
-            set(value) {
-                self.keyboardType = value.type
-                self.keyboardAppearance = value.appearance
-                self.autocapitalizationType = value.autocapitalization
-                self.autocorrectionType = value.autocorrection
-                self.spellCheckingType = value.spellChecking
-                self.returnKeyType = value.returnKey
-                self.enablesReturnKeyAutomatically = value.enablesReturnKeyAutomatically
-                if #available(iOS 10.0, *) {
-                    self.textContentType = value.textContent
-                }
-            }
-            get {
-                if #available(iOS 10.0, *) {
-                    return QInputKeyboard(
-                        type: self.keyboardType,
-                        appearance: self.keyboardAppearance,
-                        autocapitalization: self.autocapitalizationType,
-                        autocorrection: self.autocorrectionType,
-                        spellChecking: self.spellCheckingType,
-                        returnKey: self.returnKeyType,
-                        enablesReturnKeyAutomatically: self.enablesReturnKeyAutomatically,
-                        textContent: self.textContentType
-                    )
-                } else {
-                    return QInputKeyboard(
-                        type: self.keyboardType,
-                        appearance: self.keyboardAppearance,
-                        autocapitalization: self.autocapitalizationType,
-                        autocorrection: self.autocorrectionType,
-                        spellChecking: self.spellCheckingType,
-                        returnKey: self.returnKeyType,
-                        enablesReturnKeyAutomatically: self.enablesReturnKeyAutomatically
-                    )
-                }
-            }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
         }
         
-        init() {
-            super.init(frame: .zero)
-
+        private unowned var _view: QInputStringView?
+        
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            
             self.clipsToBounds = true
             self.delegate = self
         }
@@ -113,31 +34,97 @@ extension QInputStringView {
         }
         
         override func textRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func editingRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qPlaceholderInset {
-                return result.apply(inset: inset).cgRect
-            } else if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            let inset = view.placeholderInset ?? view.textInset
+            return QRect(bounds).apply(inset: inset).cgRect
         }
         
+    }
+    
+}
+
+extension QInputStringView.InputStringView {
+    
+    func update(view: QInputStringView) {
+        self._view = view
+        self.update(text: view.text)
+        self.update(textFont: view.textFont)
+        self.update(textColor: view.textColor)
+        self.update(textInset: view.textInset)
+        self.update(editingColor: view.editingColor)
+        self.update(placeholder: view.placeholder)
+        self.update(placeholderInset: view.placeholderInset)
+        self.update(alignment: view.alignment)
+        self.update(toolbar: view.toolbar)
+        self.update(keyboard: view.keyboard)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
+    }
+    
+    func update(text: String) {
+        self.text = text
+    }
+    
+    func update(textFont: QFont) {
+        self.font = textFont.native
+    }
+    
+    func update(textColor: QColor) {
+        self.textColor = textColor.native
+    }
+    
+    func update(textInset: QInset) {
+        self.setNeedsLayout()
+    }
+    
+    func update(editingColor: QColor) {
+        self.tintColor = editingColor.native
+    }
+    
+    func update(placeholder: QInputPlaceholder) {
+        self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
+            .font: placeholder.font.native,
+            .foregroundColor: placeholder.color.native
+        ])
+    }
+    
+    func update(placeholderInset: QInset?) {
+        self.setNeedsLayout()
+    }
+    
+    func update(alignment: QTextAlignment) {
+        self.textAlignment = alignment.nsTextAlignment
+    }
+    
+    func update(toolbar: IQInputToolbarView?) {
+        self.inputAccessoryView = toolbar?.native
+    }
+    
+    func update(keyboard: QInputKeyboard?) {
+        self.keyboardType = keyboard?.type ?? .default
+        self.keyboardAppearance = keyboard?.appearance ?? .default
+        self.autocapitalizationType = keyboard?.autocapitalization ?? .sentences
+        self.autocorrectionType = keyboard?.autocorrection ?? .default
+        self.spellCheckingType = keyboard?.spellChecking ?? .default
+        self.returnKeyType = keyboard?.returnKey ?? .default
+        self.enablesReturnKeyAutomatically = keyboard?.enablesReturnKeyAutomatically ?? true
+        if #available(iOS 10.0, *) {
+            self.textContentType = keyboard?.textContent
+        }
     }
     
 }
@@ -145,39 +132,20 @@ extension QInputStringView {
 extension QInputStringView.InputStringView : UITextFieldDelegate {
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        self.qDelegate?.beginEditing()
+        self.customDelegate?.beginEditing()
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let sourceText = (textField.text ?? "") as NSString
         let newText = sourceText.replacingCharacters(in: range, with: string)
-        self.qDelegate?.editing(text: newText)
+        self.customDelegate?.editing(text: newText)
         return true
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        self.qDelegate?.endEditing()
+        self.customDelegate?.endEditing()
     }
 
-}
-
-extension QInputStringView.InputStringView : IQNativeBlendingView {
-    
-    func allowBlending() -> Bool {
-        return self.isOpaque == false
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
-        self.updateBlending()
-    }
-    
 }
 
 extension QInputStringView.InputStringView : IQReusable {
@@ -190,25 +158,16 @@ extension QInputStringView.InputStringView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: .zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qDelegate = view
-        item.qText = view.text
-        item.qFont = view.font
-        item.qColor = view.color
-        item.qInset = view.inset
-        item.qEditingColor = view.editingColor
-        item.qPlaceholder = view.placeholder
-        item.qPlaceholderInset = view.placeholderInset
-        item.qAlignment = view.alignment
-        item.qAlpha = view.alpha
-        item.qToolbar = view.toolbar
-        item.qKeyboard = view.keyboard
+        item.update(view: view)
+        item.customDelegate = view
     }
     
     static func cleanupReuseItem(view: View, item: Item) {
+        item.customDelegate = nil
     }
     
 }

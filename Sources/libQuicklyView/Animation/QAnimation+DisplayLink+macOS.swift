@@ -53,10 +53,10 @@ public extension QAnimation {
 
 fileprivate func QAnimationDisplayLinkCallback(_ displayLink: CVDisplayLink, _ nowTime: UnsafePointer< CVTimeStamp >, _ outputTime: UnsafePointer< CVTimeStamp >, _ flagsIn: CVOptionFlags, _ flagsOut: UnsafeMutablePointer< CVOptionFlags >, _ context: UnsafeMutableRawPointer?) -> CVReturn {
     guard let context = context else { return kCVReturnSuccess }
-    let queue = Unmanaged< QAnimation.Queue >.fromOpaque(context).takeRetainedValue()
-    let delta = QFloat(outputTime.pointee.videoTime - queue._prevTime.videoTime) / QFloat(outputTime.pointee.videoTimeScale)
-    queue._prevTime = outputTime.pointee
-    queue.delegate?.update(delta)
+    let displayLink = Unmanaged< QAnimation.DisplayLink >.fromOpaque(context).takeRetainedValue()
+    let delta = QFloat(outputTime.pointee.videoTime - displayLink._prevTime.videoTime) / QFloat(outputTime.pointee.videoTimeScale)
+    displayLink._prevTime = outputTime.pointee
+    displayLink.delegate?.update(delta)
     return kCVReturnSuccess
 }
 

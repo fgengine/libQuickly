@@ -13,16 +13,16 @@ public class QRootContainer : IQRootContainer {
     public weak var delegate: IQRootContainerDelegate?
     #if os(iOS)
     public var statusBarHidden: Bool {
-        return self.container?.statusBarHidden ?? false
+        return self._container?.statusBarHidden ?? false
     }
     public var statusBarStyle: UIStatusBarStyle {
-        return self.container?.statusBarStyle ?? .default
+        return self._container?.statusBarStyle ?? .default
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        return self.container?.statusBarAnimation ?? .fade
+        return self._container?.statusBarAnimation ?? .fade
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        return self.container?.supportedOrientations ?? .all
+        return self._container?.supportedOrientations ?? .all
     }
     #endif
     public private(set) var isPresented: Bool
@@ -37,25 +37,33 @@ public class QRootContainer : IQRootContainer {
         }
     }
     public var container: IQRootContentContainer? {
-        willSet {
-            if let container = self.container {
-                container.willHide(interactive: false)
-                container.didHide(interactive: false, finished: true)
+        set(value) {
+            guard self._container !== value else { return }
+            if let container = self._container {
+                if self.isPresented == true {
+                    container.prepareHide(interactive: false)
+                    container.finishHide(interactive: false)
+                }
                 container.rootContainer = nil
             }
-        }
-        didSet {
-            if let container = self.container {
+            self._container = value
+            if let container = self._container {
                 self._viewLayout.containerItem = QLayoutItem(view: container.view)
                 container.rootContainer = self
-                container.willShow(interactive: false)
-                container.didShow(interactive: false, finished: true)
+                if self.isPresented == true {
+                    container.prepareShow(interactive: false)
+                    container.finishShow(interactive: false)
+                }
+            } else {
+                self._viewLayout.containerItem = nil
             }
         }
+        get { return self._container }
     }
     
     private var _view: QCustomView
     private var _viewLayout: RootLayout
+    private var _container: IQRootContentContainer?
     
     public init() {
         self.isPresented = false
@@ -77,32 +85,40 @@ public class QRootContainer : IQRootContainer {
     #endif
     
     public func insets(of container: IQContainer) -> QInset {
-        if self.container === container {
+        if self._container === container {
             return self.safeArea
         }
         return QInset()
     }
     
     public func didChangeInsets() {
-        self.container?.didChangeInsets()
+        self._container?.didChangeInsets()
     }
     
-    public func willShow(interactive: Bool) {
-        self.container?.willShow(interactive: interactive)
+    public func prepareShow(interactive: Bool) {
+        self._container?.prepareShow(interactive: interactive)
     }
     
-    public func didShow(interactive: Bool, finished: Bool) {
+    public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self.container?.didShow(interactive: interactive, finished: finished)
-    }
-
-    public func willHide(interactive: Bool) {
-        self.container?.willHide(interactive: interactive)
+        self._container?.finishShow(interactive: interactive)
     }
     
-    public func didHide(interactive: Bool, finished: Bool) {
+    public func cancelShow(interactive: Bool) {
+        self._container?.cancelShow(interactive: interactive)
+    }
+    
+    public func prepareHide(interactive: Bool) {
+        self._container?.prepareHide(interactive: interactive)
+    }
+    
+    public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self.container?.didHide(interactive: interactive, finished: finished)
+        self._container?.finishHide(interactive: interactive)
+    }
+    
+    public func cancelHide(interactive: Bool) {
+        self._container?.cancelHide(interactive: interactive)
     }
 
 }
@@ -116,30 +132,10 @@ private extension QRootContainer {
         var containerItem: IQLayoutItem? {
             didSet { self.setNeedUpdate() }
         }
-        var items: [IQLayoutItem] {
-            var items: [IQLayoutItem] = []
-            if let containerItem = self.containerItem {
-                items.append(containerItem)
-            }
-            return items
-        }
-        var size: QSize
-
-        init() {
-            self.size = QSize()
-        }
         
-        func layout() {
-            var size: QSize
-            if let bounds = self.delegate?.bounds(self) {
-                for item in self.items {
-                    item.frame = bounds
-                }
-                size = bounds.size
-            } else {
-                size = QSize()
-            }
-            self.size = size
+        func layout(bounds: QRect) -> QSize {
+            self.containerItem?.frame = bounds
+            return bounds.size
         }
         
         func size(_ available: QSize) -> QSize {
@@ -147,7 +143,11 @@ private extension QRootContainer {
         }
         
         func items(bounds: QRect) -> [IQLayoutItem] {
-            return self.items
+            var items: [IQLayoutItem] = []
+            if let containerItem = self.containerItem {
+                items.append(containerItem)
+            }
+            return items
         }
         
     }

@@ -169,34 +169,6 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         }
     }
     public private(set) var accessoryRightItem: IQLayoutItem?
-    public var items: [IQLayoutItem] {
-        var items: [IQLayoutItem] = [
-            self.titleItem,
-            self.pincodeItem,
-        ]
-        if let item = self.errorItem {
-            items.append(item)
-        }
-        items.append(contentsOf: [
-            self.buttonOneItem,
-            self.buttonTwoItem,
-            self.buttonThreeItem,
-            self.buttonFourItem,
-            self.buttonFiveItem,
-            self.buttonSixItem,
-            self.buttonEightItem,
-            self.buttonNineItem,
-            self.buttonZeroItem
-        ])
-        if let item = self.accessoryLeftItem {
-            items.append(item)
-        }
-        if let item = self.accessoryRightItem {
-            items.append(item)
-        }
-        return items
-    }
-    public private(set) var size: QSize
     
     public init(
         titleInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -260,78 +232,71 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         if let view = accessoryRightView {
             self.accessoryRightItem = QLayoutItem(view: view)
         }
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            var origin = bounds.origin.y
-            do {
-                let item = self.titleItem
-                let inset = self.titleInset
-                let size = item.size(bounds.size.apply(inset: inset))
-                item.frame = QRect(
-                    x: bounds.origin.x + inset.left,
-                    y: origin + inset.top,
-                    width: bounds.size.width - (inset.left + inset.right),
-                    height: size.height
-                )
-                origin += inset.top + size.height + inset.bottom
-            }
-            do {
-                let item = self.pincodeItem
-                let inset = self.pincodeInset
-                let size = item.size(bounds.size.apply(inset: inset))
-                item.frame = QRect(
-                    x: bounds.origin.x + inset.left,
-                    y: origin + inset.top,
-                    width: bounds.size.width - (inset.left + inset.right),
-                    height: size.height
-                )
-                origin += inset.top + size.height + inset.bottom
-            }
-            if let item = self.errorItem {
-                let inset = self.errorInset
-                let size = item.size(bounds.size.apply(inset: inset))
-                item.frame = QRect(
-                    x: bounds.origin.x + inset.left,
-                    y: origin + inset.top,
-                    width: bounds.size.width - (inset.left + inset.right),
-                    height: size.height
-                )
-                origin += inset.top + size.height + inset.bottom
-            }
-            do {
-                let inset = self.buttonsInset
-                let rect = QRect(
-                    x: bounds.origin.x + inset.left,
-                    y: origin + inset.top,
-                    width: bounds.size.width - (inset.left + inset.right),
-                    height: bounds.size.height - origin - (inset.left + inset.right)
-                )
-                let grid = rect.grid(rows: 4, columns: 3, spacing: self.buttonsSpacing)
-                self.buttonOneItem.frame = grid[0]
-                self.buttonTwoItem.frame = grid[1]
-                self.buttonThreeItem.frame = grid[3]
-                self.buttonFourItem.frame = grid[4]
-                self.buttonFiveItem.frame = grid[5]
-                self.buttonSixItem.frame = grid[6]
-                self.buttonEightItem.frame = grid[7]
-                self.buttonNineItem.frame = grid[8]
-                self.buttonZeroItem.frame = grid[10]
-                if let item = self.accessoryLeftItem {
-                    item.frame = grid[9]
-                }
-                if let item = self.accessoryRightItem {
-                    item.frame = grid[11]
-                }
-            }
-            size = bounds.size
-        } else {
-            size = QSize()
+    public func layout(bounds: QRect) -> QSize {
+        var origin = bounds.origin.y
+        do {
+            let item = self.titleItem
+            let inset = self.titleInset
+            let size = item.size(bounds.size.apply(inset: inset))
+            item.frame = QRect(
+                x: bounds.origin.x + inset.left,
+                y: origin + inset.top,
+                width: bounds.size.width - (inset.left + inset.right),
+                height: size.height
+            )
+            origin += inset.top + size.height + inset.bottom
         }
-        self.size = size
+        do {
+            let item = self.pincodeItem
+            let inset = self.pincodeInset
+            let size = item.size(bounds.size.apply(inset: inset))
+            item.frame = QRect(
+                x: bounds.origin.x + inset.left,
+                y: origin + inset.top,
+                width: bounds.size.width - (inset.left + inset.right),
+                height: size.height
+            )
+            origin += inset.top + size.height + inset.bottom
+        }
+        if let item = self.errorItem {
+            let inset = self.errorInset
+            let size = item.size(bounds.size.apply(inset: inset))
+            item.frame = QRect(
+                x: bounds.origin.x + inset.left,
+                y: origin + inset.top,
+                width: bounds.size.width - (inset.left + inset.right),
+                height: size.height
+            )
+            origin += inset.top + size.height + inset.bottom
+        }
+        do {
+            let inset = self.buttonsInset
+            let rect = QRect(
+                x: bounds.origin.x + inset.left,
+                y: origin + inset.top,
+                width: bounds.size.width - (inset.left + inset.right),
+                height: bounds.size.height - origin - (inset.left + inset.right)
+            )
+            let grid = rect.grid(rows: 4, columns: 3, spacing: self.buttonsSpacing)
+            self.buttonOneItem.frame = grid[0]
+            self.buttonTwoItem.frame = grid[1]
+            self.buttonThreeItem.frame = grid[3]
+            self.buttonFourItem.frame = grid[4]
+            self.buttonFiveItem.frame = grid[5]
+            self.buttonSixItem.frame = grid[6]
+            self.buttonEightItem.frame = grid[7]
+            self.buttonNineItem.frame = grid[8]
+            self.buttonZeroItem.frame = grid[10]
+            if let item = self.accessoryLeftItem {
+                item.frame = grid[9]
+            }
+            if let item = self.accessoryRightItem {
+                item.frame = grid[11]
+            }
+        }
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -355,6 +320,34 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         let buttonsHeight = buttonsWidth * self.buttonsAspectRatio
         result.height += self.buttonsInset.top + (buttonsHeight * 3) + (self.buttonsSpacing.y * 3) + self.buttonsInset.bottom
         return result
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        var items: [IQLayoutItem] = [
+            self.titleItem,
+            self.pincodeItem,
+        ]
+        if let item = self.errorItem {
+            items.append(item)
+        }
+        items.append(contentsOf: [
+            self.buttonOneItem,
+            self.buttonTwoItem,
+            self.buttonThreeItem,
+            self.buttonFourItem,
+            self.buttonFiveItem,
+            self.buttonSixItem,
+            self.buttonEightItem,
+            self.buttonNineItem,
+            self.buttonZeroItem
+        ])
+        if let item = self.accessoryLeftItem {
+            items.append(item)
+        }
+        if let item = self.accessoryRightItem {
+            items.append(item)
+        }
+        return self.visible(items: items, for: bounds)
     }
     
 }

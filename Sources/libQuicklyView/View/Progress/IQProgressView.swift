@@ -5,8 +5,27 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQProgressView : IQView {
+public protocol IQProgressView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
-    var progress: QFloat { set get }
+    var width: QDimensionBehaviour { get }
+    var height: QDimensionBehaviour { get }
+    var progressColor: QColor { get }
+    var trackColor: QColor { get }
+    var progress: QFloat { get }
+    
+    @discardableResult
+    func width(_ value: QDimensionBehaviour) -> Self
+    
+    @discardableResult
+    func height(_ value: QDimensionBehaviour) -> Self
+    
+    @discardableResult
+    func progressColor(_ value: QColor) -> Self
+    
+    @discardableResult
+    func trackColor(_ value: QColor) -> Self
+    
+    @discardableResult
+    func progress(_ value: QFloat) -> Self
     
 }

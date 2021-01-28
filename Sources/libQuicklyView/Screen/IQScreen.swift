@@ -9,11 +9,13 @@ public protocol IQScreen : AnyObject {
     
     var container: IQContainer? { set get }
     
-    func willShow(interactive: Bool)
-    func didShow(interactive: Bool, finished: Bool)
-
-    func willHide(interactive: Bool)
-    func didHide(interactive: Bool, finished: Bool)
+    func prepareShow(interactive: Bool)
+    func finishShow(interactive: Bool)
+    func cancelShow(interactive: Bool)
+    
+    func prepareHide(interactive: Bool)
+    func finishHide(interactive: Bool)
+    func cancelHide(interactive: Bool)
     
 }
 
@@ -27,16 +29,22 @@ public extension IQScreen {
         return self.container?.inheritedInsets ?? QInset()
     }
     
-    func willShow(interactive: Bool) {
+    func prepareShow(interactive: Bool) {
     }
     
-    func didShow(interactive: Bool, finished: Bool) {
-    }
-
-    func willHide(interactive: Bool) {
+    func finishShow(interactive: Bool) {
     }
     
-    func didHide(interactive: Bool, finished: Bool) {
+    func cancelShow(interactive: Bool) {
+    }
+    
+    func prepareHide(interactive: Bool) {
+    }
+    
+    func finishHide(interactive: Bool) {
+    }
+    
+    func cancelHide(interactive: Bool) {
     }
     
 }

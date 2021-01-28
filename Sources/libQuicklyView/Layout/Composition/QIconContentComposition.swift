@@ -37,13 +37,6 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
         }
     }
     public private(set) var contentItem: IQLayoutItem
-    public var items: [IQLayoutItem] {
-        return [
-            self.iconItem,
-            self.contentItem
-        ]
-    }
-    public private(set) var size: QSize
     
     public init(
         iconInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -57,23 +50,16 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
         self.contentInset = contentInset
         self.contentView = contentView
         self.contentItem = QLayoutItem(view: contentView)
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            size = bounds.size
-            let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
-            let contentValue = bounds.split(
-                left: self.iconInset.left + iconSize.width + self.iconInset.right
-            )
-            self.iconItem.frame = contentValue.left.apply(inset: self.iconInset)
-            self.contentItem.frame = contentValue.right.apply(inset: self.contentInset)
-        } else {
-            size = QSize()
-        }
-        self.size = size
+    public func layout(bounds: QRect) -> QSize {
+        let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
+        let contentValue = bounds.split(
+            left: self.iconInset.left + iconSize.width + self.iconInset.right
+        )
+        self.iconItem.frame = contentValue.left.apply(inset: self.iconInset)
+        self.contentItem.frame = contentValue.right.apply(inset: self.contentInset)
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -89,6 +75,11 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
             width: iconBounds.width + contentBounds.width,
             height: max(iconBounds.height, contentBounds.height)
         )
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        let items = [ self.iconItem, self.contentItem ]
+        return self.visible(items: items, for: bounds)
     }
     
 }

@@ -37,13 +37,6 @@ public class QContentValueComposition< ContentView: IQView, ValueView: IQView > 
         }
     }
     public private(set) var valueItem: IQLayoutItem
-    public var items: [IQLayoutItem] {
-        return [
-            self.contentItem,
-            self.valueItem
-        ]
-    }
-    public private(set) var size: QSize
     
     public init(
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -57,23 +50,16 @@ public class QContentValueComposition< ContentView: IQView, ValueView: IQView > 
         self.valueInset = valueInset
         self.valueView = valueView
         self.valueItem = QLayoutItem(view: valueView)
-        self.size = QSize()
     }
     
-    public func layout() {
-        var size: QSize
-        if let bounds = self.delegate?.bounds(self) {
-            size = bounds.size
-            let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
-            let contentValue = bounds.split(
-                right: self.valueInset.left + valueSize.width + self.valueInset.right
-            )
-            self.contentItem.frame = contentValue.left.apply(inset: self.contentInset)
-            self.valueItem.frame = contentValue.right.apply(inset: self.valueInset)
-        } else {
-            size = QSize()
-        }
-        self.size = size
+    public func layout(bounds: QRect) -> QSize {
+        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let contentValue = bounds.split(
+            right: self.valueInset.left + valueSize.width + self.valueInset.right
+        )
+        self.contentItem.frame = contentValue.left.apply(inset: self.contentInset)
+        self.valueItem.frame = contentValue.right.apply(inset: self.valueInset)
+        return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -89,6 +75,11 @@ public class QContentValueComposition< ContentView: IQView, ValueView: IQView > 
             width: contentBounds.width + valueBounds.width,
             height: max(contentBounds.height, valueBounds.height)
         )
+    }
+    
+    public func items(bounds: QRect) -> [IQLayoutItem] {
+        let items = [ self.contentItem, self.valueItem ]
+        return self.visible(items: items, for: bounds)
     }
     
 }

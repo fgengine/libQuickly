@@ -80,6 +80,8 @@ extension QWindow {
         override func viewDidLoad() {
             super.viewDidLoad()
             self.container.safeArea = self._safeArea()
+            self.container.prepareShow(interactive: false)
+            self.container.finishShow(interactive: true)
         }
         
         override func viewDidLayoutSubviews() {

@@ -11,57 +11,21 @@ extension QScrollView {
     
     final class ScrollView : UIScrollView {
         
-        weak var qDelegate: ScrollViewDelegate?
-        var qDirection: Direction = [] {
+        unowned var customDelegate: ScrollViewDelegate?
+        var needLayoutContent: Bool {
             didSet(oldValue) {
-                if self.qDirection != oldValue {
-                    self.alwaysBounceHorizontal = self.qDirection.contains(.horizontal)
-                    self.alwaysBounceVertical = self.qDirection.contains(.vertical)
-                    self._contentView.needLayoutContent = true
+                if self.needLayoutContent == true {
                     self.setNeedsLayout()
                 }
             }
-        }
-        var qLayout: IQLayout! {
-            willSet(newValue) {
-                if self.qLayout !== newValue {
-                    if let layout = self.qLayout {
-                        layout.delegate = nil
-                    }
-                }
-            }
-            didSet(oldValue) {
-                if self.qLayout !== oldValue {
-                    if let layout = self.qLayout {
-                        layout.delegate = self
-                    }
-                    self._contentView.needLayoutContent = true
-                    self.setNeedsLayout()
-                }
-            }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qContentInset: QInset {
-            set(value) { self.contentInset = value.uiEdgeInsets }
-            get { return QInset(self.contentInset) }
-        }
-        var qContentOffset: QPoint {
-            set(value) { self.contentOffset = value.cgPoint }
-            get { return QPoint(self.contentOffset) }
-        }
-        var qContentSize: QSize {
-            get { return QSize(self.contentSize) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
         }
         override var frame: CGRect {
             didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
                 if self.frame.size != oldValue.size {
-                    self._contentView.needLayoutContent = true
+                    self.needLayoutContent = true
                     self.setNeedsLayout()
                 }
             }
@@ -75,21 +39,25 @@ extension QScrollView {
             get { return super.contentSize }
         }
         
-        private lazy var _contentView: ContentView = ContentView(owner: self)
-        private var _visibleItems: [IQLayoutItem]
-
-        init() {
-            self._visibleItems = []
+        private unowned var _view: QScrollView?
+        private var _contentView: UIView!
+        private var _layoutManager: QLayoutManager!
+        
+        override init(frame: CGRect) {
+            self.needLayoutContent = true
             
-            super.init(frame: CGRect.zero)
+            super.init(frame: frame)
 
-            self.delegate = self
             if #available(iOS 11.0, *) {
                 self.contentInsetAdjustmentBehavior = .never
             }
             self.clipsToBounds = true
+            self.delegate = self
             
+            self._contentView = UIView(frame: .zero)
             self.addSubview(self._contentView)
+            
+            self._layoutManager = QLayoutManager(contentView: self._contentView)
         }
         
         required init?(coder: NSCoder) {
@@ -100,127 +68,131 @@ extension QScrollView {
             super.willMove(toSuperview: superview)
             
             if superview != nil {
-                self._contentView.needLayoutContent = true
+                self.needLayoutContent = true
                 self.setNeedsLayout()
             } else {
-                self._disappear()
+                self._layoutManager.clear()
             }
         }
         
         override func layoutSubviews() {
             super.layoutSubviews()
             
-            self._layoutContent(visibleRect: QRect(self.bounds))
-        }
-        
-    }
-    
-    final class ContentView : UIView {
-        
-        weak var qOwner: ScrollView?
-        var needLayoutContent: Bool {
-            didSet(oldValue) {
-                if self.needLayoutContent == true {
-                    self.setNeedsLayout()
-                }
-            }
-        }
-        override var backgroundColor: UIColor? {
-            didSet(oldValue) {
-                guard self.backgroundColor != oldValue else { return }
-                self.updateBlending()
-            }
-        }
-        override var alpha: CGFloat {
-            didSet(oldValue) {
-                guard self.alpha != oldValue else { return }
-                self.updateBlending()
-            }
-        }
-        override var frame: CGRect {
-            didSet(oldValue) {
-                guard self.frame != oldValue else { return }
-                self.needLayoutContent = true
-            }
-        }
-
-        init(owner: ScrollView) {
-            self.qOwner = owner
-            self.needLayoutContent = true
-            
-            super.init(frame: CGRect.zero)
-
-            self.clipsToBounds = true
-        }
-        
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-        
-        override func didAddSubview(_ subview: UIView) {
-            super.didAddSubview(subview)
-            
-            if let view = subview as? QNativeView {
-                view.updateBlending(superview: self)
-            }
-        }
-        
-        override func layoutSubviews() {
-            super.layoutSubviews()
             if self.needLayoutContent == true {
-                self.qOwner?._layoutContent()
+                let frame = self.bounds
+                if #available(iOS 11.0, *) {
+                    let inset = self.adjustedContentInset
+                    self._layoutManager.layout(
+                        bounds: QRect(
+                            x: 0,
+                            y: 0,
+                            width: QFloat(frame.width - (inset.left + inset.right)),
+                            height: QFloat(frame.height - (inset.top + inset.bottom))
+                        )
+                    )
+                } else {
+                    self._layoutManager.layout(
+                        bounds: QRect(
+                            x: 0,
+                            y: 0,
+                            width: QFloat(frame.width),
+                            height: QFloat(frame.height)
+                        )
+                    )
+                }
+                self.contentSize = self._layoutManager.size.cgSize
+                self.customDelegate?.update(contentSize: self._layoutManager.size)
                 self.needLayoutContent = false
             }
+            self._layoutManager.visible(bounds: QRect(self.bounds))
         }
         
     }
         
 }
 
-private extension QScrollView.ScrollView {
+extension QScrollView.ScrollView {
     
-    func _appear(view: IQView) {
-        guard view.isAppeared == false else { return }
-        self._contentView.addSubview(view.native)
-        view.onAppear(to: self.qLayout)
+    func update(view: QScrollView) {
+        self._view = view
+        self.update(direction: view.direction)
+        self.update(indicatorDirection: view.indicatorDirection)
+        self.update(contentInset: view.contentInset)
+        self.update(contentOffset: view.contentOffset, normalized: false)
+        self.update(layout: view.layout)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
     }
     
-    func _disappear(view: IQView) {
-        guard view.isAppeared == true else { return }
-        view.native.removeFromSuperview()
-        view.onDisappear()
-    }
-    
-    func _disappear() {
-        for item in self._visibleItems {
-            self._disappear(view: item.view)
+    func update(layout: IQLayout) {
+        if let layout = self._layoutManager.layout {
+            layout.delegate = nil
         }
-        self._visibleItems.removeAll()
+        if self.isAppeared == true {
+            self._layoutManager.clear()
+        }
+        self._layoutManager.layout = layout
+        layout.delegate = self
+        if self.isAppeared == true {
+            self.needLayoutContent = true
+            self.setNeedsLayout()
+        }
     }
     
-    func _layoutContent() {
-        self.qLayout.layout()
-        self.contentSize = self.qLayout.size.cgSize
-        self.qDelegate?.update(contentSize: self.qContentSize)
+    func update(direction: QScrollViewDirection) {
+        self.alwaysBounceHorizontal = direction.contains(.horizontal)
+        self.alwaysBounceVertical = direction.contains(.vertical)
+        self.needLayoutContent = true
+        self.setNeedsLayout()
     }
     
-    func _layoutContent(visibleRect: QRect) {
-        let visibleItems = self.qLayout.items(bounds: visibleRect)
-        let unvisibleItems = self._visibleItems.filter({ visibleItem in
-            return visibleItems.contains(where: { return visibleItem === $0 }) == false
-        })
-        for item in unvisibleItems {
-            self._disappear(view: item.view)
+    func update(indicatorDirection: QScrollViewDirection) {
+        self.showsHorizontalScrollIndicator = indicatorDirection.contains(.horizontal)
+        self.showsVerticalScrollIndicator = indicatorDirection.contains(.vertical)
+    }
+    
+    func update(contentInset: QInset) {
+        self.contentInset = contentInset.uiEdgeInsets
+    }
+    
+    func update(contentOffset: QPoint, normalized: Bool) {
+        if normalized == true {
+            let contentSize = self.contentSize
+            let visibleSize = self.bounds.size
+            self.contentOffset = CGPoint(
+                x: max(0, min(CGFloat(contentOffset.x), contentSize.width - visibleSize.width)),
+                y: max(0, min(CGFloat(contentOffset.y), contentSize.height - visibleSize.height))
+            )
+        } else {
+            self.contentOffset = contentOffset.cgPoint
         }
-        if self.qLayout.isValid == true {
-            for item in visibleItems {
-                if visibleRect.isIntersects(rect: item.frame) == true {
-                    item.view.native.frame = item.frame.cgRect
-                    self._appear(view: item.view)
-                }
-            }
-            self._visibleItems = visibleItems
+    }
+    
+    func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint? {
+        guard let item = view.item else { return nil }
+        let contentSize = QSize(self.contentSize)
+        let visibleSize = QSize(self.bounds.size)
+        let itemFrame = item.frame
+        let x: QFloat
+        switch horizontal {
+        case .leading: x = itemFrame.origin.x
+        case .center: x = (itemFrame.origin.x + (itemFrame.size.width / 2)) - (visibleSize.width / 2)
+        case .trailing: x = (itemFrame.origin.x + itemFrame.size.width) - visibleSize.width
         }
+        let y: QFloat
+        switch vertical {
+        case .leading: y = itemFrame.origin.y
+        case .center: y = (itemFrame.origin.y + (itemFrame.size.height / 2)) - (visibleSize.height / 2)
+        case .trailing: y = (itemFrame.origin.y + itemFrame.size.height) - visibleSize.height
+        }
+        return QPoint(
+            x: max(0, min(x, contentSize.width - visibleSize.width)),
+            y: max(0, min(y, contentSize.height - visibleSize.height))
+        )
     }
     
 }
@@ -228,101 +200,33 @@ private extension QScrollView.ScrollView {
 extension QScrollView.ScrollView : UIScrollViewDelegate {
     
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        self.qDelegate?.beginScrolling()
+        self.customDelegate?.beginScrolling()
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if self._contentView.needLayoutContent == false {
-            self.qDelegate?.scrolling(contentOffset: self.qContentOffset)
+        if self.needLayoutContent == false {
+            self.customDelegate?.scrolling(contentOffset: QPoint(scrollView.contentOffset))
         }
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        self.qDelegate?.endScrolling(decelerating: decelerate)
+        self.customDelegate?.endScrolling(decelerate: decelerate)
     }
     
     func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
-        self.qDelegate?.beginDecelerating()
+        self.customDelegate?.beginDecelerating()
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        self.qDelegate?.endDecelerating()
-    }
-    
-}
-
-extension QScrollView.ScrollView : IQNativeBlendingView {
-    
-    func allowBlending() -> Bool {
-        return self.alpha < 1
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
-        self.updateBlending()
-    }
-    
-}
-
-extension QScrollView.ContentView : IQNativeBlendingView {
-    
-    func allowBlending() -> Bool {
-        return self.qOwner?.allowBlending() ?? false
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
-        self.updateBlending()
+        self.customDelegate?.endDecelerating()
     }
     
 }
 
 extension QScrollView.ScrollView : IQLayoutDelegate {
     
-    func bounds(_ parentLayout: IQLayout) -> QRect {
-        var result = QRect()
-        let frame = self.bounds
-        if #available(iOS 11.0, *) {
-            let inset = self.adjustedContentInset
-            if self.qDirection.contains(.vertical) == false {
-                result.size.width = .infinity
-            } else {
-                result.size.width = QFloat(frame.width - (inset.left + inset.right))
-            }
-            if self.qDirection.contains(.horizontal) == false {
-                result.size.height = .infinity
-            } else {
-                result.size.height = QFloat(frame.height - (inset.top + inset.bottom))
-            }
-        } else {
-            if self.qDirection.contains(.vertical) == false {
-                result.size.width = .infinity
-            } else {
-                result.size.width = QFloat(frame.width)
-            }
-            if self.qDirection.contains(.horizontal) == false {
-                result.size.height = .infinity
-            } else {
-                result.size.height = QFloat(frame.height)
-            }
-        }
-        return result
-    }
-    
     func setNeedUpdate(_ parentLayout: IQLayout) {
-        self._contentView.needLayoutContent = true
+        self.needLayoutContent = true
         self.setNeedsLayout()
     }
     
@@ -342,19 +246,16 @@ extension QScrollView.ScrollView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: .zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qDelegate = view
-        item.qDirection = view.direction
-        item.qLayout = view.layout
-        item.qAlpha = view.alpha
-        item.qContentInset = view.contentInset
-        item.qContentOffset = view.contentOffset
+        item.update(view: view)
+        item.customDelegate = view
     }
     
     static func cleanupReuseItem(view: View, item: Item) {
+        item.customDelegate = nil
     }
     
 }

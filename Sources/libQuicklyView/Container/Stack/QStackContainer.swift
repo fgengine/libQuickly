@@ -10,7 +10,13 @@ import libQuicklyCore
 
 public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContainerScreenable {
     
-    public weak var parentContainer: IQContainer?
+    public weak var parentContainer: IQContainer? {
+        didSet(oldValue) {
+            if self.parentContainer !== oldValue {
+                self.didChangeInsets()
+            }
+        }
+    }
     #if os(iOS)
     public var statusBarHidden: Bool {
         return self.currentContainer?.statusBarHidden ?? false
@@ -44,41 +50,37 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         return self._items.last?.container
     }
     
-    private var _items: [Item]
+    private var _rootView: QCustomView
+    private var _rootLayout: RootLayout
     #if os(iOS)
-    private lazy var _rootView: QCustomView = QCustomView(
-        gestures: [ self._interactiveGesture ],
-        layout: self._rootLayout
-    )
-    private lazy var _interactiveGesture: QScreenEdgePanGesture = QScreenEdgePanGesture(
-        edge: .left,
-        onShouldBegin: { [weak self] gesture -> Bool in
-            guard let self = self else { return false }
-            return self._items.count > 1
-        },
-        onBegin: { [weak self] gesture in self?._beginInteractiveGesture() },
-        onChange: { [weak self] gesture in self?._changeInteractiveGesture() },
-        onCancel: { [weak self] gesture in self?._endInteractiveGesture(true) },
-        onEnd: { [weak self] gesture in self?._endInteractiveGesture(false) }
-    )
+    private var _interactiveGesture: IQPanGesture
     private var _interactiveBeginLocation: QPoint?
     private var _interactiveBackward: Item?
     private var _interactiveCurrent: Item?
-    #else
-    private lazy var _rootView: QCustomView = QCustomView(
-        layout: self._rootLayout
-    )
     #endif
-    private lazy var _rootLayout: RootLayout = RootLayout()
+    private var _items: [Item]
     
     public init(screen: Screen) {
         self.isPresented = false
         self.screen = screen
         #if os(iOS)
         self.interactiveLimit = QFloat(UIScreen.main.bounds.width * 0.45)
-        self.interactiveVelocity = QFloat(UIScreen.main.bounds.width * 2)
+        self.interactiveVelocity = QFloat(UIScreen.main.bounds.width * 5)
+        #endif
+        self._rootLayout = RootLayout()
+        #if os(iOS)
+        self._interactiveGesture = QPanGesture(screenEdge: .left)
+        self._rootView = QCustomView(
+            gestures: [ self._interactiveGesture ],
+            layout: self._rootLayout
+        )
+        #else
+        self._rootView = QCustomView(
+            layout: self._rootLayout
+        )
         #endif
         self._items = []
+        self._init()
     }
     
     public func insets(of container: IQContainer) -> QInset {
@@ -108,22 +110,30 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         }
     }
     
-    public func willShow(interactive: Bool) {
-        self._items.last?.container.willShow(interactive: interactive)
+    public func prepareShow(interactive: Bool) {
+        self._items.last?.container.prepareShow(interactive: interactive)
     }
     
-    public func didShow(interactive: Bool, finished: Bool) {
+    public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self._items.last?.container.didShow(interactive: interactive, finished: finished)
-    }
-
-    public func willHide(interactive: Bool) {
-        self._items.last?.container.willHide(interactive: interactive)
+        self._items.last?.container.finishShow(interactive: interactive)
     }
     
-    public func didHide(interactive: Bool, finished: Bool) {
+    public func cancelShow(interactive: Bool) {
+        self._items.last?.container.cancelShow(interactive: interactive)
+    }
+    
+    public func prepareHide(interactive: Bool) {
+        self._items.last?.container.prepareHide(interactive: interactive)
+    }
+    
+    public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self._items.last?.container.didHide(interactive: interactive, finished: finished)
+        self._items.last?.container.finishHide(interactive: interactive)
+    }
+    
+    public func cancelHide(interactive: Bool) {
+        self._items.last?.container.cancelHide(interactive: interactive)
     }
     
     public func update(container: IQStackContentContainer, animated: Bool, completion: (() -> Void)?) {
@@ -255,105 +265,38 @@ private extension QStackContainer {
         var pageView: QCustomView
         var pageItem: IQLayoutItem
 
-        private var _barLayout: BarLayout
-        private var _barView: QCustomView
-        private var _itemLayout: ItemLayout
+        private var _layout: ItemLayout
         
         init(
             container: IQStackContentContainer,
             insets: QInset
         ) {
-            self._barLayout = BarLayout(
-                inset: insets.top,
-                item: QLayoutItem(view: container.stackBarItemView)
-            )
-            self._barView = QCustomView(
-                layout: self._barLayout
-            )
-            self._itemLayout = ItemLayout(
+            container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right))
+            self._layout = ItemLayout(
                 barInset: insets.top,
                 barSize: container.stackBarSize,
                 barVisibility: container.stackBarVisibility,
                 barHidden: container.stackBarHidden,
-                barItem: QLayoutItem(view: self._barView),
+                barItem: QLayoutItem(view: container.stackBarView),
                 contentItem: QLayoutItem(view: container.view)
             )
             self.container = container
-            self.pageView = QCustomView(layout: self._itemLayout)
+            self.pageView = QCustomView(layout: self._layout)
             self.pageItem = QLayoutItem(view: self.pageView)
         }
         
         func set(insets: QInset) {
-            self._barLayout.inset = insets.top
-            self._itemLayout.barInset = insets.top
+            self.container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right))
+            self._layout.barInset = insets.top
         }
         
         func update() {
-            self._barLayout.item = QLayoutItem(view: self.container.stackBarItemView)
-            self._itemLayout.barSize = self.container.stackBarSize
-            self._itemLayout.barVisibility = self.container.stackBarVisibility
-            self._itemLayout.barHidden = self.container.stackBarHidden
+            self._layout.barSize = self.container.stackBarSize
+            self._layout.barVisibility = self.container.stackBarVisibility
+            self._layout.barHidden = self.container.stackBarHidden
         }
 
     }
-    
-}
-
-private extension QStackContainer {
-    
-    class BarLayout : IQLayout {
-        
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
-        var inset: QFloat {
-            didSet { self.setNeedUpdate() }
-        }
-        var item: IQLayoutItem {
-            didSet { self.setNeedUpdate() }
-        }
-        var items: [IQLayoutItem] {
-            return [ self.item ]
-        }
-        var size: QSize
-
-        init(
-            inset: QFloat,
-            item: IQLayoutItem
-        ) {
-            self.inset = inset
-            self.item = item
-            self.size = QSize()
-        }
-        
-        func layout() {
-            var size: QSize
-            if let bounds = self.delegate?.bounds(self) {
-                self.item.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y + self.inset,
-                    width: bounds.size.width,
-                    height: bounds.size.height - self.inset
-                )
-                size = bounds.size
-            } else {
-                size = QSize()
-            }
-            self.size = size
-        }
-        
-        func size(_ available: QSize) -> QSize {
-            return available
-        }
-        
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            return self.items
-        }
-        
-    }
-    
-}
-
-private extension QStackContainer {
     
     class ItemLayout : IQLayout {
         
@@ -375,14 +318,6 @@ private extension QStackContainer {
             didSet { self.setNeedUpdate() }
         }
         var contentItem: IQLayoutItem
-        var items: [IQLayoutItem] {
-            var items: [IQLayoutItem] = [ self.contentItem ]
-            if self.barHidden == false {
-                items.append(self.barItem)
-            }
-            return items
-        }
-        var size: QSize
 
         init(
             barInset: QFloat,
@@ -398,24 +333,17 @@ private extension QStackContainer {
             self.barHidden = barHidden
             self.barItem = barItem
             self.contentItem = contentItem
-            self.size = QSize()
         }
         
-        func layout() {
-            var size: QSize
-            if let bounds = self.delegate?.bounds(self) {
-                self.barItem.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y,
-                    width: bounds.size.width,
-                    height: self.barInset + self.barSize
-                )
-                self.contentItem.frame = bounds
-                size = bounds.size
-            } else {
-                size = QSize()
-            }
-            self.size = size
+        func layout(bounds: QRect) -> QSize {
+            self.barItem.frame = QRect(
+                x: bounds.origin.x,
+                y: bounds.origin.y,
+                width: bounds.size.width,
+                height: self.barInset + self.barSize
+            )
+            self.contentItem.frame = bounds
+            return bounds.size
         }
         
         func size(_ available: QSize) -> QSize {
@@ -423,23 +351,58 @@ private extension QStackContainer {
         }
         
         func items(bounds: QRect) -> [IQLayoutItem] {
-            return self.items
+            var items: [IQLayoutItem] = [ self.contentItem ]
+            if self.barHidden == false {
+                items.append(self.barItem)
+            }
+            return items
         }
         
     }
     
-}
-
-private extension QStackContainer {
-    
     class RootLayout : IQLayout {
+        
+        enum State {
+            case empty
+            case idle(current: IQLayoutItem)
+            case push(current: IQLayoutItem, forward: IQLayoutItem, progress: QFloat)
+            case pop(backward: IQLayoutItem, current: IQLayoutItem, progress: QFloat)
+        }
         
         weak var delegate: IQLayoutDelegate?
         weak var parentView: IQView?
         var state: State {
             didSet { self.setNeedUpdate() }
         }
-        var items: [IQLayoutItem] {
+
+        init(state: State = .empty) {
+            self.state = state
+        }
+        
+        func layout(bounds: QRect) -> QSize {
+            let forwardFrame = QRect(topLeft: bounds.topRight, size: bounds.size)
+            let currentFrame = bounds
+            let backwardFrame = QRect(topRight: bounds.topLeft, size: bounds.size)
+            switch self.state {
+            case .empty:
+                break
+            case .idle(let current):
+                current.frame = currentFrame
+            case .push(let current, let forward, let progress):
+                forward.frame = forwardFrame.lerp(currentFrame, progress: progress)
+                current.frame = currentFrame.lerp(backwardFrame, progress: progress)
+            case .pop(let backward, let current, let progress):
+                current.frame = currentFrame.lerp(forwardFrame, progress: progress)
+                backward.frame = backwardFrame.lerp(currentFrame, progress: progress)
+            }
+            return bounds.size
+        }
+        
+        func size(_ available: QSize) -> QSize {
+            return available
+        }
+        
+        func items(bounds: QRect) -> [IQLayoutItem] {
             switch self.state {
             case .empty: return []
             case .idle(let current): return [ current ]
@@ -447,62 +410,35 @@ private extension QStackContainer {
             case .pop(let backward, let current, _): return [ backward, current ]
             }
         }
-        var size: QSize
-
-        init(state: State = .empty) {
-            self.state = state
-            self.size = QSize()
-        }
         
-        func layout() {
-            var size: QSize
-            if let bounds = self.delegate?.bounds(self) {
-                let forwardFrame = QRect(topLeft: bounds.topRight, size: bounds.size)
-                let currentFrame = bounds
-                let backwardFrame = QRect(topRight: bounds.topLeft, size: bounds.size)
-                switch self.state {
-                case .empty:
-                    break
-                case .idle(let current):
-                    current.frame = bounds
-                case .push(let current, let forward, let progress):
-                    forward.frame = forwardFrame.lerp(currentFrame, progress: progress)
-                    current.frame = currentFrame.lerp(backwardFrame, progress: progress)
-                case .pop(let backward, let current, let progress):
-                    current.frame = currentFrame.lerp(forwardFrame, progress: progress)
-                    backward.frame = backwardFrame.lerp(currentFrame, progress: progress)
-                }
-                size = bounds.size
-            } else {
-                size = QSize()
-            }
-            self.size = size
-        }
-        
-        func size(_ available: QSize) -> QSize {
-            return available
-        }
-        
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            return self.items
-        }
-        
-    }
-    
-}
-
-private extension QStackContainer.RootLayout {
-    
-    enum State {
-        case empty
-        case idle(current: IQLayoutItem)
-        case push(current: IQLayoutItem, forward: IQLayoutItem, progress: QFloat)
-        case pop(backward: IQLayoutItem, current: IQLayoutItem, progress: QFloat)
     }
     
 }
 
 private extension QStackContainer {
+    
+    func _init() {
+        self.screen.container = self
+        #if os(iOS)
+        self._interactiveGesture.onShouldBegin({ [weak self] in
+            guard let self = self else { return false }
+            return self._items.count > 1
+        }).onShouldBeRequiredToFailBy({ [weak self] gesture in
+            guard let self = self else { return false }
+            guard let gestureView = gesture.view else { return false }
+            return self._rootView.native.isChild(of: gestureView, recursive: true)
+        }).onBegin({ [weak self] in
+            self?._beginInteractiveGesture()
+        }) .onChange({ [weak self] in
+            self?._changeInteractiveGesture()
+        }).onCancel({ [weak self] in
+            self?._endInteractiveGesture(true)
+        }).onEnd({ [weak self] in
+            self?._endInteractiveGesture(false)
+        })
+        #else
+        #endif
+    }
     
     func _push(
         current: Item?,
@@ -513,8 +449,8 @@ private extension QStackContainer {
         if animated == true {
             if let current = current, let forward = forward {
                 if self.isPresented == true {
-                    current.container.willHide(interactive: false)
-                    forward.container.willShow(interactive: false)
+                    current.container.prepareHide(interactive: false)
+                    forward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
                     duration: 0.2,
@@ -527,28 +463,28 @@ private extension QStackContainer {
                         guard let self = self else { return }
                         self._rootLayout.state = .idle(current: forward.pageItem)
                         if self.isPresented == true {
-                            current.container.didHide(interactive: false, finished: true)
-                            forward.container.didShow(interactive: false, finished: true)
+                            current.container.finishHide(interactive: false)
+                            forward.container.finishShow(interactive: false)
                         }
                         completion?()
                     }
                 )
             } else if let forward = forward {
                 if self.isPresented == true {
-                    forward.container.willShow(interactive: false)
+                    forward.container.prepareShow(interactive: false)
                 }
                 self._rootLayout.state = .idle(current: forward.pageItem)
                 if self.isPresented == true {
-                    forward.container.didShow(interactive: false, finished: true)
+                    forward.container.finishShow(interactive: false)
                 }
                 completion?()
             } else if let current = current {
                 if self.isPresented == true {
-                    current.container.willHide(interactive: false)
+                    current.container.prepareHide(interactive: false)
                 }
                 self._rootLayout.state = .empty
                 if self.isPresented == true {
-                    current.container.didHide(interactive: false, finished: true)
+                    current.container.finishHide(interactive: false)
                 }
                 completion?()
             } else {
@@ -557,30 +493,30 @@ private extension QStackContainer {
             }
         } else if let current = current, let forward = forward {
             if self.isPresented == true {
-                current.container.willHide(interactive: false)
-                forward.container.willShow(interactive: false)
+                current.container.prepareHide(interactive: false)
+                forward.container.prepareShow(interactive: false)
             }
             self._rootLayout.state = .idle(current: forward.pageItem)
             if self.isPresented == true {
-                current.container.didHide(interactive: false, finished: true)
-                forward.container.didShow(interactive: false, finished: true)
+                current.container.finishHide(interactive: false)
+                forward.container.finishShow(interactive: false)
             }
         } else if let forward = forward {
             if self.isPresented == true {
-                forward.container.willShow(interactive: false)
+                forward.container.prepareShow(interactive: false)
             }
             self._rootLayout.state = .idle(current: forward.pageItem)
             if self.isPresented == true {
-                forward.container.didShow(interactive: false, finished: true)
+                forward.container.finishShow(interactive: false)
             }
             completion?()
         } else if let current = current {
             if self.isPresented == true {
-                current.container.willHide(interactive: false)
+                current.container.prepareHide(interactive: false)
             }
             self._rootLayout.state = .empty
             if self.isPresented == true {
-                current.container.didHide(interactive: false, finished: true)
+                current.container.finishHide(interactive: false)
             }
             completion?()
         } else {
@@ -598,8 +534,8 @@ private extension QStackContainer {
         if animated == true {
             if let current = current, let backward = backward {
                 if self.isPresented == true {
-                    current.container.willHide(interactive: false)
-                    backward.container.willShow(interactive: false)
+                    current.container.prepareHide(interactive: false)
+                    backward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
                     duration: 0.2,
@@ -612,28 +548,28 @@ private extension QStackContainer {
                         guard let self = self else { return }
                         self._rootLayout.state = .idle(current: backward.pageItem)
                         if self.isPresented == true {
-                            current.container.didHide(interactive: false, finished: true)
-                            backward.container.didShow(interactive: false, finished: true)
+                            current.container.finishHide(interactive: false)
+                            backward.container.finishShow(interactive: false)
                         }
                         completion?()
                     }
                 )
             } else if let backward = backward {
                 if self.isPresented == true {
-                    backward.container.willShow(interactive: false)
+                    backward.container.prepareShow(interactive: false)
                 }
                 self._rootLayout.state = .idle(current: backward.pageItem)
                 if self.isPresented == true {
-                    backward.container.didShow(interactive: false, finished: true)
+                    backward.container.finishShow(interactive: false)
                 }
                 completion?()
             } else if let current = current {
                 if self.isPresented == true {
-                    current.container.willHide(interactive: false)
+                    current.container.prepareHide(interactive: false)
                 }
                 self._rootLayout.state = .empty
                 if self.isPresented == true {
-                    current.container.didHide(interactive: false, finished: true)
+                    current.container.finishHide(interactive: false)
                 }
                 completion?()
             } else {
@@ -642,30 +578,30 @@ private extension QStackContainer {
             }
         } else if let current = current, let backward = backward {
             if self.isPresented == true {
-                current.container.willHide(interactive: false)
-                backward.container.willShow(interactive: false)
+                current.container.prepareHide(interactive: false)
+                backward.container.prepareShow(interactive: false)
             }
             self._rootLayout.state = .idle(current: backward.pageItem)
             if self.isPresented == true {
-                current.container.didHide(interactive: false, finished: true)
-                backward.container.didShow(interactive: false, finished: true)
+                current.container.finishHide(interactive: false)
+                backward.container.finishShow(interactive: false)
             }
         } else if let backward = backward {
             if self.isPresented == true {
-                backward.container.willShow(interactive: false)
+                backward.container.prepareShow(interactive: false)
             }
             self._rootLayout.state = .idle(current: backward.pageItem)
             if self.isPresented == true {
-                backward.container.didShow(interactive: false, finished: true)
+                backward.container.finishShow(interactive: false)
             }
             completion?()
         } else if let current = current {
             if self.isPresented == true {
-                current.container.willHide(interactive: false)
+                current.container.prepareHide(interactive: false)
             }
             self._rootLayout.state = .empty
             if self.isPresented == true {
-                current.container.didHide(interactive: false, finished: true)
+                current.container.finishHide(interactive: false)
             }
             completion?()
         } else {
@@ -678,13 +614,11 @@ private extension QStackContainer {
     
     func _beginInteractiveGesture() {
         self._interactiveBeginLocation = self._interactiveGesture.location(in: self._rootView)
-        
         let backward = self._items[self._items.count - 2]
-        backward.container.willShow(interactive: true)
+        backward.container.prepareShow(interactive: true)
         self._interactiveBackward = backward
-        
         let current = self._items[self._items.count - 1]
-        current.container.willHide(interactive: true)
+        current.container.prepareHide(interactive: true)
         self._interactiveCurrent = current
     }
     
@@ -692,8 +626,8 @@ private extension QStackContainer {
         guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
         let currentLocation = self._interactiveGesture.location(in: self._rootView)
         let deltaLocation = currentLocation - beginLocation
-        let layoutSize = self._rootLayout.size
-        let progress = deltaLocation.x / layoutSize.width
+        let layoutSize = self._rootView.contentSize
+        let progress = max(0, deltaLocation.x / layoutSize.width)
         self._rootLayout.state = .pop(backward: backward.pageItem, current: current.pageItem, progress: progress)
     }
 
@@ -701,8 +635,8 @@ private extension QStackContainer {
         guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
         let currentLocation = self._interactiveGesture.location(in: self._rootView)
         let deltaLocation = currentLocation - beginLocation
-        let layoutSize = self._rootLayout.size
-        if deltaLocation.x > self.interactiveLimit {
+        let layoutSize = self._rootView.contentSize
+        if deltaLocation.x >= self.interactiveLimit && canceled == false {
             QAnimation.default.run(
                 duration: layoutSize.width / self.interactiveVelocity,
                 elapsed: deltaLocation.x / self.interactiveVelocity,
@@ -737,8 +671,8 @@ private extension QStackContainer {
         guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
         self._items.remove(at: self._items.count - 1)
         self._rootLayout.state = .idle(current: backward.pageItem)
-        current.container.didHide(interactive: true, finished: true)
-        backward.container.didShow(interactive: true, finished: true)
+        current.container.finishHide(interactive: true)
+        backward.container.finishShow(interactive: true)
         current.container.stackContainer = nil
         self._resetInteractiveAnimation()
     }
@@ -746,8 +680,8 @@ private extension QStackContainer {
     func _cancelInteractiveAnimation() {
         guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
         self._rootLayout.state = .idle(current: current.pageItem)
-        current.container.didHide(interactive: true, finished: false)
-        backward.container.didShow(interactive: true, finished: false)
+        current.container.cancelHide(interactive: true)
+        backward.container.cancelShow(interactive: true)
         self._resetInteractiveAnimation()
     }
     

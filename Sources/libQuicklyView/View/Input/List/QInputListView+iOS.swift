@@ -11,78 +11,29 @@ extension QInputListView {
     
     final class InputListView : UITextField {
         
-        weak var qDelegate: InputListViewDelegate?
-        var qItems: [QInputListView.Item] {
-            didSet {
-                self._picker.reloadAllComponents()
+        unowned var customDelegate: InputListViewDelegate?
+        override var frame: CGRect {
+            didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
             }
-        }
-        var qSelectedItem: QInputListView.Item? {
-            didSet {
-                if let item = self.qSelectedItem {
-                    self.text = item.title
-                } else {
-                    self.text = ""
-                }
-            }
-        }
-        var qFont: QFont {
-            set(value) { self.font = value.native }
-            get { return QFont(self.font!) }
-        }
-        var qColor: QColor {
-            set(value) { self.textColor = value.native }
-            get { return QColor(self.textColor!) }
-        }
-        var qInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qPlaceholder: QInputPlaceholder? {
-            didSet {
-                if let placeholder = self.qPlaceholder {
-                    self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
-                        .font: placeholder.font.native,
-                        .foregroundColor: placeholder.color.native
-                    ])
-                } else {
-                    self.attributedPlaceholder = nil
-                }
-            }
-        }
-        var qPlaceholderInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qAlignment: QTextAlignment {
-            set(value) { self.textAlignment = value.nsTextAlignment }
-            get { return QTextAlignment(self.textAlignment) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qToolbar: IQAccessoryView? {
-            didSet {
-                self.inputAccessoryView = self.qToolbar?.native
-            }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
         }
         
-        private var _picker: UIPickerView
+        private unowned var _view: QInputListView?
+        private var _picker: UIPickerView!
         
-        init() {
-            self.qItems = []
-            self._picker = UIPickerView()
+        override init(frame: CGRect) {
             
-            super.init(frame: .zero)
+            super.init(frame: frame)
             
-            self.delegate = self
             self.clipsToBounds = true
-            self.inputView = self._picker
+            self.delegate = self
             
+            self._picker = UIPickerView()
             self._picker.dataSource = self
             self._picker.delegate = self
+            self.inputView = self._picker
         }
         
         required init?(coder: NSCoder) {
@@ -90,31 +41,108 @@ extension QInputListView {
         }
         
         override func textRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func editingRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qPlaceholderInset {
-                return result.apply(inset: inset).cgRect
-            } else if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            let inset = view.placeholderInset ?? view.textInset
+            return QRect(bounds).apply(inset: inset).cgRect
         }
         
+    }
+    
+}
+
+extension QInputListView.InputListView {
+    
+    func update(view: QInputListView) {
+        self._view = view
+        self.update(items: view.items)
+        self.update(selectedItem: view.selectedItem, userIteraction: false)
+        self.update(textFont: view.textFont)
+        self.update(textColor: view.textColor)
+        self.update(textInset: view.textInset)
+        self.update(placeholder: view.placeholder)
+        self.update(placeholderInset: view.placeholderInset)
+        self.update(alignment: view.alignment)
+        self.update(toolbar: view.toolbar)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
+    }
+    
+    func update(items: [IQInputListViewItem]) {
+        self._picker.reloadAllComponents()
+        self._applyText()
+    }
+    
+    func update(selectedItem: IQInputListViewItem?, userIteraction: Bool) {
+        if userIteraction == false {
+            let animated = self.isFirstResponder
+            if let view = self._view, let selectedItem = selectedItem {
+                if let index = view.items.firstIndex(where: { $0 === selectedItem }) {
+                    self._picker.selectRow(index, inComponent: 0, animated: animated)
+                } else {
+                    self._picker.selectRow(0, inComponent: 0, animated: animated)
+                }
+            } else {
+                self._picker.selectRow(0, inComponent: 0, animated: animated)
+            }
+        }
+        self._applyText()
+    }
+    
+    func update(textFont: QFont) {
+        self.font = textFont.native
+    }
+    
+    func update(textColor: QColor) {
+        self.textColor = textColor.native
+    }
+    
+    func update(textInset: QInset) {
+        self.setNeedsLayout()
+    }
+    
+    func update(placeholder: QInputPlaceholder) {
+        self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
+            .font: placeholder.font.native,
+            .foregroundColor: placeholder.color.native
+        ])
+    }
+    
+    func update(placeholderInset: QInset?) {
+        self.setNeedsLayout()
+    }
+    
+    func update(alignment: QTextAlignment) {
+        self.textAlignment = alignment.nsTextAlignment
+    }
+    
+    func update(toolbar: IQInputToolbarView?) {
+        self.inputAccessoryView = toolbar?.native
+    }
+    
+}
+
+private extension QInputListView.InputListView {
+    
+    func _applyText() {
+        if let view = self._view, let selectedItem = view.selectedItem {
+            self.text = selectedItem.title
+        } else {
+            self.text = nil
+        }
     }
     
 }
@@ -122,12 +150,9 @@ extension QInputListView {
 extension QInputListView.InputListView : UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        self.qDelegate?.beginEditing()
-        if self.qSelectedItem == nil {
-            if let firstItem = self.qItems.first {
-                self.qSelectedItem = firstItem
-                self.qDelegate?.select(item: firstItem)
-            }
+        self.customDelegate?.beginEditing()
+        if self._view?.selectedItem == nil, let firstItem = self._view?.items.first {
+            self.customDelegate?.select(item: firstItem)
         }
     }
     
@@ -136,7 +161,7 @@ extension QInputListView.InputListView : UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        self.qDelegate?.endEditing()
+        self.customDelegate?.endEditing()
     }
     
 }
@@ -148,7 +173,8 @@ extension QInputListView.InputListView : UIPickerViewDataSource {
     }
     
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        return self.qItems.count
+        guard let view = self._view else { return 0 }
+        return view.items.count
     }
     
 }
@@ -156,34 +182,16 @@ extension QInputListView.InputListView : UIPickerViewDataSource {
 extension QInputListView.InputListView : UIPickerViewDelegate {
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        return self.qItems[row].title
+        guard let view = self._view else { return nil }
+        return view.items[row].title
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        let selectedItem = self.qItems[row]
-        if self.qSelectedItem !== selectedItem {
-            self.qSelectedItem = selectedItem
-            self.qDelegate?.select(item: selectedItem)
+        guard let view = self._view else { return }
+        let selectedItem = view.items[row]
+        if view.selectedItem !== selectedItem {
+            self.customDelegate?.select(item: selectedItem)
         }
-    }
-    
-}
-
-extension QInputListView.InputListView : IQNativeBlendingView {
-    
-    func allowBlending() -> Bool {
-        return self.isOpaque == false
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
-        self.updateBlending()
     }
     
 }
@@ -198,24 +206,16 @@ extension QInputListView.InputListView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: .zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qDelegate = view
-        item.qItems = view.items
-        item.qSelectedItem = view.selectedItem
-        item.qFont = view.font
-        item.qColor = view.color
-        item.qInset = view.inset
-        item.qPlaceholder = view.placeholder
-        item.qPlaceholderInset = view.placeholderInset
-        item.qAlignment = view.alignment
-        item.qAlpha = view.alpha
-        item.qToolbar = view.toolbar
+        item.update(view: view)
+        item.customDelegate = view
     }
     
     static func cleanupReuseItem(view: View, item: Item) {
+        item.customDelegate = nil
     }
     
 }

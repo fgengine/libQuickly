@@ -1,3 +1,7 @@
+//
+//  libQuicklyView
+//
+
 #if os(iOS)
 
 import UIKit

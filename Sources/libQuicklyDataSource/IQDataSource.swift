@@ -5,22 +5,11 @@
 import Foundation
 import libQuicklyCore
 
-public enum QDataSourceObserverPriority : UInt {
-    case `internal`
-    case userInterface
-}
-
-public protocol IQDataSource : AnyObject {
+public protocol IQDataSource {
     
-    associatedtype Success
-    associatedtype Failure
-    associatedtype Observer
+    associatedtype Error
     
-    var result: Success? { get }
-    var error: Failure? { get }
-    
-    func add(observer: Observer, priority: QDataSourceObserverPriority)
-    func remove(observer: Observer)
+    var error: Error? { get }
     
     func cancel()
     

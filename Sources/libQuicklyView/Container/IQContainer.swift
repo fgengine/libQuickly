@@ -28,11 +28,13 @@ public protocol IQContainer : AnyObject {
     func insets(of container: IQContainer) -> QInset
     func didChangeInsets()
     
-    func willShow(interactive: Bool)
-    func didShow(interactive: Bool, finished: Bool)
-
-    func willHide(interactive: Bool)
-    func didHide(interactive: Bool, finished: Bool)
+    func prepareShow(interactive: Bool)
+    func finishShow(interactive: Bool)
+    func cancelShow(interactive: Bool)
+    
+    func prepareHide(interactive: Bool)
+    func finishHide(interactive: Bool)
+    func cancelHide(interactive: Bool)
     
 }
 
@@ -41,22 +43,5 @@ public extension IQContainer {
     var inheritedInsets: QInset {
         return QInset()
     }
-    
-    #if os(iOS)
-    
-    var statusBarHidden: Bool {
-        return false
-    }
-    var statusBarStyle: UIStatusBarStyle {
-        return .default
-    }
-    var statusBarAnimation: UIStatusBarAnimation {
-        return .fade
-    }
-    var supportedOrientations: UIInterfaceOrientationMask {
-        return .all
-    }
-    
-    #endif
     
 }

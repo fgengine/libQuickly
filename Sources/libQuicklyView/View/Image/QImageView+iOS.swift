@@ -11,24 +11,18 @@ extension QImageView {
     
     final class ImageView : UIImageView {
         
-        var qImage: QImage {
-            set(value) { self.image = value.native }
-            get { return QImage(self.image!) }
-        }
-        var qMode: Mode {
-            set(value) { self.contentMode = value.uiViewContentMode }
-            get { return Mode(self.contentMode) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
+        override var frame: CGRect {
+            didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
+            }
         }
         
-        init() {
-            super.init(frame: .zero)
+        private unowned var _view: QImageView?
+        
+        override init(frame: CGRect) {
+            super.init(frame: frame)
             
             self.isUserInteractionEnabled = false
             self.clipsToBounds = true
@@ -42,39 +36,29 @@ extension QImageView {
     
 }
 
-extension QImageView.ImageView : IQNativeBlendingView {
+extension QImageView.ImageView {
     
-    func allowBlending() -> Bool {
-        return self.alpha < 1
+    func update(view: QImageView) {
+        self._view = view
+        self.update(image: view.image)
+        self.update(mode: view.mode)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
     }
     
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
+    func update(image: QImage) {
+        self.image = image.native
     }
     
-}
-
-extension QImageView.Mode {
-    
-    var uiViewContentMode: UIView.ContentMode {
-        switch self {
-        case .origin: return .center
-        case .aspectFit: return .scaleAspectFit
-        case .aspectFill: return .scaleAspectFill
-        }
-    }
-    
-    init(_ uiViewContentMode: UIView.ContentMode) {
-        switch uiViewContentMode {
-        case .scaleAspectFit: self = .aspectFit
-        case .scaleAspectFill: self = .aspectFill
-        default: self = .origin
+    func update(mode: QImageViewMode) {
+        switch mode {
+        case .origin: self.contentMode = .center
+        case .aspectFit: self.contentMode = .scaleAspectFit
+        case .aspectFill: self.contentMode = .scaleAspectFill
         }
     }
     
@@ -90,13 +74,11 @@ extension QImageView.ImageView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: CGRect.zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qImage = view.image
-        item.qMode = view.mode
-        item.qAlpha = view.alpha
+        item.update(view: view)
     }
     
     static func cleanupReuseItem(view: View, item: Item) {

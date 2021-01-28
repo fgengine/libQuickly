@@ -11,118 +11,30 @@ extension QInputDateView {
     
     final class InputDateView : UITextField {
         
-        weak var qDelegate: InputDateViewDelegate?
-        var qMode: QInputDateView.Mode {
-            didSet {
-                self._picker.datePickerMode = self.qMode.datePickerMode
+        unowned var customDelegate: InputDateViewDelegate?
+        override var frame: CGRect {
+            didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
             }
-        }
-        var qMinimumDate: Date? {
-            didSet { self._picker.minimumDate = self.qMinimumDate }
-        }
-        var qMaximumDate: Date? {
-            didSet { self._picker.maximumDate = self.qMaximumDate }
-        }
-        var qSelectedDate: Date? {
-            didSet {
-                if let formatter = self.qFormatter, let selectedDate = self.qSelectedDate {
-                    self.text = formatter.string(from: selectedDate)
-                    self._picker.date = selectedDate
-                } else {
-                    self.text = ""
-                }
-            }
-        }
-        var qFormatter: DateFormatter? {
-            didSet {
-                if let formatter = self.qFormatter, let selectedDate = self.qSelectedDate {
-                    self.text = formatter.string(from: selectedDate)
-                } else {
-                    self.text = ""
-                }
-            }
-        }
-        var qLocale: Locale {
-            set(value) { self._picker.locale = value }
-            get { return self._picker.locale ?? Locale.current }
-        }
-        var qCalendar: Calendar {
-            set(value) { self._picker.calendar = value }
-            get { return self._picker.calendar ?? Calendar.current }
-        }
-        var qTimeZone: TimeZone? {
-            set(value) { self._picker.timeZone = value }
-            get { return self._picker.timeZone }
-        }
-        var qFont: QFont {
-            set(value) { self.font = value.native }
-            get { return QFont(self.font!) }
-        }
-        var qColor: QColor {
-            set(value) { self.textColor = value.native }
-            get { return QColor(self.textColor!) }
-        }
-        var qInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qPlaceholder: QInputPlaceholder? {
-            didSet {
-                if let placeholder = self.qPlaceholder {
-                    self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
-                        .font: placeholder.font.native,
-                        .foregroundColor: placeholder.color.native
-                    ])
-                } else {
-                    self.attributedPlaceholder = nil
-                }
-            }
-        }
-        var qPlaceholderInset: QInset? {
-            didSet { self.setNeedsLayout() }
-        }
-        var qAlignment: QTextAlignment {
-            set(value) { self.textAlignment = value.nsTextAlignment }
-            get { return QTextAlignment(self.textAlignment) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qToolbar: IQAccessoryView? {
-            didSet {
-                self.inputAccessoryView = self.qToolbar?.native
-            }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
         }
         
-        private var _picker: UIDatePicker
+        private unowned var _view: QInputDateView?
+        private var _picker: UIDatePicker!
         
-        init(
-            mode: QInputDateView.Mode,
-            locale: Locale,
-            calendar: Calendar,
-            timeZone: TimeZone?
-        ) {
-            self.qMode = mode
+        override init(frame: CGRect) {
+            super.init(frame: frame)
 
+            self.clipsToBounds = true
+            self.delegate = self
+            
             self._picker = UIDatePicker()
-            self._picker.datePickerMode = mode.datePickerMode
-            self._picker.locale = locale
-            self._picker.calendar = calendar
-            self._picker.timeZone = timeZone
             if #available(iOS 13.4, *) {
                 self._picker.preferredDatePickerStyle = .wheels
             }
-            
-            super.init(frame: .zero)
-            
-            self.delegate = self
-            self.clipsToBounds = true
-            self.inputView = self._picker
-            
             self._picker.addTarget(self, action: #selector(self._changed(_:)), for: .valueChanged)
+            self.inputView = self._picker
         }
         
         required init?(coder: NSCoder) {
@@ -130,29 +42,19 @@ extension QInputDateView {
         }
         
         override func textRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func editingRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            return QRect(bounds).apply(inset: view.textInset).cgRect
         }
 
         override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-            let result = QRect(bounds)
-            if let inset = self.qPlaceholderInset {
-                return result.apply(inset: inset).cgRect
-            } else if let inset = self.qInset {
-                return result.apply(inset: inset).cgRect
-            }
-            return result.cgRect
+            guard let view = self._view else { return bounds }
+            let inset = view.placeholderInset ?? view.textInset
+            return QRect(bounds).apply(inset: inset).cgRect
         }
         
     }
@@ -161,10 +63,111 @@ extension QInputDateView {
 
 extension QInputDateView.InputDateView {
     
+    func update(view: QInputDateView) {
+        self._view = view
+        self.update(mode: view.mode)
+        self.update(minimumDate: view.minimumDate)
+        self.update(maximumDate: view.maximumDate)
+        self.update(selectedDate: view.selectedDate)
+        self.update(formatter: view.formatter)
+        self.update(locale: view.locale)
+        self.update(timeZone: view.timeZone)
+        self.update(textFont: view.textFont)
+        self.update(textColor: view.textColor)
+        self.update(textInset: view.textInset)
+        self.update(placeholder: view.placeholder)
+        self.update(placeholderInset: view.placeholderInset)
+        self.update(alignment: view.alignment)
+        self.update(toolbar: view.toolbar)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
+    }
+    
+    func update(mode: QInputDateViewMode) {
+        self._picker.datePickerMode = mode.datePickerMode
+    }
+    
+    func update(minimumDate: Date?) {
+        self._picker.minimumDate = minimumDate
+    }
+    
+    func update(maximumDate: Date?) {
+        self._picker.maximumDate = maximumDate
+    }
+    
+    func update(selectedDate: Date?) {
+        if let selectedDate = selectedDate {
+            self._picker.date = selectedDate
+        }
+        self._applyText()
+    }
+    
+    func update(formatter: DateFormatter) {
+        self._applyText()
+    }
+    
+    func update(locale: Locale) {
+        self._picker.locale = locale
+    }
+    
+    func update(calendar: Calendar) {
+        self._picker.calendar = calendar
+    }
+    
+    func update(timeZone: TimeZone?) {
+        self._picker.timeZone = timeZone
+    }
+    
+    func update(textFont: QFont) {
+        self.font = textFont.native
+    }
+    
+    func update(textColor: QColor) {
+        self.textColor = textColor.native
+    }
+    
+    func update(textInset: QInset) {
+        self.setNeedsLayout()
+    }
+    
+    func update(placeholder: QInputPlaceholder) {
+        self.attributedPlaceholder = NSAttributedString(string: placeholder.text, attributes: [
+            .font: placeholder.font.native,
+            .foregroundColor: placeholder.color.native
+        ])
+    }
+    
+    func update(placeholderInset: QInset?) {
+        self.setNeedsLayout()
+    }
+    
+    func update(alignment: QTextAlignment) {
+        self.textAlignment = alignment.nsTextAlignment
+    }
+    
+    func update(toolbar: IQInputToolbarView?) {
+        self.inputAccessoryView = toolbar?.native
+    }
+    
+}
+
+private extension QInputDateView.InputDateView {
+    
+    func _applyText() {
+        if let view = self._view, let selectedDate = view.selectedDate {
+            self.text = view.formatter.string(from: selectedDate)
+        } else {
+            self.text = nil
+        }
+    }
+    
     @objc
-    private func _changed(_ sender: UIDatePicker) {
-        self.qSelectedDate = sender.date
-        self.qDelegate?.select(date: sender.date)
+    func _changed(_ sender: UIDatePicker) {
+        self.customDelegate?.select(date: sender.date)
     }
     
 }
@@ -172,10 +175,9 @@ extension QInputDateView.InputDateView {
 extension QInputDateView.InputDateView : UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        self.qDelegate?.beginEditing()
-        if self.qSelectedDate == nil {
-            self.qSelectedDate = self._picker.date
-            self.qDelegate?.select(date: self._picker.date)
+        self.customDelegate?.beginEditing()
+        if self._view?.selectedDate == nil {
+            self.customDelegate?.select(date: self._picker.date)
         }
     }
     
@@ -184,26 +186,7 @@ extension QInputDateView.InputDateView : UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        self.qDelegate?.endEditing()
-    }
-    
-}
-
-extension QInputDateView.InputDateView : IQNativeBlendingView {
-    
-    func allowBlending() -> Bool {
-        return self.isOpaque == false
-    }
-    
-    func updateBlending(superview: QNativeView) {
-        if superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
-        self.updateBlending()
+        self.customDelegate?.endEditing()
     }
     
 }
@@ -218,40 +201,21 @@ extension QInputDateView.InputDateView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item(
-            mode: view.mode,
-            locale: view.locale,
-            calendar: view.calendar,
-            timeZone: view.timeZone
-        )
+        return Item(frame: .zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qDelegate = view
-        item.qMode = view.mode
-        item.qMinimumDate = view.minimumDate
-        item.qMaximumDate = view.maximumDate
-        item.qSelectedDate = view.selectedDate
-        item.qFormatter = view.formatter
-        item.qLocale = view.locale
-        item.qCalendar = view.calendar
-        item.qTimeZone = view.timeZone
-        item.qFont = view.font
-        item.qColor = view.color
-        item.qInset = view.inset
-        item.qPlaceholder = view.placeholder
-        item.qPlaceholderInset = view.placeholderInset
-        item.qAlignment = view.alignment
-        item.qAlpha = view.alpha
-        item.qToolbar = view.toolbar
+        item.update(view: view)
+        item.customDelegate = view
     }
     
     static func cleanupReuseItem(view: View, item: Item) {
+        item.customDelegate = nil
     }
     
 }
 
-extension QInputDateView.Mode {
+extension QInputDateViewMode {
     
     var datePickerMode: UIDatePicker.Mode {
         switch self {

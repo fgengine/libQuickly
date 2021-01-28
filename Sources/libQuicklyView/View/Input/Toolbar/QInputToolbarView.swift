@@ -13,20 +13,14 @@ protocol InputToolbarViewDelegate : AnyObject {
     
 }
 
-public protocol IQInputToolbarItem {
+public struct QInputToolbarActionItem : IQInputToolbarItem {
     
-    var barItem: UIBarButtonItem { get }
-    
-}
-
-public struct QInputToolbarActionItem< SenderType > : IQInputToolbarItem {
-    
-    public var callback: (_ sender: SenderType) -> Void
     public var barItem: UIBarButtonItem
+    public var callback: () -> Void
     
     public init(
         text: String,
-        callback: @escaping (_ sender: SenderType) -> Void
+        callback: @escaping () -> Void
     ) {
         self.callback = callback
         self.barItem = UIBarButtonItem(title: text, style: .plain, target: nil, action: nil)
@@ -34,7 +28,7 @@ public struct QInputToolbarActionItem< SenderType > : IQInputToolbarItem {
     
     public init(
         image: QImage,
-        callback: @escaping (_ sender: SenderType) -> Void
+        callback: @escaping () -> Void
     ) {
         self.callback = callback
         self.barItem = UIBarButtonItem(image: image.native, style: .plain, target: nil, action: nil)
@@ -42,10 +36,14 @@ public struct QInputToolbarActionItem< SenderType > : IQInputToolbarItem {
     
     public init(
         systemItem: UIBarButtonItem.SystemItem,
-        callback: @escaping (_ sender: SenderType) -> Void
+        callback: @escaping () -> Void
     ) {
         self.callback = callback
         self.barItem = UIBarButtonItem(barButtonSystemItem: systemItem, target: nil, action: nil)
+    }
+    
+    public func pressed() {
+        self.callback()
     }
     
 }
@@ -58,102 +56,147 @@ public struct QInputToolbarFlexibleSpaceItem : IQInputToolbarItem {
         self.barItem = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
     }
     
-}
-
-public protocol QInputToolbarDelegate : AnyObject {
-    
-    func pressed(_ toolbar: QInputToolbarView, item: IQInputToolbarItem)
+    public func pressed() {
+    }
     
 }
 
-open class QInputToolbarView : IQAccessoryView {
+open class QInputToolbarView : IQInputToolbarView {
     
     public private(set) weak var parentView: IQView?
-    public weak var delegate: QInputToolbarDelegate?
-    public var size: QFloat {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qSize = self.size
-        }
-    }
-    public var items: [IQInputToolbarItem] {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qItems = self.items
-        }
-    }
-    public var alpha: QFloat {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qAlpha = self.alpha
-        }
-    }
-    public var isTranslucent: Bool {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qIsTranslucent = self.isTranslucent
-        }
-    }
-    public var tintColor: QColor? {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qTintColor = self.tintColor
-        }
-    }
-    public var contentTintColor: QColor {
-        didSet {
-            guard self.isLoaded == true else { return }
-            self._view.qContentTintColor = self.contentTintColor
-        }
+    public var native: QNativeView {
+        return self._view
     }
     public var isLoaded: Bool {
         return self._reuseView.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
-        return self._view.qIsAppeared
+        return self._view.isAppeared
     }
-    public var native: QNativeView {
-        return self._view
+    public private(set) var items: [IQInputToolbarItem] {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(items: self.items)
+        }
+    }
+    public private(set) var size: QFloat {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(size: self.size)
+        }
+    }
+    public private(set) var isTranslucent: Bool {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(translucent: self.isTranslucent)
+        }
+    }
+    public private(set) var tintColor: QColor? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(tintColor: self.tintColor)
+        }
+    }
+    public private(set) var contentTintColor: QColor {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(contentTintColor: self.contentTintColor)
+        }
+    }
+    public private(set) var color: QColor? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(color: self.color)
+        }
     }
     
+    private var _reuseView: QReuseView< InputToolbarView >
     private var _view: InputToolbarView {
         if self.isLoaded == false { self._reuseView.load(view: self) }
         return self._reuseView.item!
     }
-    private var _reuseView: QReuseView< InputToolbarView >
+    private var _onAppear: (() -> Void)?
+    private var _onDisappear: (() -> Void)?
     
     public init(
-        size: QFloat = 55,
         items: [IQInputToolbarItem],
-        alpha: QFloat = 1,
+        size: QFloat = 55,
         isTranslucent: Bool = false,
         tintColor: QColor? = nil,
-        contentTintColor: QColor = QColor(rgb: 0xffffff)
+        contentTintColor: QColor = QColor(rgb: 0xffffff),
+        color: QColor? = nil
     ) {
-        self.size = size
         self.items = items
-        self.alpha = alpha
+        self.size = size
         self.isTranslucent = isTranslucent
         self.tintColor = tintColor
         self.contentTintColor = contentTintColor
+        self.color = color
         self._reuseView = QReuseView()
     }
     
-    public func onAppear(to view: IQView) {
-        self.parentView = view
+    public func size(_ available: QSize) -> QSize {
+        return QSize(width: available.width, height: self.size)
     }
     
-    public func onDisappear() {
+    public func appear(to view: IQView) {
+        self.parentView = view
+        self._onAppear?()
+    }
+    
+    public func disappear() {
         self._reuseView.unload(view: self)
         self.parentView = nil
+        self._onDisappear?()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return QSize(
-            width: available.width,
-            height: self.size
-        )
+    @discardableResult
+    public func items(_ value: [IQInputToolbarItem]) -> Self {
+        self.items = value
+        return self
+    }
+    
+    @discardableResult
+    public func size(_ value: QFloat) -> Self {
+        self.size = value
+        return self
+    }
+    
+    @discardableResult
+    public func translucent(_ value: Bool) -> Self {
+        self.isTranslucent = value
+        return self
+    }
+    
+    @discardableResult
+    public func tintColor(_ value: QColor?) -> Self {
+        self.tintColor = value
+        return self
+    }
+    
+    @discardableResult
+    public func contentTintColor(_ value: QColor) -> Self {
+        self.contentTintColor = value
+        return self
+    }
+    
+    @discardableResult
+    public func color(_ value: QColor?) -> Self {
+        self.color = value
+        return self
+    }
+    
+    @discardableResult
+    public func onAppear(_ value: (() -> Void)?) -> Self {
+        self._onAppear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onDisappear(_ value: (() -> Void)?) -> Self {
+        self._onDisappear = value
+        return self
     }
     
 }
@@ -162,7 +205,7 @@ extension QInputToolbarView : InputToolbarViewDelegate {
     
     func pressed(barItem: UIBarButtonItem) {
         guard let item = self.items.first(where: { return $0.barItem == barItem }) else { return }
-        self.delegate?.pressed(self, item: item)
+        item.pressed()
     }
     
 }

@@ -11,34 +11,19 @@ extension QAttributedTextView {
     
     final class AttributedTextView : UILabel {
         
-        var qText: NSAttributedString? {
-            set(value) { self.attributedText = value }
-            get { return self.attributedText }
-        }
-        var qAlignment: QTextAlignment {
-            set(value) { self.textAlignment = value.nsTextAlignment }
-            get { return QTextAlignment(self.textAlignment) }
-        }
-        var qLineBreak: QTextLineBreak {
-            set(value) { self.lineBreakMode = value.nsLineBreakMode }
-            get { return QTextLineBreak(self.lineBreakMode) }
-        }
-        var qNumberOfLines: UInt {
-            set(value) { self.numberOfLines = Int(value) }
-            get { return UInt(self.numberOfLines) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
+        override var frame: CGRect {
+            didSet(oldValue) {
+                guard let view = self._view, self.frame != oldValue else { return }
+                self.update(cornerRadius: view.cornerRadius)
+                self.updateShadowPath()
+            }
         }
         
-        init() {
-            super.init(frame: CGRect.zero)
+        private unowned var _view: QAttributedTextView?
+        
+        override init(frame: CGRect) {
+            super.init(frame: frame)
             
-            self.isUserInteractionEnabled = false
             self.clipsToBounds = true
         }
         
@@ -50,20 +35,36 @@ extension QAttributedTextView {
         
 }
 
-extension QAttributedTextView.AttributedTextView : IQNativeBlendingView {
+extension QAttributedTextView.AttributedTextView {
     
-    func allowBlending() -> Bool {
-        return self.alpha < 1
+    func update(view: QAttributedTextView) {
+        self._view = view
+        self.update(text: view.text)
+        self.update(alignment: view.alignment)
+        self.update(lineBreak: view.lineBreak)
+        self.update(numberOfLines: view.numberOfLines)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
     }
     
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
+    func update(text: NSAttributedString) {
+        self.attributedText = text
+    }
+    
+    func update(alignment: QTextAlignment) {
+        self.textAlignment = alignment.nsTextAlignment
+    }
+    
+    func update(lineBreak: QTextLineBreak) {
+        self.lineBreakMode = lineBreak.nsLineBreakMode
+    }
+    
+    func update(numberOfLines: UInt) {
+        self.numberOfLines = Int(numberOfLines)
     }
     
 }
@@ -78,15 +79,11 @@ extension QAttributedTextView.AttributedTextView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: CGRect.zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qText = view.text
-        item.qAlignment = view.alignment
-        item.qLineBreak = view.lineBreak
-        item.qNumberOfLines = view.numberOfLines
-        item.qAlpha = view.alpha
+        item.update(view: view)
     }
     
     static func cleanupReuseItem(view: View, item: Item) {

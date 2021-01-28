@@ -69,6 +69,7 @@ private extension QAnimation {
         var isRunning: Bool
         var isCompletion: Bool
         
+        @inlinable
         init(
             duration: QFloat,
             elapsed: QFloat,
@@ -85,12 +86,13 @@ private extension QAnimation {
             self.isCompletion = false
         }
         
+        @inlinable
         func update(_ delta: QFloat) {
             if self.isRunning == false {
                 self.isRunning = true
             }
             self.elapsed += delta
-            let rawProgress = self.elapsed / self.duration
+            let rawProgress = min(self.elapsed / self.duration, 1)
             let easeProgress = self.ease.perform(rawProgress)
             self.processing(easeProgress)
             if self.elapsed >= self.duration && self.isCompletion == false {

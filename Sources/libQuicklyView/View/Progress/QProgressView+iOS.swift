@@ -31,10 +31,11 @@ extension QProgressView {
             return self.superview != nil
         }
         
+        private unowned var _view: QProgressView?
         private var _progress: UIProgressView!
         
-        init() {
-            super.init(frame: .zero)
+        override init(frame: CGRect) {
+            super.init(frame: frame)
             
             self.isUserInteractionEnabled = false
             self.clipsToBounds = true
@@ -64,24 +65,31 @@ extension QProgressView {
     
 }
 
-extension QProgressView.ProgressView : IQNativeBlendingView {
+extension QProgressView.ProgressView {
     
-    func allowBlending() -> Bool {
-        return self.alpha < 1
+    func update(view: QProgressView) {
+        self._view = view
+        self.update(progressColor: view.progressColor)
+        self.update(trackColor: view.trackColor)
+        self.update(progress: view.progress)
+        self.update(color: view.color)
+        self.update(border: view.border)
+        self.update(cornerRadius: view.cornerRadius)
+        self.update(shadow: view.shadow)
+        self.update(alpha: view.alpha)
+        self.updateShadowPath()
     }
     
-    func updateBlending(superview: QNativeView) {
-        if self.allowBlending() == true || superview.allowBlending() == true {
-            self._progress.backgroundColor = .clear
-            self._progress.isOpaque = false
-            self.backgroundColor = .clear
-            self.isOpaque = false
-        } else {
-            self._progress.backgroundColor = superview.backgroundColor
-            self._progress.isOpaque = true
-            self.backgroundColor = superview.backgroundColor
-            self.isOpaque = true
-        }
+    func update(progressColor: QColor) {
+        self._progress.progressTintColor = progressColor.native
+    }
+    
+    func update(trackColor: QColor) {
+        self._progress.trackTintColor = trackColor.native
+    }
+    
+    func update(progress: QFloat) {
+        self._progress.progress = progress
     }
     
 }
@@ -96,14 +104,11 @@ extension QProgressView.ProgressView : IQReusable {
     }
     
     static func createReuseItem(view: View) -> Item {
-        return Item()
+        return Item(frame: .zero)
     }
     
     static func configureReuseItem(view: View, item: Item) {
-        item.qProgressColor = view.progressColor
-        item.qTrackColor = view.trackColor
-        item.qProgress = view.progress
-        item.qAlpha = view.alpha
+        item.update(view: view)
     }
     
     static func cleanupReuseItem(view: View, item: Item) {

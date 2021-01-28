@@ -17,6 +17,32 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
             }
         }
     }
+    #if os(iOS)
+    public var statusBarHidden: Bool {
+        guard let screen = self.screen as? IQScreenStatusable else {
+            return false
+        }
+        return screen.statusBarHidden
+    }
+    public var statusBarStyle: UIStatusBarStyle {
+        guard let screen = self.screen as? IQScreenStatusable else {
+            return .default
+        }
+        return screen.statusBarStyle
+    }
+    public var statusBarAnimation: UIStatusBarAnimation {
+        guard let screen = self.screen as? IQScreenStatusable else {
+            return .fade
+        }
+        return screen.statusBarAnimation
+    }
+    public var supportedOrientations: UIInterfaceOrientationMask {
+        guard let screen = self.screen as? IQScreenOrientable else {
+            return .all
+        }
+        return screen.supportedOrientations
+    }
+    #endif
     public private(set) var isPresented: Bool
     public var view: IQView {
         return self.screen.view
@@ -26,6 +52,7 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
     public init(screen: Screen) {
         self.isPresented = false
         self.screen = screen
+        self._init()
     }
     
     public func insets(of container: IQContainer) -> QInset {
@@ -36,53 +63,47 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
         self.screen.didChangeInsets()
     }
     
-    public func willShow(interactive: Bool) {
-        self.screen.willShow(interactive: interactive)
+    public func prepareShow(interactive: Bool) {
+        self.screen.prepareShow(interactive: interactive)
     }
     
-    public func didShow(interactive: Bool, finished: Bool) {
+    public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self.screen.didShow(interactive: interactive, finished: finished)
+        self.screen.finishShow(interactive: interactive)
     }
     
-    public func willHide(interactive: Bool) {
-        self.screen.willHide(interactive: interactive)
+    public func cancelShow(interactive: Bool) {
+        self.screen.cancelShow(interactive: interactive)
     }
     
-    public func didHide(interactive: Bool, finished: Bool) {
+    public func prepareHide(interactive: Bool) {
+        self.screen.prepareHide(interactive: interactive)
+    }
+    
+    public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self.screen.didHide(interactive: interactive, finished: finished)
+        self.screen.finishHide(interactive: interactive)
+    }
+    
+    public func cancelHide(interactive: Bool) {
+        self.screen.cancelHide(interactive: interactive)
     }
     
 }
 
-#if os(iOS)
-
-extension QScreenContainer where Screen : IQScreenStatusable {
+private extension QScreenContainer {
     
-    public var statusBarHidden: Bool {
-        return self.screen.statusBarHidden
-    }
-    public var statusBarStyle: UIStatusBarStyle {
-        return self.screen.statusBarStyle
-    }
-    public var statusBarAnimation: UIStatusBarAnimation {
-        return self.screen.statusBarAnimation
+    func _init() {
+        self.screen.container = self
     }
     
 }
-
-extension QScreenContainer where Screen : IQScreenOrientable {
-    
-    public var supportedOrientations: UIInterfaceOrientationMask {
-        return self.screen.supportedOrientations
-    }
-    
-}
-
-#endif
 
 extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStackable {
+    
+    public var stackBarView: IQStackBarView {
+        return self.screen.stackBarView
+    }
     
     public var stackBarSize: QFloat {
         return self.screen.stackBarSize
@@ -96,8 +117,12 @@ extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStac
         return self.screen.stackBarHidden
     }
     
-    public var stackBarItemView: IQView {
-        return self.screen.stackBarItemView
+}
+
+extension QScreenContainer : IQPageContentContainer where Screen : IQScreenPageable {
+    
+    public var pageItemView: IQView & IQViewSelectable {
+        return self.screen.pageItemView
     }
     
 }
