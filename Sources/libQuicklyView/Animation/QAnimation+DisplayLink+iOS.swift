@@ -11,7 +11,7 @@ public extension QAnimation {
     
     class DisplayLink : NSObject {
         
-        weak var delegate: IQAnimationQueueDelegate?
+        unowned var delegate: IQAnimationQueueDelegate?
         
         var isRunning: Bool {
             return self._displayLink != nil
@@ -42,12 +42,23 @@ public extension QAnimation {
     
 }
 
+#if targetEnvironment(simulator)
+
+@_silgen_name("UIAnimationDragCoefficient")
+func UIAnimationDragCoefficient() -> Float
+
+#endif
+
 private extension QAnimation.DisplayLink {
     
     @objc
     func _handle() {
         let now = CACurrentMediaTime()
+        #if targetEnvironment(simulator)
+        let delta = (now - self._prevTime) / CFTimeInterval(UIAnimationDragCoefficient())
+        #else
         let delta = now - self._prevTime
+        #endif
         self._prevTime = now
         self.delegate?.update(QFloat(delta))
     }

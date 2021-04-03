@@ -11,6 +11,9 @@ extension QGradientView {
     
     final class GradientView : UIView {
         
+        override class var layerClass: AnyClass {
+            return CAGradientLayer.self
+        }
         override var frame: CGRect {
             didSet(oldValue) {
                 guard let view = self._view, self.frame != oldValue else { return }
@@ -18,8 +21,9 @@ extension QGradientView {
                 self.updateShadowPath()
             }
         }
-        override class var layerClass: AnyClass {
-            return CAGradientLayer.self
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
         }
         
         private unowned var _view: QGradientView?
@@ -65,26 +69,31 @@ extension QGradientView.GradientView {
         self._layer.endPoint = fill.end.cgPoint
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QGradientView.GradientView : IQReusable {
     
-    typealias View = QGradientView
-    typealias Item = QGradientView.GradientView
+    typealias Owner = QGradientView
+    typealias Content = QGradientView.GradientView
 
     static var reuseIdentificator: String {
         return "QGradientView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: CGRect.zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: CGRect.zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

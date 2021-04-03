@@ -7,6 +7,8 @@ import libQuicklyCore
 
 public protocol IQPanGesture : IQGesture {
     
+    func translation(in view: IQView) -> QPoint
+    
     func velocity(in view: IQView) -> QPoint
     
     @discardableResult

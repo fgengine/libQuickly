@@ -18,6 +18,10 @@ extension QTextView {
                 self.updateShadowPath()
             }
         }
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QTextView?
         
@@ -77,26 +81,31 @@ extension QTextView.TextView {
         self.numberOfLines = Int(numberOfLines)
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QTextView.TextView : IQReusable {
     
-    typealias View = QTextView
-    typealias Item = QTextView.TextView
+    typealias Owner = QTextView
+    typealias Content = QTextView.TextView
 
     static var reuseIdentificator: String {
         return "QTextView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: CGRect.zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: CGRect.zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

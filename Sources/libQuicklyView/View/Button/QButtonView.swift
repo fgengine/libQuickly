@@ -5,23 +5,29 @@
 import Foundation
 import libQuicklyCore
 
-public final class QButtonView : IQButtonView {
+public class QButtonView : IQButtonView {
     
     public var parentLayout: IQLayout? {
         get { return self._view.parentLayout }
     }
-    public weak var item: IQLayoutItem? {
+    public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
+    public var name: String {
+        return self._view.name
+    }
     public var native: QNativeView {
-        get { return self._view.native }
+        return self._view.native
     }
     public var isLoaded: Bool {
         return self._view.isLoaded
     }
     public var isAppeared: Bool {
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        return self._view.bounds
     }
     public private(set) var inset: QInset {
         set(value) {
@@ -74,7 +80,7 @@ public final class QButtonView : IQButtonView {
         set(value) {
             if self._isHighlighted != value {
                 self._isHighlighted = value
-                self._onChangeStyle?(false)
+                self.triggeredChangeStyle(false)
             }
         }
         get { return self._isHighlighted }
@@ -83,10 +89,10 @@ public final class QButtonView : IQButtonView {
         set(value) {
             if self._isSelected != value {
                 self._isSelected = value
-                self._onChangeStyle?(false)
+                self.triggeredChangeStyle(false)
             }
         }
-        get { return self._isHighlighted }
+        get { return self._isSelected }
     }
     public var color: QColor? {
         get { return self._view.color }
@@ -112,6 +118,7 @@ public final class QButtonView : IQButtonView {
     private var _onPressed: (() -> Void)?
     
     public init(
+        name: String? = nil,
         inset: QInset = QInset(horizontal: 4, vertical: 4),
         backgroundView: IQView,
         spinnerPosition: QButtonViewSpinnerPosition = .fill,
@@ -130,6 +137,7 @@ public final class QButtonView : IQButtonView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        let name = name ?? String(describing: Self.self)
         self.backgroundView = backgroundView
         self.spinnerView = spinnerView
         self.imageView = imageView
@@ -147,6 +155,7 @@ public final class QButtonView : IQButtonView {
             textItem: textView.flatMap({ return QLayoutItem(view: $0) })
         )
         self._view = QControlView(
+            name: name,
             layout: self._layout,
             shouldHighlighting: true,
             shouldPressed: true,
@@ -170,6 +179,10 @@ public final class QButtonView : IQButtonView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func triggeredChangeStyle(_ userIteraction: Bool) {
+        self._onChangeStyle?(userIteraction)
     }
     
     @discardableResult
@@ -209,7 +222,7 @@ public final class QButtonView : IQButtonView {
     }
     
     @discardableResult
-    public func highlighted(_ value: Bool) -> Self {
+    public func highlight(_ value: Bool) -> Self {
         self.isHighlighted = value
         return self
     }
@@ -280,30 +293,30 @@ extension QButtonView {
     
     class Layout : IQLayout {
         
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
+        unowned var delegate: IQLayoutDelegate?
+        unowned var parentView: IQView?
         var inset: QInset
         var spinnerPosition: QButtonViewSpinnerPosition
-        var spinnerItem: IQLayoutItem?
+        var spinnerItem: QLayoutItem?
         var spinnerAnimating: Bool
-        var backgroundItem: IQLayoutItem
+        var backgroundItem: QLayoutItem
         var imagePosition: QButtonViewImagePosition
         var imageInset: QInset
-        var imageItem: IQLayoutItem?
+        var imageItem: QLayoutItem?
         var textInset: QInset
-        var textItem: IQLayoutItem?
+        var textItem: QLayoutItem?
 
         init(
             inset: QInset,
-            backgroundItem: IQLayoutItem,
+            backgroundItem: QLayoutItem,
             spinnerPosition: QButtonViewSpinnerPosition,
-            spinnerItem: IQLayoutItem?,
+            spinnerItem: QLayoutItem?,
             spinnerAnimating: Bool,
             imagePosition: QButtonViewImagePosition,
             imageInset: QInset,
-            imageItem: IQLayoutItem?,
+            imageItem: QLayoutItem?,
             textInset: QInset,
-            textItem: IQLayoutItem?
+            textItem: QLayoutItem?
         ) {
             self.inset = inset
             self.backgroundItem = backgroundItem
@@ -315,6 +328,9 @@ extension QButtonView {
             self.imageItem = imageItem
             self.textInset = textInset
             self.textItem = textItem
+        }
+        
+        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {
@@ -420,8 +436,8 @@ extension QButtonView {
             return size
         }
         
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            var items: [IQLayoutItem] = [ self.backgroundItem ]
+        func items(bounds: QRect) -> [QLayoutItem] {
+            var items: [QLayoutItem] = [ self.backgroundItem ]
             if self.spinnerAnimating == true {
                 if let item = self.spinnerItem {
                     items.append(item)

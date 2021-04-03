@@ -10,6 +10,7 @@ import libQuicklyCore
 
 public protocol IQContainer : AnyObject {
     
+    var shouldInteractive: Bool { get }
     var inheritedInsets: QInset { get }
     #if os(iOS)
     var statusBarHidden: Bool { get }

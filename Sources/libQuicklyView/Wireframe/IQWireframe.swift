@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQWireframe : AnyObject {
+public protocol IQWireframe {
     
     associatedtype Container : IQContainer
     

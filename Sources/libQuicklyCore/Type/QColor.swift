@@ -69,6 +69,10 @@ public struct QColor : Hashable {
 
 public extension QColor {
     
+    static func random() -> Self {
+        return QColor(r: UInt8.random(in: 0..<255), g: UInt8.random(in: 0..<255), b: UInt8.random(in: 0..<255))
+    }
+    
     var isOpaque: Bool {
         get {
             if (1 - self.a) > QFloat.leastNonzeroMagnitude {

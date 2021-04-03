@@ -9,14 +9,16 @@ public protocol IQPageContainer : IQContainer, IQContainerParentable {
     
     var barView: IQPageBarView { get }
     var barSize: QFloat { get }
-    #if os(iOS)
-    var interactiveLimit: QFloat { set get }
-    var interactiveVelocity: QFloat { set get }
-    #endif
+    var barVisibility: QFloat { get }
+    var barHidden: Bool { get }
     var containers: [IQPageContentContainer] { get }
     var backwardContainer: IQPageContentContainer? { get }
     var currentContainer: IQPageContentContainer? { get }
     var forwardContainer: IQPageContentContainer? { get }
+    var animationVelocity: QFloat { set get }
+    #if os(iOS)
+    var interactiveLimit: QFloat { set get }
+    #endif
     
     func updateBar(animated: Bool, completion: (() -> Void)?)
     
@@ -29,37 +31,45 @@ public protocol IQPageContainer : IQContainer, IQContainerParentable {
 
 public extension IQPageContainer {
     
+    @inlinable
     func update(container: IQPageContentContainer, animated: Bool = true, completion: (() -> Void)? = nil) {
         self.update(container: container, animated: animated, completion: completion)
     }
     
+    @inlinable
     func set(containers: [IQPageContentContainer], current: IQPageContentContainer? = nil, animated: Bool = false, completion: (() -> Void)? = nil) {
         self.set(containers: containers, current: current, animated: animated, completion: completion)
     }
     
+    @inlinable
     func set(current: IQPageContentContainer, animated: Bool = true, completion: (() -> Void)? = nil) {
         self.set(current: current, animated: animated, completion: completion)
     }
     
 }
 
-public protocol IQPageContentContainer : IQContainer {
+public protocol IQPageContentContainer : IQContainer, IQContainerParentable {
     
-    var pageContainer: IQPageContainer? { set get }
+    var pageContainer: IQPageContainer? { get }
     
-    var pageItemView: IQView & IQViewSelectable { get }
+    var pageItemView: IQBarItemView { get }
     
 }
 
-public extension IQPageContentContainer where Self : IQContainerParentable {
+public extension IQPageContentContainer {
     
+    @inlinable
     var pageContainer: IQPageContainer? {
-        set(value) { self.parentContainer = value }
-        get { return self.parentContainer as? IQPageContainer }
+        return self.parent as? IQPageContainer
     }
     
+    @inlinable
     func updatePageBar(animated: Bool, completion: (() -> Void)? = nil) {
-        self.pageContainer?.updateBar(animated: animated, completion: completion)
+        guard let pageContainer = self.pageContainer else {
+            completion?()
+            return
+        }
+        pageContainer.updateBar(animated: animated, completion: completion)
     }
     
 }

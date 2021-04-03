@@ -15,19 +15,24 @@ protocol ControlViewDelegate : AnyObject {
     
 }
 
-public final class QControlView : IQControlView {
+public class QControlView : IQControlView {
     
-    public private(set) weak var parentLayout: IQLayout?
-    public weak var item: IQLayoutItem?
+    public private(set) unowned var parentLayout: IQLayout?
+    public unowned var item: QLayoutItem?
+    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
     public var isLoaded: Bool {
-        return self._reuseView.isLoaded
+        return self._reuse.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        guard self.isLoaded == true else { return QRect() }
+        return QRect(self._view.bounds)
     }
     public private(set) var layout: IQLayout {
         willSet {
@@ -56,7 +61,7 @@ public final class QControlView : IQControlView {
         set(value) {
             if self._isHighlighted != value {
                 self._isHighlighted = value
-                self._onChangeStyle?(false)
+                self.triggeredChangeStyle(false)
             }
         }
         get { return self._isHighlighted }
@@ -95,10 +100,10 @@ public final class QControlView : IQControlView {
         }
     }
     
-    private var _reuseView: QReuseView< ControlView >
+    private var _reuse: QReuseItem< ControlView >
     private var _view: ControlView {
-        if self.isLoaded == false { self._reuseView.load(view: self) }
-        return self._reuseView.item!
+        if self.isLoaded == false { self._reuse.load(owner: self) }
+        return self._reuse.content!
     }
     private var _isHighlighted: Bool
     private var _onAppear: (() -> Void)?
@@ -107,6 +112,7 @@ public final class QControlView : IQControlView {
     private var _onPressed: (() -> Void)?
     
     public init(
+        name: String? = nil,
         layout: IQLayout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
@@ -117,6 +123,7 @@ public final class QControlView : IQControlView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        self.name = name ?? String(describing: Self.self)
         self.layout = layout
         self.shouldHighlighting = shouldHighlighting
         self._isHighlighted = shouldHighlighting == true && isHighlighted == true
@@ -126,7 +133,7 @@ public final class QControlView : IQControlView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuseView = QReuseView()
+        self._reuse = QReuseItem()
         self.layout.parentView = self
     }
     
@@ -140,9 +147,13 @@ public final class QControlView : IQControlView {
     }
     
     public func disappear() {
-        self._reuseView.unload(view: self)
+        self._reuse.unload(owner: self)
         self.parentLayout = nil
         self._onDisappear?()
+    }
+    
+    public func triggeredChangeStyle(_ userIteraction: Bool) {
+        self._onChangeStyle?(userIteraction)
     }
     
     @discardableResult
@@ -158,7 +169,7 @@ public final class QControlView : IQControlView {
     }
     
     @discardableResult
-    public func highlighted(_ value: Bool) -> Self {
+    public func highlight(_ value: Bool) -> Self {
         self.isHighlighted = value
         return self
     }

@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public class QContentComposition< ContentView: IQView > : IQLayout {
     
-    public weak var delegate: IQLayoutDelegate?
-    public weak var parentView: IQView?
+    public unowned var delegate: IQLayoutDelegate?
+    public unowned var parentView: IQView?
     public var contentInset: QInset {
         didSet(oldValue) {
             guard self.contentInset != oldValue else { return }
@@ -22,7 +22,7 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
             self.setNeedUpdate()
         }
     }
-    public private(set) var contentItem: IQLayoutItem
+    public private(set) var contentItem: QLayoutItem
 
     public init(
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -31,6 +31,9 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
         self.contentInset = contentInset
         self.contentView = contentView
         self.contentItem = QLayoutItem(view: contentView)
+    }
+    
+    public func invalidate() {
     }
     
     public func layout(bounds: QRect) -> QSize {
@@ -44,9 +47,8 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
         return contentBounds
     }
     
-    public func items(bounds: QRect) -> [IQLayoutItem] {
-        let items = [ self.contentItem ]
-        return self.visible(items: items, for: bounds)
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        return [ self.contentItem ]
     }
     
 }

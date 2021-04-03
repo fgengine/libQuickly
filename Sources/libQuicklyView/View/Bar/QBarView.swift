@@ -10,18 +10,24 @@ public class QBarView : IQBarView {
     public var parentLayout: IQLayout? {
         get { return self._view.parentLayout }
     }
-    public weak var item: IQLayoutItem? {
+    public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
+    public var name: String {
+        return self._view.name
+    }
     public var native: QNativeView {
-        get { return self._view.native }
+        return self._view.native
     }
     public var isLoaded: Bool {
         return self._view.isLoaded
     }
     public var isAppeared: Bool {
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        return self._view.bounds
     }
     public private(set) var safeArea: QInset {
         set(value) {
@@ -57,6 +63,7 @@ public class QBarView : IQBarView {
     private var _view: IQCustomView
     
     public init(
+        name: String? = nil,
         contentView: IQView? = nil,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
@@ -64,12 +71,14 @@ public class QBarView : IQBarView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        let name = name ?? String(describing: Self.self)
         self.contentView = contentView
         self._layout = Layout(
             safeArea: QInset(),
             contentItem: contentView.flatMap({ QLayoutItem(view: $0) })
         )
         self._view = QCustomView(
+            name: name,
             layout: self._layout,
             color: color,
             border: border,
@@ -151,21 +160,24 @@ extension QBarView {
     
     class Layout : IQLayout {
         
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
+        unowned var delegate: IQLayoutDelegate?
+        unowned var parentView: IQView?
         var safeArea: QInset
-        var contentItem: IQLayoutItem?
-        var items: [IQLayoutItem] {
+        var contentItem: QLayoutItem?
+        var items: [QLayoutItem] {
             guard let contentItem = self.contentItem else { return [] }
             return [ contentItem ]
         }
         
         init(
             safeArea: QInset,
-            contentItem: IQLayoutItem?
+            contentItem: QLayoutItem?
         ) {
             self.safeArea = safeArea
             self.contentItem = contentItem
+        }
+        
+        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {
@@ -183,7 +195,7 @@ extension QBarView {
             )
         }
         
-        func items(bounds: QRect) -> [IQLayoutItem] {
+        func items(bounds: QRect) -> [QLayoutItem] {
             guard let contentItem = self.contentItem else { return [] }
             return self.visible(items: [ contentItem ], for: bounds)
         }

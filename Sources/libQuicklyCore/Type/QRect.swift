@@ -10,17 +10,11 @@ public struct QRect : Hashable {
     public var size: QSize
     
     @inlinable
-    public init() {
-        self.origin = QPoint()
-        self.size = QSize()
-    }
-    
-    @inlinable
     public init(
-        x: QFloat,
-        y: QFloat,
-        width: QFloat,
-        height: QFloat
+        x: QFloat = 0,
+        y: QFloat = 0,
+        width: QFloat = 0,
+        height: QFloat = 0
     ) {
         self.origin = QPoint(x: x, y: y)
         self.size = QSize(width: width, height: height)
@@ -136,6 +130,26 @@ public struct QRect : Hashable {
 public extension QRect {
     
     @inlinable
+    var x: QFloat {
+        return self.origin.x
+    }
+    
+    @inlinable
+    var y: QFloat {
+        return self.origin.y
+    }
+    
+    @inlinable
+    var width: QFloat {
+        return self.size.width
+    }
+
+    @inlinable
+    var height: QFloat {
+        return self.size.height
+    }
+
+    @inlinable
     var topLeft: QPoint {
         return QPoint(
             x: self.origin.x,
@@ -147,8 +161,8 @@ public extension QRect {
     @inlinable
     var top: QPoint {
         return QPoint(
-            x: self.origin.x,
-            y: self.origin.y + (self.size.height / 2)
+            x: self.origin.x + (self.size.width / 2),
+            y: self.origin.y
         )
     }
     

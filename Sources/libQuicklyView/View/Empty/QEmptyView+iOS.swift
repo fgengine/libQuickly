@@ -18,6 +18,10 @@ extension QEmptyView {
                 self.updateShadowPath()
             }
         }
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QEmptyView?
         
@@ -47,26 +51,31 @@ extension QEmptyView.EmptyView {
         self.updateShadowPath()
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QEmptyView.EmptyView : IQReusable {
     
-    typealias View = QEmptyView
-    typealias Item = QEmptyView.EmptyView
+    typealias Owner = QEmptyView
+    typealias Content = QEmptyView.EmptyView
 
     static var reuseIdentificator: String {
         return "QEmptyView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: CGRect.zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: CGRect.zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

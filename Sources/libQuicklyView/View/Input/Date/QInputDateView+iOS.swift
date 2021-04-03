@@ -85,6 +85,7 @@ extension QInputDateView.InputDateView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(mode: QInputDateViewMode) {
@@ -153,6 +154,11 @@ extension QInputDateView.InputDateView {
         self.inputAccessoryView = toolbar?.native
     }
     
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
+    }
+    
 }
 
 private extension QInputDateView.InputDateView {
@@ -193,24 +199,23 @@ extension QInputDateView.InputDateView : UITextFieldDelegate {
 
 extension QInputDateView.InputDateView : IQReusable {
     
-    typealias View = QInputDateView
-    typealias Item = QInputDateView.InputDateView
+    typealias Owner = QInputDateView
+    typealias Content = QInputDateView.InputDateView
 
     static var reuseIdentificator: String {
         return "QInputDateView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

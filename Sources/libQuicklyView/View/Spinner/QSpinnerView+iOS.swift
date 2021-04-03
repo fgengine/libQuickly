@@ -11,6 +11,11 @@ extension QSpinnerView {
     
     final class SpinnerView : UIActivityIndicatorView {
         
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
+        
         private unowned var _view: QSpinnerView?
         
         override init(style: Style) {
@@ -58,29 +63,34 @@ extension QSpinnerView.SpinnerView {
         }
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QSpinnerView.SpinnerView : IQReusable {
     
-    typealias View = QSpinnerView
-    typealias Item = QSpinnerView.SpinnerView
+    typealias Owner = QSpinnerView
+    typealias Content = QSpinnerView.SpinnerView
 
     static var reuseIdentificator: String {
         return "QSpinnerView"
     }
     
-    static func createReuseItem(view: View) -> Item {
+    static func createReuse(owner: Owner) -> Content {
         if #available(iOS 13.0, *) {
-            return Item(style: .large)
+            return Content(style: .large)
         }
-        return Item(style: .whiteLarge)
+        return Content(style: .whiteLarge)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

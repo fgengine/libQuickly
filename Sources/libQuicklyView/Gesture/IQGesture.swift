@@ -7,8 +7,11 @@ import libQuicklyCore
 
 public protocol IQGesture : AnyObject {
     
+    var name: String { get }
     var native: QNativeGesture { get }
     var isEnabled: Bool { get }
+    
+    func require(toFail gesture: QNativeGesture)
     
     func contains(in view: IQView) -> Bool
     

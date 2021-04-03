@@ -7,38 +7,36 @@ import libQuicklyCore
 
 public protocol IQStickyContainer : IQContainer, IQContainerParentable {
     
-    var contentContainer: IQStickyContentContainer? { set get }
-    var accessoryContainer: IQStickyAccessoryContainer? { set get }
+    var contentContainer: IQStickyContentContainer { set get }
+    var accessoryContainer: IQStickyAccessoryContainer { set get }
     
 }
 
-public protocol IQStickyContentContainer : IQContainer {
+public protocol IQStickyContentContainer : IQContainer, IQContainerParentable {
     
-    var stickyContainer: IQStickyContainer? { set get }
+    var stickyContainer: IQStickyContainer? { get }
     
 }
 
-public extension IQStickyContentContainer where Self : IQContainerParentable {
+public extension IQStickyContentContainer {
     
+    @inlinable
     var stickyContainer: IQStickyContainer? {
-        set(value) { self.parentContainer = value }
-        get { return self.parentContainer as? IQStickyContainer }
+        return self.parent as? IQStickyContainer
     }
     
 }
 
-public protocol IQStickyAccessoryContainer : IQContainer {
+public protocol IQStickyAccessoryContainer : IQStickyContentContainer {
     
-    var stickyContainer: IQStickyContainer? { set get }
     var stickySize: QFloat { get }
     
 }
 
-public extension IQStickyAccessoryContainer where Self : IQContainerParentable {
+public extension IQStickyAccessoryContainer {
     
-    var stickyContainer: IQStickyContainer? {
-        set(value) { self.parentContainer = value }
-        get { return self.parentContainer as? IQStickyContainer }
+    var stickySize: QFloat? {
+        return 96
     }
     
 }

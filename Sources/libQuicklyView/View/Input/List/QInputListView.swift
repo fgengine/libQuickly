@@ -13,19 +13,24 @@ protocol InputListViewDelegate : AnyObject {
     
 }
 
-public final class QInputListView : IQInputListView {
+public class QInputListView : IQInputListView {
     
-    public private(set) weak var parentLayout: IQLayout?
-    public weak var item: IQLayoutItem?
+    public private(set) unowned var parentLayout: IQLayout?
+    public unowned var item: QLayoutItem?
+    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
     public var isLoaded: Bool {
-        return self._reuseView.isLoaded
+        return self._reuse.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        guard self.isLoaded == true else { return QRect() }
+        return QRect(self._view.bounds)
     }
     public private(set) var width: QDimensionBehaviour {
         didSet {
@@ -128,10 +133,10 @@ public final class QInputListView : IQInputListView {
         }
     }
     
-    private var _reuseView: QReuseView< InputListView >
+    private var _reuse: QReuseItem< InputListView >
     private var _view: InputListView {
-        if self.isLoaded == false { self._reuseView.load(view: self) }
-        return self._reuseView.item!
+        if self.isLoaded == false { self._reuse.load(owner: self) }
+        return self._reuse.content!
     }
     private var _selectedItem: IQInputListViewItem?
     private var _onAppear: (() -> Void)?
@@ -141,6 +146,7 @@ public final class QInputListView : IQInputListView {
     private var _onEndEditing: (() -> Void)?
     
     public init(
+        name: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         items: [IQInputListViewItem],
@@ -157,6 +163,7 @@ public final class QInputListView : IQInputListView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.items = items
@@ -172,7 +179,7 @@ public final class QInputListView : IQInputListView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuseView = QReuseView()
+        self._reuse = QReuseItem()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -187,7 +194,7 @@ public final class QInputListView : IQInputListView {
     
     public func disappear() {
         self.toolbar?.disappear()
-        self._reuseView.unload(view: self)
+        self._reuse.unload(owner: self)
         self.parentLayout = nil
         self._onDisappear?()
     }

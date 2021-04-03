@@ -11,7 +11,7 @@ public extension QAnimation {
     
     class DisplayLink {
         
-        weak var delegate: IQAnimationQueueDelegate?
+        unowned var delegate: IQAnimationQueueDelegate?
         
         var isRunning: Bool {
             return CVDisplayLinkIsRunning(self._displayLink)

@@ -26,14 +26,29 @@ let package = Package(
             targets: [ "libQuicklyJson" ]
         ),
         .library(
+            name: "libQuicklyXml",
+            type: .static,
+            targets: [ "libQuicklyXml" ]
+        ),
+        .library(
             name: "libQuicklyKeychain",
             type: .static,
             targets: [ "libQuicklyKeychain" ]
         ),
         .library(
+            name: "libQuicklyQRCode",
+            type: .static,
+            targets: [ "libQuicklyQRCode" ]
+        ),
+        .library(
             name: "libQuicklyApi",
             type: .static,
             targets: [ "libQuicklyApi" ]
+        ),
+        .library(
+            name: "libQuicklyDatabase",
+            type: .static,
+            targets: [ "libQuicklyDatabase" ]
         ),
         .library(
             name: "libQuicklyDataSource",
@@ -65,13 +80,31 @@ let package = Package(
             ]
         ),
         .target(
+            name: "libQuicklyXml",
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
+        ),
+        .target(
             name: "libQuicklyKeychain",
             dependencies: [
                 .target(name: "libQuicklyCore")
             ]
         ),
         .target(
+            name: "libQuicklyQRCode",
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
+        ),
+        .target(
             name: "libQuicklyApi",
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
+        ),
+        .target(
+            name: "libQuicklyDatabase",
             dependencies: [
                 .target(name: "libQuicklyCore")
             ]
@@ -85,7 +118,8 @@ let package = Package(
         .target(
             name: "libQuicklyView",
             dependencies: [
-                .target(name: "libQuicklyCore")
+                .target(name: "libQuicklyCore"),
+                .target(name: "libQuicklyObserver")
             ]
         )
     ]

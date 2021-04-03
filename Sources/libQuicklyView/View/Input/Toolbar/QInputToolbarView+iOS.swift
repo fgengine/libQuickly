@@ -39,6 +39,7 @@ extension QInputToolbarView.InputToolbarView {
         self.update(tintColor: view.tintColor)
         self.update(contentTintColor: view.contentTintColor)
         self.update(color: view.color)
+        self.customDelegate = view
     }
     
     func update(items: [IQInputToolbarItem]) {
@@ -72,6 +73,11 @@ extension QInputToolbarView.InputToolbarView {
         self.tintColor = contentTintColor.native
     }
     
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
+    }
+    
 }
 
 private extension QInputToolbarView.InputToolbarView {
@@ -85,15 +91,15 @@ private extension QInputToolbarView.InputToolbarView {
 
 extension QInputToolbarView.InputToolbarView : IQReusable {
     
-    typealias View = QInputToolbarView
-    typealias Item = QInputToolbarView.InputToolbarView
+    typealias Owner = QInputToolbarView
+    typealias Content = QInputToolbarView.InputToolbarView
 
     static var reuseIdentificator: String {
         return "QInputToolbarView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: CGRect(
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: CGRect(
             x: 0,
             y: 0,
             width: UIScreen.main.bounds.width,
@@ -101,13 +107,12 @@ extension QInputToolbarView.InputToolbarView : IQReusable {
         ))
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

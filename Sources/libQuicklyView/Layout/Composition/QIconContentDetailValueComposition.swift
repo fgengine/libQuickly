@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public class QIconContentDetailValueComposition< IconView: IQView, ContentView: IQView, DetailView: IQView, ValueView: IQView > : IQLayout {
     
-    public weak var delegate: IQLayoutDelegate?
-    public weak var parentView: IQView?
+    public unowned var delegate: IQLayoutDelegate?
+    public unowned var parentView: IQView?
     public var iconInset: QInset {
         didSet(oldValue) {
             guard self.iconInset != oldValue else { return }
@@ -22,7 +22,7 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
             self.setNeedUpdate()
         }
     }
-    public private(set) var iconItem: IQLayoutItem
+    public private(set) var iconItem: QLayoutItem
     public var contentInset: QInset {
         didSet(oldValue) {
             guard self.contentInset != oldValue else { return }
@@ -36,7 +36,7 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
             self.setNeedUpdate()
         }
     }
-    public private(set) var contentItem: IQLayoutItem
+    public private(set) var contentItem: QLayoutItem
     public var detailInset: QInset {
         didSet(oldValue) {
             guard self.detailInset != oldValue else { return }
@@ -50,7 +50,7 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
             self.setNeedUpdate()
         }
     }
-    public private(set) var detailItem: IQLayoutItem
+    public private(set) var detailItem: QLayoutItem
     public var valueInset: QInset {
         didSet(oldValue) {
             guard self.valueInset != oldValue else { return }
@@ -64,7 +64,7 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
             self.setNeedUpdate()
         }
     }
-    public private(set) var valueItem: IQLayoutItem
+    public private(set) var valueItem: QLayoutItem
     
     public init(
         iconInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -88,6 +88,9 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
         self.valueInset = valueInset
         self.valueView = valueView
         self.valueItem = QLayoutItem(view: valueView)
+    }
+    
+    public func invalidate() {
     }
     
     public func layout(bounds: QRect) -> QSize {
@@ -127,9 +130,8 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
         )
     }
     
-    public func items(bounds: QRect) -> [IQLayoutItem] {
-        let items = [ self.iconItem, self.contentItem, self.detailItem, self.valueItem ]
-        return self.visible(items: items, for: bounds)
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        return [ self.iconItem, self.contentItem, self.detailItem, self.valueItem ]
     }
     
 }

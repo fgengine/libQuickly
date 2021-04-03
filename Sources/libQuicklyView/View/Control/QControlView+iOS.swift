@@ -22,6 +22,10 @@ extension QControlView {
                 self.updateShadowPath()
             }
         }
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QControlView?
         private var _layoutManager: QLayoutManager!
@@ -93,6 +97,7 @@ extension QControlView.ControlView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(layout: IQLayout) {
@@ -107,6 +112,11 @@ extension QControlView.ControlView {
         if self.isAppeared == true {
             self.setNeedsLayout()
         }
+    }
+    
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
     }
     
 }
@@ -168,24 +178,23 @@ extension QControlView.ControlView : IQLayoutDelegate {
 
 extension QControlView.ControlView : IQReusable {
     
-    typealias View = QControlView
-    typealias Item = QControlView.ControlView
+    typealias Owner = QControlView
+    typealias Content = QControlView.ControlView
 
     static var reuseIdentificator: String {
         return "QControlView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

@@ -5,19 +5,24 @@
 import Foundation
 import libQuicklyCore
 
-public final class QImageView : IQImageView {
+public class QImageView : IQImageView {
     
-    public private(set) weak var parentLayout: IQLayout?
-    public weak var item: IQLayoutItem?
+    public private(set) unowned var parentLayout: IQLayout?
+    public unowned var item: QLayoutItem?
+    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
     public var isLoaded: Bool {
-        return self._reuseView.isLoaded
+        return self._reuse.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        guard self.isLoaded == true else { return QRect() }
+        return QRect(self._view.bounds)
     }
     public private(set) var width: QDimensionBehaviour? {
         didSet {
@@ -75,15 +80,16 @@ public final class QImageView : IQImageView {
         }
     }
     
-    private var _reuseView: QReuseView< ImageView >
+    private var _reuse: QReuseItem< ImageView >
     private var _view: ImageView {
-        if self.isLoaded == false { self._reuseView.load(view: self) }
-        return self._reuseView.item!
+        if self.isLoaded == false { self._reuse.load(owner: self) }
+        return self._reuse.content!
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     
     public init(
+        name: String? = nil,
         width: QDimensionBehaviour? = nil,
         height: QDimensionBehaviour? = nil,
         image: QImage,
@@ -94,6 +100,7 @@ public final class QImageView : IQImageView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.image = image
@@ -103,7 +110,7 @@ public final class QImageView : IQImageView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuseView = QReuseView()
+        self._reuse = QReuseItem()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -135,7 +142,7 @@ public final class QImageView : IQImageView {
     }
     
     public func disappear() {
-        self._reuseView.unload(view: self)
+        self._reuse.unload(owner: self)
         self.parentLayout = nil
         self._onDisappear?()
     }

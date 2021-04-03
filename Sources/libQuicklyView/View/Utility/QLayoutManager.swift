@@ -15,7 +15,7 @@ struct QLayoutManager {
     unowned let contentView: QNativeView
     var layout: IQLayout?
     var size: QSize
-    var items: [IQLayoutItem]
+    var items: [QLayoutItem]
 
     @inline(__always)
     init(contentView: QNativeView) {
@@ -80,7 +80,7 @@ private extension QLayoutManager {
     @inline(__always)
     func _appear(view: IQView, layout: IQLayout) {
         self.contentView.addSubview(view.native)
-        if view.isAppeared == true {
+        if view.isAppeared == false {
             view.appear(to: layout)
         }
     }

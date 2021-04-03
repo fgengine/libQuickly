@@ -5,39 +5,47 @@
 import Foundation
 import Security
 
-public enum QKeychainAccessOptions {
-    case whenUnlocked
-    case whenUnlockedThisDeviceOnly
-    case afterFirstUnlock
-    case afterFirstUnlockThisDeviceOnly
-    case always
-    case whenPasscodeSetThisDeviceOnly
-    case alwaysThisDeviceOnly
-
-    public static var defaultOption: QKeychainAccessOptions {
-        return .whenUnlocked
-    }
-
-    public var value: String {
-        switch self {
-        case .whenUnlocked: return kSecAttrAccessibleWhenUnlocked as String
-        case .whenUnlockedThisDeviceOnly: return kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
-        case .afterFirstUnlock: return kSecAttrAccessibleAfterFirstUnlock as String
-        case .afterFirstUnlockThisDeviceOnly: return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly as String
-        case .always: return kSecAttrAccessibleAlways as String
-        case .whenPasscodeSetThisDeviceOnly: return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly as String
-        case .alwaysThisDeviceOnly: return kSecAttrAccessibleAlwaysThisDeviceOnly as String
-        }
-    }
-}
-
 public final class QKeychain {
 
     public var accessGroup: String?
     public var synchronizable: Bool
 
-    public init() {
-        self.synchronizable = false
+    public init(
+        accessGroup: String? = nil,
+        synchronizable: Bool = true
+    ) {
+        self.accessGroup = accessGroup
+        self.synchronizable = synchronizable
+    }
+    
+}
+
+public extension QKeychain {
+    
+    enum AccessOptions {
+        case whenUnlocked
+        case whenUnlockedThisDeviceOnly
+        case afterFirstUnlock
+        case afterFirstUnlockThisDeviceOnly
+        case always
+        case whenPasscodeSetThisDeviceOnly
+        case alwaysThisDeviceOnly
+
+        public static var defaultOption: AccessOptions {
+            return .whenUnlocked
+        }
+
+        public var value: String {
+            switch self {
+            case .whenUnlocked: return kSecAttrAccessibleWhenUnlocked as String
+            case .whenUnlockedThisDeviceOnly: return kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
+            case .afterFirstUnlock: return kSecAttrAccessibleAfterFirstUnlock as String
+            case .afterFirstUnlockThisDeviceOnly: return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly as String
+            case .always: return kSecAttrAccessibleAlways as String
+            case .whenPasscodeSetThisDeviceOnly: return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly as String
+            case .alwaysThisDeviceOnly: return kSecAttrAccessibleAlwaysThisDeviceOnly as String
+            }
+        }
     }
     
 }
@@ -45,7 +53,7 @@ public final class QKeychain {
 public extension QKeychain {
     
     @discardableResult
-    func set(_ value: Data?, key: String, access: QKeychainAccessOptions = .defaultOption) -> Bool {
+    func set(_ value: Data?, key: String, access: AccessOptions = .defaultOption) -> Bool {
         guard let value = value else {
             return self._processDelete(key)
         }
@@ -53,7 +61,7 @@ public extension QKeychain {
     }
 
     @discardableResult
-    func set(_ value: String?, key: String, access: QKeychainAccessOptions = .defaultOption) -> Bool {
+    func set(_ value: String?, key: String, access: AccessOptions = .defaultOption) -> Bool {
         guard let value = value else {
             return self._processDelete(key)
         }
@@ -61,7 +69,7 @@ public extension QKeychain {
     }
 
     @discardableResult
-    func set(_ value: Bool?, key: String, access: QKeychainAccessOptions = .defaultOption) -> Bool {
+    func set(_ value: Bool?, key: String, access: AccessOptions = .defaultOption) -> Bool {
         guard let value = value else {
             return self._processDelete(key)
         }
@@ -113,7 +121,7 @@ public extension QKeychain {
 
 private extension QKeychain {
 
-    func _processSet(_ value: Data, key: String, access: QKeychainAccessOptions) -> Bool {
+    func _processSet(_ value: Data, key: String, access: AccessOptions) -> Bool {
         self._processDelete(key)
         let query = self._process(
             query: [
@@ -128,12 +136,12 @@ private extension QKeychain {
         return code == noErr
     }
 
-    func _processSet(_ value: String, key: String, access: QKeychainAccessOptions) -> Bool {
+    func _processSet(_ value: String, key: String, access: AccessOptions) -> Bool {
         guard let data = value.data(using: String.Encoding.utf8) else { return false }
         return self._processSet(data, key: key, access: access)
     }
 
-    func _processSet(_ value: Bool, key: String, access: QKeychainAccessOptions) -> Bool {
+    func _processSet(_ value: Bool, key: String, access: AccessOptions) -> Bool {
         let bytes: [UInt8] = (value == true) ? [1] : [0]
         return self._processSet(Data(bytes), key: key, access: access)
     }

@@ -38,6 +38,10 @@ extension QScrollView {
             }
             get { return super.contentSize }
         }
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QScrollView?
         private var _contentView: UIView!
@@ -126,6 +130,7 @@ extension QScrollView.ScrollView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(layout: IQLayout) {
@@ -170,6 +175,11 @@ extension QScrollView.ScrollView {
         } else {
             self.contentOffset = contentOffset.cgPoint
         }
+    }
+    
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
     }
     
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint? {
@@ -238,24 +248,23 @@ extension QScrollView.ScrollView : IQLayoutDelegate {
 
 extension QScrollView.ScrollView : IQReusable {
     
-    typealias View = QScrollView
-    typealias Item = QScrollView.ScrollView
+    typealias Owner = QScrollView
+    typealias Content = QScrollView.ScrollView
 
     static var reuseIdentificator: String {
         return "QScrollView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

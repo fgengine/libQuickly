@@ -10,15 +10,9 @@ public struct QPoint : Hashable {
     public var y: QFloat
     
     @inlinable
-    public init() {
-        self.x = 0
-        self.y = 0
-    }
-    
-    @inlinable
     public init(
-        x: QFloat,
-        y: QFloat
+        x: QFloat = 0,
+        y: QFloat = 0
     ) {
         self.x = x
         self.y = y

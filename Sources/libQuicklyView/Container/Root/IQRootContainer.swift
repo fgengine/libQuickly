@@ -18,21 +18,21 @@ public protocol IQRootContainer : IQContainer {
     
     var delegate: IQRootContainerDelegate? { set get }
     var safeArea: QInset { set get }
-    var container: IQRootContentContainer? { set get }
+    var container: IQRootContentContainer { set get }
     
 }
 
-public protocol IQRootContentContainer : IQContainer {
+public protocol IQRootContentContainer : IQContainer, IQContainerParentable {
     
-    var rootContainer: IQRootContainer? { set get }
+    var rootContainer: IQRootContainer? { get }
     
 }
 
-public extension IQRootContentContainer where Self : IQContainerParentable {
+public extension IQRootContentContainer {
     
+    @inlinable
     var rootContainer: IQRootContainer? {
-        set(value) { self.parentContainer = value }
-        get { return self.parentContainer as? IQRootContainer }
+        return self.parent as? IQRootContainer
     }
     
 }

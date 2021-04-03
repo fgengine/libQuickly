@@ -63,16 +63,21 @@ public struct QInputToolbarFlexibleSpaceItem : IQInputToolbarItem {
 
 open class QInputToolbarView : IQInputToolbarView {
     
-    public private(set) weak var parentView: IQView?
+    public private(set) unowned var parentView: IQView?
+    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
     public var isLoaded: Bool {
-        return self._reuseView.isLoaded
+        return self._reuse.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        guard self.isLoaded == true else { return QRect() }
+        return QRect(self._view.bounds)
     }
     public private(set) var items: [IQInputToolbarItem] {
         didSet {
@@ -111,15 +116,16 @@ open class QInputToolbarView : IQInputToolbarView {
         }
     }
     
-    private var _reuseView: QReuseView< InputToolbarView >
+    private var _reuse: QReuseItem< InputToolbarView >
     private var _view: InputToolbarView {
-        if self.isLoaded == false { self._reuseView.load(view: self) }
-        return self._reuseView.item!
+        if self.isLoaded == false { self._reuse.load(owner: self) }
+        return self._reuse.content!
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     
     public init(
+        name: String? = nil,
         items: [IQInputToolbarItem],
         size: QFloat = 55,
         isTranslucent: Bool = false,
@@ -127,13 +133,14 @@ open class QInputToolbarView : IQInputToolbarView {
         contentTintColor: QColor = QColor(rgb: 0xffffff),
         color: QColor? = nil
     ) {
+        self.name = name ?? String(describing: Self.self)
         self.items = items
         self.size = size
         self.isTranslucent = isTranslucent
         self.tintColor = tintColor
         self.contentTintColor = contentTintColor
         self.color = color
-        self._reuseView = QReuseView()
+        self._reuse = QReuseItem()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -146,7 +153,7 @@ open class QInputToolbarView : IQInputToolbarView {
     }
     
     public func disappear() {
-        self._reuseView.unload(view: self)
+        self._reuse.unload(owner: self)
         self.parentView = nil
         self._onDisappear?()
     }

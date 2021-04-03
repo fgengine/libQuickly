@@ -10,15 +10,9 @@ public struct QSize : Hashable {
     public var height: QFloat
     
     @inlinable
-    public init() {
-        self.width = 0
-        self.height = 0
-    }
-    
-    @inlinable
     public init(
-        width: QFloat,
-        height: QFloat
+        width: QFloat = 0,
+        height: QFloat = 0
     ) {
         self.width = width
         self.height = height

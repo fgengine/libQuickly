@@ -15,23 +15,31 @@ public protocol IQPageBarView : IQBarView {
     
     var delegate: IQPageBarViewDelegate? { set get }
     var indicatorView: IQView { get }
-    var views: [IQView] { get }
-    var selectedView: IQView? { get }
+    var itemInset: QInset { get }
+    var itemSpacing: QFloat { get }
+    var itemViews: [IQBarItemView] { get }
+    var selectedItemView: IQBarItemView? { get }
     
     @discardableResult
     func indicatorView(_ value: IQView) -> Self
     
     @discardableResult
-    func views(_ value: [IQView]) -> Self
+    func itemInset(_ value: QInset) -> Self
     
     @discardableResult
-    func selectedView(_ value: IQView?) -> Self
+    func itemSpacing(_ value: QFloat) -> Self
+    
+    @discardableResult
+    func itemViews(_ value: [IQBarItemView]) -> Self
+    
+    @discardableResult
+    func selectedItemView(_ value: IQBarItemView?) -> Self
     
     func beginTransition()
     
-    func changeTransition(to view: IQView, progress: QFloat)
+    func transition(to view: IQBarItemView, progress: QFloat)
     
-    func finishTransition(to view: IQView)
+    func finishTransition(to view: IQBarItemView)
     
     func cancelTransition()
 

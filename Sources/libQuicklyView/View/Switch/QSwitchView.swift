@@ -11,19 +11,24 @@ protocol SwitchViewDelegate : AnyObject {
     
 }
 
-public final class QSwitchView : IQView {
+public class QSwitchView : IQView {
         
-    public private(set) weak var parentLayout: IQLayout?
-    public weak var item: IQLayoutItem?
+    public private(set) unowned var parentLayout: IQLayout?
+    public unowned var item: QLayoutItem?
+    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
     public var isLoaded: Bool {
-        return self._reuseView.isLoaded
+        return self._reuse.isLoaded
     }
     public var isAppeared: Bool {
         guard self.isLoaded == true else { return false }
         return self._view.isAppeared
+    }
+    public var bounds: QRect {
+        guard self.isLoaded == true else { return QRect() }
+        return QRect(self._view.bounds)
     }
     public private(set) var width: QDimensionBehaviour {
         didSet {
@@ -94,10 +99,10 @@ public final class QSwitchView : IQView {
         }
     }
     
-    private var _reuseView: QReuseView< SwitchView >
+    private var _reuse: QReuseItem< SwitchView >
     private var _view: SwitchView {
-        if self.isLoaded == false { self._reuseView.load(view: self) }
-        return self._reuseView.item!
+        if self.isLoaded == false { self._reuse.load(owner: self) }
+        return self._reuse.content!
     }
     private var _value: Bool
     private var _onAppear: (() -> Void)?
@@ -105,6 +110,7 @@ public final class QSwitchView : IQView {
     private var _onChangeValue: (() -> Void)?
     
     public init(
+        name: String? = nil,
         width: QDimensionBehaviour = .fill,
         height: QDimensionBehaviour,
         thumbColor: QColor,
@@ -117,6 +123,7 @@ public final class QSwitchView : IQView {
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.thumbColor = thumbColor
@@ -128,7 +135,7 @@ public final class QSwitchView : IQView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuseView = QReuseView()
+        self._reuse = QReuseItem()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -141,7 +148,7 @@ public final class QSwitchView : IQView {
     }
     
     public func disappear() {
-        self._reuseView.unload(view: self)
+        self._reuse.unload(owner: self)
         self.parentLayout = nil
         self._onDisappear?()
     }

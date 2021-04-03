@@ -5,7 +5,6 @@
 #if os(iOS)
 
 import UIKit
-import libQuicklyCore
 
 public struct QImage {
 
@@ -25,9 +24,17 @@ public struct QImage {
     
     @inlinable
     public init(
-        _ native: UIImage
+        _ uiImage: UIImage
     ) {
-        self.native = native
+        self.native = uiImage
+        self.size = QSize(uiImage.size)
+    }
+    
+    @inlinable
+    public init(
+        _ cgImage: CGImage
+    ) {
+        self.native = UIImage(cgImage: cgImage)
         self.size = QSize(native.size)
     }
     

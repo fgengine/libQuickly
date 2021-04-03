@@ -7,9 +7,15 @@ import libQuicklyCore
 
 public final class QListLayout : IQLayout {
     
-    public weak var delegate: IQLayoutDelegate?
-    public weak var parentView: IQView?
-    public private(set) var mode: Mode
+    public unowned var delegate: IQLayoutDelegate?
+    public unowned var parentView: IQView?
+    public var direction: Direction {
+        didSet(oldValue) {
+            guard self.direction != oldValue else { return }
+            self.invalidate()
+            self.setNeedUpdate()
+        }
+    }
     public var inset: QInset {
         didSet(oldValue) {
             guard self.inset != oldValue else { return }
@@ -22,8 +28,9 @@ public final class QListLayout : IQLayout {
             self.setNeedUpdate()
         }
     }
-    public var items: [IQLayoutItem] {
-        didSet(oldValue) {
+    public var items: [QLayoutItem] {
+        didSet {
+            self.invalidate()
             self.setNeedUpdate()
         }
     }
@@ -31,49 +38,64 @@ public final class QListLayout : IQLayout {
         set(value) { self.items = value.compactMap({ return QLayoutItem(view: $0) }) }
         get { return self.items.compactMap({ $0.view }) }
     }
+    
+    private var _cache: [Int : QSize]
 
     public init(
-        mode: Mode,
+        direction: Direction,
         inset: QInset = QInset(),
         spacing: QFloat = 0,
-        items: [IQLayoutItem]
+        items: [QLayoutItem]
     ) {
-        self.mode = mode
+        self.direction = direction
         self.inset = inset
         self.spacing = spacing
         self.items = items
+        self._cache = [:]
     }
 
     public convenience init(
-        mode: Mode,
+        direction: Direction,
         inset: QInset = QInset(),
         spacing: QFloat = 0,
         views: [IQView]
     ) {
         self.init(
-            mode: mode,
+            direction: direction,
             inset: inset,
             spacing: spacing,
             items: views.compactMap({ return QLayoutItem(view: $0) })
         )
     }
     
+    public func invalidate() {
+        self._cache.removeAll()
+    }
+    
     public func layout(bounds: QRect) -> QSize {
-        switch self.mode {
-        case .horizontal: return self.items.horizontalLayout(bounds: bounds, inset: self.inset, spacing: self.spacing)
-        case .vertical: return self.items.verticalLayout(bounds: bounds, inset: self.inset, spacing: self.spacing)
-        }
+        return QStackLayoutHelper.layout(
+            bounds: bounds,
+            direction: QStackLayoutHelper.Direction(self.direction),
+            origin: .forward,
+            alignment: .fill,
+            inset: self.inset,
+            spacing: self.spacing,
+            items: self.items,
+            sizeCache: &self._cache
+        )
     }
     
     public func size(_ available: QSize) -> QSize {
-        guard self.items.count > 0 else { return QSize() }
-        switch self.mode {
-        case .horizontal: return self.items.horizontalSize(available: available, inset: self.inset, spacing: self.spacing)
-        case .vertical: return self.items.verticalSize(available: available, inset: self.inset, spacing: self.spacing)
-        }
+        return QStackLayoutHelper.size(
+            available: available,
+            direction: QStackLayoutHelper.Direction(self.direction),
+            inset: self.inset,
+            spacing: self.spacing,
+            items: self.items
+        )
     }
     
-    public func items(bounds: QRect) -> [IQLayoutItem] {
+    public func items(bounds: QRect) -> [QLayoutItem] {
         return self.visible(items: self.items, for: bounds)
     }
     
@@ -81,9 +103,21 @@ public final class QListLayout : IQLayout {
 
 public extension QListLayout {
     
-    enum Mode {
+    enum Direction {
         case horizontal
         case vertical
+    }
+    
+}
+
+fileprivate extension QStackLayoutHelper.Direction {
+    
+    @inline(__always)
+    init(_ direction: QListLayout.Direction) {
+        switch direction {
+        case .horizontal: self = .horizontal
+        case .vertical: self = .vertical
+        }
     }
     
 }

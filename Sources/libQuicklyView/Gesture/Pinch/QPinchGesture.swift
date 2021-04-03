@@ -9,12 +9,16 @@ import libQuicklyCore
 
 public final class QPinchGesture : NSObject, IQPinchGesture {
     
+    public private(set) var name: String
     public var native: QNativeGesture {
         return self._native
     }
     public private(set) var isEnabled: Bool {
         set(value) { self._native.isEnabled = value }
         get { return self._native.isEnabled }
+    }
+    public override var debugDescription: String {
+        return "<\(self.name)>"
     }
     
     private var _native: UIPinchGestureRecognizer
@@ -27,11 +31,18 @@ public final class QPinchGesture : NSObject, IQPinchGesture {
     private var _onCancel: (() -> Void)?
     private var _onEnd: (() -> Void)?
     
-    public override init() {
+    public init(
+        name: String
+    ) {
+        self.name = name
         self._native = UIPinchGestureRecognizer()
         super.init()
         self._native.delegate = self
         self._native.addTarget(self, action: #selector(self._handle))
+    }
+    
+    public func require(toFail gesture: QNativeGesture) {
+        self.native.require(toFail: gesture)
     }
     
     public func velocity() -> QFloat {

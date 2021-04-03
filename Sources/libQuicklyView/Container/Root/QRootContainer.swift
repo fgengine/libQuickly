@@ -10,19 +10,22 @@ import libQuicklyCore
 
 public class QRootContainer : IQRootContainer {
     
-    public weak var delegate: IQRootContainerDelegate?
+    public unowned var delegate: IQRootContainerDelegate?
+    public var shouldInteractive: Bool {
+        return self.container.shouldInteractive
+    }
     #if os(iOS)
     public var statusBarHidden: Bool {
-        return self._container?.statusBarHidden ?? false
+        return self.container.statusBarHidden
     }
     public var statusBarStyle: UIStatusBarStyle {
-        return self._container?.statusBarStyle ?? .default
+        return self.container.statusBarStyle
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        return self._container?.statusBarAnimation ?? .fade
+        return self.container.statusBarAnimation
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        return self._container?.supportedOrientations ?? .all
+        return self.container.supportedOrientations
     }
     #endif
     public private(set) var isPresented: Bool
@@ -36,40 +39,41 @@ public class QRootContainer : IQRootContainer {
             }
         }
     }
-    public var container: IQRootContentContainer? {
-        set(value) {
-            guard self._container !== value else { return }
-            if let container = self._container {
-                if self.isPresented == true {
-                    container.prepareHide(interactive: false)
-                    container.finishHide(interactive: false)
-                }
-                container.rootContainer = nil
+    public var container: IQRootContentContainer {
+        didSet(oldValue) {
+            guard self.container !== oldValue else { return }
+            if self.isPresented == true {
+                self.container.prepareHide(interactive: false)
+                self.container.finishHide(interactive: false)
             }
-            self._container = value
-            if let container = self._container {
-                self._viewLayout.containerItem = QLayoutItem(view: container.view)
-                container.rootContainer = self
-                if self.isPresented == true {
-                    container.prepareShow(interactive: false)
-                    container.finishShow(interactive: false)
-                }
-            } else {
-                self._viewLayout.containerItem = nil
+            self.container.parent = nil
+            self._layout.item = QLayoutItem(view: self.container.view)
+            self.container.parent = self
+            if self.isPresented == true {
+                self.container.prepareShow(interactive: false)
+                self.container.finishShow(interactive: false)
             }
         }
-        get { return self._container }
     }
     
     private var _view: QCustomView
-    private var _viewLayout: RootLayout
-    private var _container: IQRootContentContainer?
+    private var _layout: Layout
     
-    public init() {
+    public init(
+        safeArea: QInset = QInset(),
+        container: IQRootContentContainer
+    ) {
         self.isPresented = false
-        self.safeArea = QInset()
-        self._viewLayout = RootLayout()
-        self._view = QCustomView(layout: self._viewLayout)
+        self.safeArea = safeArea
+        self.container = container
+        self._layout = Layout(
+            item: QLayoutItem(view: container.view)
+        )
+        self._view = QCustomView(
+            name: "QRootContainer-RootView",
+            layout: self._layout
+        )
+        self._init()
     }
     
     #if os(iOS)
@@ -85,56 +89,71 @@ public class QRootContainer : IQRootContainer {
     #endif
     
     public func insets(of container: IQContainer) -> QInset {
-        if self._container === container {
+        if self.container === container {
             return self.safeArea
         }
         return QInset()
     }
     
     public func didChangeInsets() {
-        self._container?.didChangeInsets()
+        self.container.didChangeInsets()
     }
     
     public func prepareShow(interactive: Bool) {
-        self._container?.prepareShow(interactive: interactive)
+        self.container.prepareShow(interactive: interactive)
     }
     
     public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self._container?.finishShow(interactive: interactive)
+        self.container.finishShow(interactive: interactive)
     }
     
     public func cancelShow(interactive: Bool) {
-        self._container?.cancelShow(interactive: interactive)
+        self.container.cancelShow(interactive: interactive)
     }
     
     public func prepareHide(interactive: Bool) {
-        self._container?.prepareHide(interactive: interactive)
+        self.container.prepareHide(interactive: interactive)
     }
     
     public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self._container?.finishHide(interactive: interactive)
+        self.container.finishHide(interactive: interactive)
     }
     
     public func cancelHide(interactive: Bool) {
-        self._container?.cancelHide(interactive: interactive)
+        self.container.cancelHide(interactive: interactive)
     }
 
 }
 
 private extension QRootContainer {
     
-    class RootLayout : IQLayout {
+    func _init() {
+        self.container.parent = self
+    }
+    
+}
+
+private extension QRootContainer {
+    
+    class Layout : IQLayout {
         
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
-        var containerItem: IQLayoutItem? {
+        unowned var delegate: IQLayoutDelegate?
+        unowned var parentView: IQView?
+        var item: QLayoutItem {
             didSet { self.setNeedUpdate() }
         }
         
+        init(item: QLayoutItem) {
+            self.item = item
+        }
+        
+        func invalidate() {
+        }
+        
         func layout(bounds: QRect) -> QSize {
-            self.containerItem?.frame = bounds
+            self.item.frame = bounds
             return bounds.size
         }
         
@@ -142,12 +161,8 @@ private extension QRootContainer {
             return available
         }
         
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            var items: [IQLayoutItem] = []
-            if let containerItem = self.containerItem {
-                items.append(containerItem)
-            }
-            return items
+        func items(bounds: QRect) -> [QLayoutItem] {
+            return [ self.item ]
         }
         
     }

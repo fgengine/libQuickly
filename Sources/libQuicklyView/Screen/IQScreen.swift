@@ -8,7 +8,11 @@ import libQuicklyCore
 public protocol IQScreen : AnyObject {
     
     var container: IQContainer? { set get }
+    var shouldInteractive: Bool { get }
     
+    func setup()
+    func destroy()
+
     func prepareShow(interactive: Bool)
     func finishShow(interactive: Bool)
     func cancelShow(interactive: Bool)
@@ -21,12 +25,22 @@ public protocol IQScreen : AnyObject {
 
 public extension IQScreen {
     
+    var shouldInteractive: Bool {
+        return true
+    }
+    
     var isPresented: Bool {
         return self.container?.isPresented ?? false
     }
     
     var inheritedInsets: QInset {
         return self.container?.inheritedInsets ?? QInset()
+    }
+    
+    func setup() {
+    }
+    
+    func destroy() {
     }
     
     func prepareShow(interactive: Bool) {
@@ -63,6 +77,16 @@ public protocol IQScreenStatusable : AnyObject {
 
 public extension IQScreenStatusable where Self : IQScreen {
     
+    var statusBarHidden: Bool {
+        return false
+    }
+    var statusBarStyle: UIStatusBarStyle {
+        return .default
+    }
+    var statusBarAnimation: UIStatusBarAnimation {
+        return .fade
+    }
+    
     func setNeedUpdateStatusBar() {
         self.container?.setNeedUpdateStatusBar()
     }
@@ -76,6 +100,10 @@ public protocol IQScreenOrientable : AnyObject {
 }
 
 public extension IQScreenOrientable where Self : IQScreen {
+    
+    var supportedOrientations: UIInterfaceOrientationMask {
+        return .all
+    }
     
     func setNeedUpdateOrientations() {
         self.container?.setNeedUpdateOrientations()

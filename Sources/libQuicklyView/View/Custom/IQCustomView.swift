@@ -5,13 +5,12 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQCustomView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQCustomView : IQView, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var gestures: [IQGesture] { get }
     var layout: IQLayout { get }
     var contentSize: QSize { get }
     var shouldHighlighting: Bool { get }
-    var isHighlighted: Bool { get }
     
     @discardableResult
     func gestures(_ value: [IQGesture]) -> Self
@@ -27,11 +26,5 @@ public protocol IQCustomView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     @discardableResult
     func shouldHighlighting(_ value: Bool) -> Self
-    
-    @discardableResult
-    func isHighlighted(_ value: Bool) -> Self
-    
-    @discardableResult
-    func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self
 
 }

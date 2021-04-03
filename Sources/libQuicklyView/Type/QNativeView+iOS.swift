@@ -11,6 +11,9 @@ public typealias QNativeView = UIView
 public extension UIView {
     
     func isChild(of view: UIView, recursive: Bool) -> Bool {
+        if self === view {
+            return true
+        }
         for subview in self.subviews {
             if subview === view {
                 return true

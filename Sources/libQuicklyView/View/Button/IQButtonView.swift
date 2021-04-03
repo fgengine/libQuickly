@@ -17,7 +17,7 @@ public enum QButtonViewImagePosition {
     case bottom
 }
 
-public protocol IQButtonView : IQView, IQViewSelectable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var inset: QInset { get }
     var backgroundView: IQView { get }
@@ -29,7 +29,6 @@ public protocol IQButtonView : IQView, IQViewSelectable, IQViewColorable, IQView
     var imageView: IQView? { get }
     var textInset: QInset { get }
     var textView: IQView? { get }
-    var isHighlighted: Bool { get }
     
     @discardableResult
     func inset(_ value: QInset) -> Self
@@ -48,12 +47,6 @@ public protocol IQButtonView : IQView, IQViewSelectable, IQViewColorable, IQView
     
     @discardableResult
     func textInset(_ value: QInset) -> Self
-    
-    @discardableResult
-    func highlighted(_ value: Bool) -> Self
-    
-    @discardableResult
-    func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self
     
     @discardableResult
     func onPressed(_ value: (() -> Void)?) -> Self

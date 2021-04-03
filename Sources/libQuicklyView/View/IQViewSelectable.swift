@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQViewSelectable : AnyObject {
+public protocol IQViewSelectable : IQViewStyleable {
     
     var isSelected: Bool { get }
     

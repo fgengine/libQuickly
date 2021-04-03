@@ -19,12 +19,14 @@ public protocol IQLayout : AnyObject {
     
     func setNeedUpdate(_ isResized: Bool)
     func updateIfNeeded()
+    
+    func invalidate()
 
     func layout(bounds: QRect) -> QSize
     
     func size(_ available: QSize) -> QSize
     
-    func items(bounds: QRect) -> [IQLayoutItem]
+    func items(bounds: QRect) -> [QLayoutItem]
     
 }
 
@@ -32,6 +34,7 @@ public extension IQLayout {
     
     func setNeedUpdate(_ isResized: Bool = false) {
         if isResized == true {
+            self.invalidate()
             self.parentView?.parentLayout?.setNeedUpdate()
         }
         self.delegate?.setNeedUpdate(self)
@@ -41,9 +44,9 @@ public extension IQLayout {
         self.delegate?.updateIfNeeded(self)
     }
     
-    func visible(items: [IQLayoutItem], for bounds: QRect) -> [IQLayoutItem] {
+    func visible(items: [QLayoutItem], for bounds: QRect) -> [QLayoutItem] {
         guard let firstIndex = items.firstIndex(where: { return bounds.isIntersects(rect: $0.frame) }) else { return [] }
-        var result: [IQLayoutItem] = [ items[firstIndex] ]
+        var result: [QLayoutItem] = [ items[firstIndex] ]
         let start = min(firstIndex + 1, items.count)
         let end = items.count
         for index in start..<end {
@@ -55,6 +58,35 @@ public extension IQLayout {
             }
         }
         return result
+    }
+    
+}
+
+public class QLayoutItem {
+    
+    public var frame: QRect
+    public private(set) var view: IQView
+    
+    public init(
+        view: IQView
+    ) {
+        self.frame = QRect()
+        self.view = view
+        
+        self.view.item = self
+    }
+    
+    deinit {
+        self.view.item = nil
+    }
+    
+}
+
+public extension QLayoutItem {
+    
+    @inlinable
+    func size(_ available: QSize) -> QSize {
+        return self.view.size(available)
     }
     
 }

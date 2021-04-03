@@ -10,36 +10,31 @@ import libQuicklyCore
 
 public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreenContainer {
     
-    public weak var parentContainer: IQContainer? {
+    public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parentContainer !== oldValue {
+            if self.parent !== oldValue {
                 self.didChangeInsets()
             }
         }
     }
+    public var shouldInteractive: Bool {
+        return self.screen.shouldInteractive
+    }
     #if os(iOS)
     public var statusBarHidden: Bool {
-        guard let screen = self.screen as? IQScreenStatusable else {
-            return false
-        }
+        guard let screen = self.screen as? IQScreenStatusable else { return false }
         return screen.statusBarHidden
     }
     public var statusBarStyle: UIStatusBarStyle {
-        guard let screen = self.screen as? IQScreenStatusable else {
-            return .default
-        }
+        guard let screen = self.screen as? IQScreenStatusable else { return .default }
         return screen.statusBarStyle
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        guard let screen = self.screen as? IQScreenStatusable else {
-            return .fade
-        }
+        guard let screen = self.screen as? IQScreenStatusable else { return .fade }
         return screen.statusBarAnimation
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        guard let screen = self.screen as? IQScreenOrientable else {
-            return .all
-        }
+        guard let screen = self.screen as? IQScreenOrientable else { return .all }
         return screen.supportedOrientations
     }
     #endif
@@ -53,6 +48,10 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
         self.isPresented = false
         self.screen = screen
         self._init()
+    }
+    
+    deinit {
+        self.screen.destroy()
     }
     
     public func insets(of container: IQContainer) -> QInset {
@@ -95,6 +94,7 @@ private extension QScreenContainer {
     
     func _init() {
         self.screen.container = self
+        self.screen.setup()
     }
     
 }
@@ -119,10 +119,60 @@ extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStac
     
 }
 
+extension QScreenContainer : IQGroupContentContainer where Screen : IQScreenGroupable {
+    
+    public var groupItemView: IQBarItemView {
+        return self.screen.groupItemView
+    }
+    
+}
+
 extension QScreenContainer : IQPageContentContainer where Screen : IQScreenPageable {
     
-    public var pageItemView: IQView & IQViewSelectable {
+    public var pageItemView: IQBarItemView {
         return self.screen.pageItemView
+    }
+    
+}
+
+extension QScreenContainer : IQHamburgerContentContainer {
+}
+
+extension QScreenContainer : IQHamburgerMenuContainer where Screen : IQScreenHamburgerable {
+    
+    public var hamburgerSize: QFloat {
+        return self.screen.hamburgerSize
+    }
+    
+    public var hamburgerLimit: QFloat {
+        return self.screen.hamburgerLimit
+    }
+    
+}
+
+extension QScreenContainer : IQModalContentContainer where Screen : IQScreenModalable {
+}
+
+extension QScreenContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
+    
+    public var dialogWidth: QDialogContentContainerSize {
+        return self.screen.dialogWidth
+    }
+    
+    public var dialogHeight: QDialogContentContainerSize {
+        return self.screen.dialogHeight
+    }
+    
+    public var dialogAlignment: QDialogContentContainerAlignment {
+        return self.screen.dialogAlignment
+    }
+    
+}
+
+extension QScreenContainer : IQPushContentContainer where Screen : IQScreenPushable {
+    
+    public var pushDuration: QFloat? {
+        return self.screen.pushDuration
     }
     
 }

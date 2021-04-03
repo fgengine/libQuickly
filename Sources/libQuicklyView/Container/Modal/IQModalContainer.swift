@@ -7,13 +7,14 @@ import libQuicklyCore
 
 public protocol IQModalContainer : IQContainer, IQContainerParentable {
     
-    #if os(iOS)
-    var interactiveLimit: QFloat { set get }
-    var interactiveVelocity: QFloat { set get }
-    #endif
+    var contentContainer: IQContainer & IQContainerParentable { set get }
     var containers: [IQModalContentContainer] { get }
     var previousContainer: IQModalContentContainer? { get }
     var currentContainer: IQModalContentContainer? { get }
+    var animationVelocity: QFloat { set get }
+    #if os(iOS)
+    var interactiveLimit: QFloat { set get }
+    #endif
     
     func present(container: IQModalContentContainer, animated: Bool, completion: (() -> Void)?)
     func dismiss(container: IQModalContentContainer, animated: Bool, completion: (() -> Void)?)
@@ -32,17 +33,26 @@ public extension IQModalContainer {
     
 }
 
-public protocol IQModalContentContainer : IQContainer {
+public protocol IQModalContentContainer : IQContainer, IQContainerParentable {
     
-    var modalContainer: IQModalContainer? { set get }
+    var modalContainer: IQModalContainer? { get }
     
 }
 
-public extension IQModalContentContainer where Self : IQContainerParentable {
+public extension IQModalContentContainer {
     
+    @inlinable
     var modalContainer: IQModalContainer? {
-        set(value) { self.parentContainer = value }
-        get { return self.parentContainer as? IQModalContainer }
+        return self.parent as? IQModalContainer
+    }
+    
+    @inlinable
+    func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
+        guard let modalContainer = self.modalContainer else {
+            completion?()
+            return
+        }
+        modalContainer.dismiss(container: self, animated: animated, completion: completion)
     }
     
 }

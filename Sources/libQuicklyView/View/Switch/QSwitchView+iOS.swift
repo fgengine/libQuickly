@@ -12,6 +12,10 @@ extension QSwitchView {
     final class SwitchView : UIView {
         
         unowned var customDelegate: SwitchViewDelegate?
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QSwitchView?
         private var _switch: UISwitch!
@@ -61,6 +65,7 @@ extension QSwitchView.SwitchView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(thumbColor: QColor) {
@@ -79,6 +84,11 @@ extension QSwitchView.SwitchView {
         self._switch.isOn = value
     }
     
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
+    }
+    
 }
 
 private extension QSwitchView.SwitchView {
@@ -92,24 +102,23 @@ private extension QSwitchView.SwitchView {
 
 extension QSwitchView.SwitchView : IQReusable {
     
-    typealias View = QSwitchView
-    typealias Item = QSwitchView.SwitchView
+    typealias Owner = QSwitchView
+    typealias Content = QSwitchView.SwitchView
 
     static var reuseIdentificator: String {
         return "QSwitchView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

@@ -11,24 +11,9 @@ extension QProgressView {
     
     final class ProgressView : UIProgressView {
         
-        var qProgressColor: QColor {
-            set(value) { self._progress.progressTintColor = value.native }
-            get { return QColor(self._progress.progressTintColor!) }
-        }
-        var qTrackColor: QColor {
-            set(value) { self._progress.trackTintColor = value.native }
-            get { return QColor(self._progress.trackTintColor!) }
-        }
-        var qProgress: QFloat {
-            set(value) { self._progress.progress = value }
-            get { return QFloat(self._progress.progress) }
-        }
-        var qAlpha: QFloat {
-            set(value) { self.alpha = CGFloat(value) }
-            get { return QFloat(self.alpha) }
-        }
-        var qIsAppeared: Bool {
-            return self.superview != nil
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
         }
         
         private unowned var _view: QProgressView?
@@ -92,26 +77,31 @@ extension QProgressView.ProgressView {
         self._progress.progress = progress
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QProgressView.ProgressView : IQReusable {
     
-    typealias View = QProgressView
-    typealias Item = QProgressView.ProgressView
+    typealias Owner = QProgressView
+    typealias Content = QProgressView.ProgressView
 
     static var reuseIdentificator: String {
         return "QProgressView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

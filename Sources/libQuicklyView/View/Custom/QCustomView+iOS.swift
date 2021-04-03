@@ -22,6 +22,10 @@ extension QCustomView {
                 self.updateShadowPath()
             }
         }
+        override var debugDescription: String {
+            guard let view = self._view else { return super.debugDescription }
+            return view.debugDescription
+        }
         
         private unowned var _view: QCustomView?
         private var _layoutManager: QLayoutManager!
@@ -111,6 +115,7 @@ extension QCustomView.CustomView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(gestures: [IQGesture]) {
@@ -135,6 +140,11 @@ extension QCustomView.CustomView {
         if self.isAppeared == true {
             self.setNeedsLayout()
         }
+    }
+    
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
     }
     
     func add(gesture: IQGesture) {
@@ -168,24 +178,23 @@ extension QCustomView.CustomView : IQLayoutDelegate {
 
 extension QCustomView.CustomView : IQReusable {
     
-    typealias View = QCustomView
-    typealias Item = QCustomView.CustomView
+    typealias Owner = QCustomView
+    typealias Content = QCustomView.CustomView
 
     static var reuseIdentificator: String {
         return "QCustomView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

@@ -62,26 +62,31 @@ extension QImageView.ImageView {
         }
     }
     
+    func cleanup() {
+        self._view = nil
+    }
+    
 }
 
 extension QImageView.ImageView : IQReusable {
     
-    typealias View = QImageView
-    typealias Item = QImageView.ImageView
+    typealias Owner = QImageView
+    typealias Content = QImageView.ImageView
 
     static var reuseIdentificator: String {
         return "QImageView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: CGRect.zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: CGRect.zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

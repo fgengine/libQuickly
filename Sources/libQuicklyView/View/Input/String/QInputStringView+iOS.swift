@@ -73,6 +73,7 @@ extension QInputStringView.InputStringView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(text: String) {
@@ -127,6 +128,11 @@ extension QInputStringView.InputStringView {
         }
     }
     
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
+    }
+    
 }
 
 extension QInputStringView.InputStringView : UITextFieldDelegate {
@@ -150,24 +156,23 @@ extension QInputStringView.InputStringView : UITextFieldDelegate {
 
 extension QInputStringView.InputStringView : IQReusable {
     
-    typealias View = QInputStringView
-    typealias Item = QInputStringView.InputStringView
+    typealias Owner = QInputStringView
+    typealias Content = QInputStringView.InputStringView
 
     static var reuseIdentificator: String {
         return "QInputStringView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

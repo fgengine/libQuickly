@@ -6,6 +6,18 @@ import Foundation
 
 public extension Array {
     
+    @inlinable
+    func count(where: (_ element: Element) -> Bool) -> Int {
+        var result = 0
+        for element in self {
+            if `where`(element) == true {
+                result += 1
+            }
+        }
+        return result
+    }
+    
+    @inlinable
     func processing(
         prefix: (() throws -> Element?)? = nil,
         suffix: (() throws -> Element?)? = nil,
@@ -40,6 +52,7 @@ public extension Array {
         return result
     }
     
+    @inlinable
     func processing(
         prefix: (() throws -> [Element])? = nil,
         suffix: (() throws -> [Element])? = nil,

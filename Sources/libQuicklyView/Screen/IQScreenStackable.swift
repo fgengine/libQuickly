@@ -31,3 +31,36 @@ public extension IQScreenStackable {
     }
     
 }
+
+public extension IQScreenStackable where Self : IQScreen {
+    
+    @inlinable
+    var stackContentContainer: IQStackContentContainer? {
+        guard let contentContainer = self.container as? IQStackContentContainer else { return nil }
+        return contentContainer
+    }
+    
+    @inlinable
+    var stackContainer: IQStackContainer? {
+        return self.stackContentContainer?.stackContainer
+    }
+    
+    @inlinable
+    func pop(animated: Bool = true, completion: (() -> Void)? = nil) {
+        guard let stackContainer = self.stackContainer else {
+            completion?()
+            return
+        }
+        stackContainer.pop(animated: animated, completion: completion)
+    }
+    
+    @inlinable
+    func popToRoot(animated: Bool = true, completion: (() -> Void)? = nil) {
+        guard let stackContainer = self.stackContainer else {
+            completion?()
+            return
+        }
+        stackContainer.popToRoot(animated: animated, completion: completion)
+    }
+    
+}

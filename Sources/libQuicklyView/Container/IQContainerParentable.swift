@@ -10,24 +10,24 @@ import libQuicklyCore
 
 public protocol IQContainerParentable : AnyObject {
     
-    var parentContainer: IQContainer? { set get }
+    var parent: IQContainer? { set get }
     
 }
 
 public extension IQContainerParentable where Self : IQContainer {
     
     var inheritedInsets: QInset {
-        return self.parentContainer?.insets(of: self) ?? QInset()
+        return self.parent?.insets(of: self) ?? QInset()
     }
     
     #if os(iOS)
     
     func setNeedUpdateStatusBar() {
-        self.parentContainer?.setNeedUpdateStatusBar()
+        self.parent?.setNeedUpdateStatusBar()
     }
     
     func setNeedUpdateOrientations() {
-        self.parentContainer?.setNeedUpdateOrientations()
+        self.parent?.setNeedUpdateOrientations()
     }
     
     #endif

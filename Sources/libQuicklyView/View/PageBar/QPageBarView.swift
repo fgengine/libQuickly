@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public final class QPageBarView : QBarView, IQPageBarView {
+public class QPageBarView : QBarView, IQPageBarView {
     
     public var delegate: IQPageBarViewDelegate?
     public private(set) var indicatorView: IQView {
@@ -14,15 +14,34 @@ public final class QPageBarView : QBarView, IQPageBarView {
             self._contentLayout.indicatorItem = QLayoutItem(view: self.indicatorView)
         }
     }
-    public private(set) var views: [IQView] {
-        didSet(oldValue) {
-            self._contentLayout.items = self.views.compactMap({ QLayoutItem(view: $0) })
-        }
+    public private(set) var itemInset: QInset {
+        set(value) { self._contentLayout.itemInset = value }
+        get { return self._contentLayout.itemInset }
     }
-    public private(set) var selectedView: IQView? {
-        didSet(oldValue) {
-            guard self.selectedView !== oldValue else { return }
-            if let selectedView = self.selectedView {
+    public private(set) var itemSpacing: QFloat {
+        set(value) { self._contentLayout.itemSpacing = value }
+        get { return self._contentLayout.itemSpacing }
+    }
+    public private(set) var itemViews: [IQBarItemView] {
+        set(value) {
+            for itemView in self._itemViews {
+                itemView.delegate = nil
+            }
+            self._itemViews = value
+            for itemView in self._itemViews {
+                itemView.delegate = self
+            }
+            self._contentLayout.items = self.itemViews.compactMap({ QLayoutItem(view: $0) })
+        }
+        get { return self._itemViews }
+    }
+    public private(set) var selectedItemView: IQBarItemView? {
+        set(value) {
+            guard self._selectedItemView !== value else { return }
+            self._selectedItemView?.select(false)
+            self._selectedItemView = value
+            if let selectedView = self._selectedItemView {
+                selectedView.select(true)
                 if let contentOffset = self._contentView.contentOffset(with: selectedView, horizontal: .center, vertical: .center) {
                     self._contentView.contentOffset(contentOffset, normalized: true)
                 }
@@ -33,34 +52,44 @@ public final class QPageBarView : QBarView, IQPageBarView {
                 self._contentLayout.indicatorState = .empty
             }
         }
+        get { return self._selectedItemView }
     }
     
     private var _contentLayout: Layout
     private var _contentView: QScrollView
+    private var _itemViews: [IQBarItemView]
+    private var _selectedItemView: IQBarItemView?
     private var _transitionContentOffset: QPoint?
     private var _transitionSelectedView: IQView?
     
     public init(
+        name: String? = nil,
         indicatorView: IQView,
+        itemInset: QInset = QInset(horizontal: 12, vertical: 0),
+        itemSpacing: QFloat = 4,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: QFloat = 1
     ) {
+        let name = name ?? String(describing: Self.self)
         self.indicatorView = indicatorView
-        self.views = []
+        self._itemViews = []
         self._contentLayout = Layout(
             indicatorItem: QLayoutItem(view: indicatorView),
             indicatorState: .empty,
-            itemSpacing: 10,
+            itemInset: itemInset,
+            itemSpacing: itemSpacing,
             items: []
         )
         self._contentView = QScrollView(
+            name: "\(name)-BarView",
             direction: .horizontal,
             layout: self._contentLayout
         )
         super.init(
+            name: name,
             contentView: self._contentView,
             color: color,
             border: border,
@@ -77,23 +106,35 @@ public final class QPageBarView : QBarView, IQPageBarView {
     }
     
     @discardableResult
-    public func views(_ value: [IQView]) -> Self {
-        self.views = value
+    public func itemInset(_ value: QInset) -> Self {
+        self.itemInset = value
         return self
     }
     
     @discardableResult
-    public func selectedView(_ value: IQView?) -> Self {
-        self.selectedView = value
+    public func itemSpacing(_ value: QFloat) -> Self {
+        self.itemSpacing = value
+        return self
+    }
+    
+    @discardableResult
+    public func itemViews(_ value: [IQBarItemView]) -> Self {
+        self.itemViews = value
+        return self
+    }
+    
+    @discardableResult
+    public func selectedItemView(_ value: IQBarItemView?) -> Self {
+        self.selectedItemView = value
         return self
     }
     
     public func beginTransition() {
         self._transitionContentOffset = self._contentView.contentOffset
-        self._transitionSelectedView = self.selectedView
+        self._transitionSelectedView = self._selectedItemView
     }
     
-    public func changeTransition(to view: IQView, progress: QFloat) {
+    public func transition(to view: IQBarItemView, progress: QFloat) {
         if let currentContentOffset = self._transitionContentOffset {
             if let targetContentOffset = self._contentView.contentOffset(with: view, horizontal: .center, vertical: .center) {
                 self._contentView.contentOffset(currentContentOffset.lerp(targetContentOffset, progress: progress), normalized: true)
@@ -104,15 +145,23 @@ public final class QPageBarView : QBarView, IQPageBarView {
         }
     }
     
-    public func finishTransition(to view: IQView) {
+    public func finishTransition(to view: IQBarItemView) {
         self._transitionContentOffset = nil
         self._transitionSelectedView = nil
-        self.selectedView = view
+        self.selectedItemView = view
     }
     
     public func cancelTransition() {
         self._transitionContentOffset = nil
         self._transitionSelectedView = nil
+    }
+    
+}
+
+extension QPageBarView : IQBarItemViewDelegate {
+    
+    public func pressed(barItemView: IQBarItemView) {
+        self.delegate?.pressed(pageBar: self, itemView: barItemView)
     }
     
 }
@@ -123,97 +172,77 @@ private extension QPageBarView {
         
         enum IndicatorState {
             case empty
-            case alias(current: IQLayoutItem)
-            case transition(current: IQLayoutItem, next: IQLayoutItem, progress: QFloat)
+            case alias(current: QLayoutItem)
+            case transition(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
         }
         
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
-        var indicatorItem: IQLayoutItem {
+        unowned var delegate: IQLayoutDelegate?
+        unowned var parentView: IQView?
+        var indicatorItem: QLayoutItem {
             didSet { self.setNeedUpdate() }
         }
         var indicatorState: IndicatorState {
             didSet { self.setNeedUpdate() }
         }
+        var itemInset: QInset {
+            didSet { self.setNeedUpdate() }
+        }
         var itemSpacing: QFloat {
             didSet { self.setNeedUpdate() }
         }
-        var items: [IQLayoutItem] {
-            didSet { self.setNeedUpdate() }
+        var items: [QLayoutItem] {
+            didSet {
+                self.invalidate()
+                self.setNeedUpdate()
+            }
         }
+        
+        private var _cache: [Int : QSize]
 
         init(
-            indicatorItem: IQLayoutItem,
+            indicatorItem: QLayoutItem,
             indicatorState: IndicatorState,
+            itemInset: QInset,
             itemSpacing: QFloat,
-            items: [IQLayoutItem]
+            items: [QLayoutItem]
         ) {
             self.indicatorItem = indicatorItem
             self.indicatorState = indicatorState
+            self.itemInset = itemInset
             self.itemSpacing = itemSpacing
             self.items = items
+            self._cache = [:]
+        }
+        
+        func invalidate() {
+            self._cache.removeAll()
         }
         
         func layout(bounds: QRect) -> QSize {
-            var size = QSize(width: 0, height: bounds.size.height)
-            if self.items.count > 1 {
-                var sizes: [QFloat] = []
-                for item in self.items {
-                    let itemSize = item.size(QSize(width: bounds.size.width, height: bounds.size.height))
-                    sizes.append(itemSize.width)
-                    size.width += itemSize.width + self.itemSpacing
-                    size.height = bounds.size.height
-                }
-                size.width -= self.itemSpacing
-                let additionalItemSize: QFloat
-                if size.width < bounds.size.width {
-                    additionalItemSize = (bounds.size.width - size.width) / QFloat(self.items.count)
-                    size.width = bounds.size.width
-                } else {
-                    additionalItemSize = 0
-                }
-                var origin = bounds.origin
-                for index in 0 ..< self.items.count {
-                    let item = self.items[index]
-                    let itemSize = sizes[index]
-                    item.frame = QRect(
-                        x: origin.x,
-                        y: origin.y,
-                        width: itemSize + additionalItemSize,
-                        height: bounds.size.height
-                    )
-                    origin.x += itemSize + additionalItemSize + self.itemSpacing
-                }
-            } else if let item = self.items.first {
-                item.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y,
-                    width: bounds.size.width,
-                    height: bounds.size.height
-                )
-            }
-            return size
+            return QStackLayoutHelper.layout(
+                bounds: bounds,
+                direction: .horizontal,
+                origin: .forward,
+                inset: self.itemInset,
+                spacing: self.itemSpacing,
+                maxSize: bounds.size.width,
+                items: self.items,
+                sizeCache: &self._cache
+            )
         }
         
         func size(_ available: QSize) -> QSize {
-            var size = QSize(width: 0, height: available.height)
-            if self.items.count > 1 {
-                for item in self.items {
-                    let itemSize = item.size(QSize(width: available.width, height: available.height))
-                    size.width += itemSize.width + self.itemSpacing
-                    size.height = available.height
-                }
-                size.width -= self.itemSpacing
-                if size.width < available.width {
-                    size.width = available.width
-                }
-            } else {
-                size.width = available.width
-            }
-            return size
+            return QStackLayoutHelper.size(
+                available: available,
+                direction: .horizontal,
+                inset: self.itemInset,
+                spacing: self.itemSpacing,
+                maxSize: available.width,
+                items: self.items
+            )
         }
         
-        func items(bounds: QRect) -> [IQLayoutItem] {
+        func items(bounds: QRect) -> [QLayoutItem] {
             var items = self.visible(items: self.items, for: bounds)
             switch self.indicatorState {
             case .empty:

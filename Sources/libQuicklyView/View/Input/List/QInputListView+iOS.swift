@@ -79,6 +79,7 @@ extension QInputListView.InputListView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(items: [IQInputListViewItem]) {
@@ -131,6 +132,11 @@ extension QInputListView.InputListView {
     
     func update(toolbar: IQInputToolbarView?) {
         self.inputAccessoryView = toolbar?.native
+    }
+    
+    func cleanup() {
+        self.customDelegate = nil
+        self._view = nil
     }
     
 }
@@ -198,24 +204,23 @@ extension QInputListView.InputListView : UIPickerViewDelegate {
 
 extension QInputListView.InputListView : IQReusable {
     
-    typealias View = QInputListView
-    typealias Item = QInputListView.InputListView
+    typealias Owner = QInputListView
+    typealias Content = QInputListView.InputListView
 
     static var reuseIdentificator: String {
         return "QInputListView"
     }
     
-    static func createReuseItem(view: View) -> Item {
-        return Item(frame: .zero)
+    static func createReuse(owner: Owner) -> Content {
+        return Content(frame: .zero)
     }
     
-    static func configureReuseItem(view: View, item: Item) {
-        item.update(view: view)
-        item.customDelegate = view
+    static func configureReuse(owner: Owner, content: Content) {
+        content.update(view: owner)
     }
     
-    static func cleanupReuseItem(view: View, item: Item) {
-        item.customDelegate = nil
+    static func cleanupReuse(owner: Owner, content: Content) {
+        content.cleanup()
     }
     
 }

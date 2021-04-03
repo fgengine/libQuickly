@@ -8,14 +8,17 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContainerScreenable {
+public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQContainerScreenable {
     
-    public weak var parentContainer: IQContainer? {
+    public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parentContainer !== oldValue {
+            if self.parent !== oldValue {
                 self.didChangeInsets()
             }
         }
+    }
+    public var shouldInteractive: Bool {
+        return self.currentContainer?.shouldInteractive ?? false
     }
     #if os(iOS)
     public var statusBarHidden: Bool {
@@ -36,46 +39,99 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
         return self._rootView
     }
     public private(set) var screen: Screen
+    public private(set) var barView: IQGroupBarView {
+        set(value) {
+            guard self._barView !== value else { return }
+            self._barView.delegate = nil
+            self._barView = value
+            self._barView.delegate = self
+            self._rootLayout.barItem = QLayoutItem(view: self._barView)
+        }
+        get { return self._barView }
+    }
+    public private(set) var barSize: QFloat {
+        set(value) { self._rootLayout.barSize = value }
+        get { return self._rootLayout.barSize }
+    }
+    public private(set) var barVisibility: QFloat {
+        set(value) { self._rootLayout.barVisibility = value }
+        get { return self._rootLayout.barVisibility }
+    }
+    public private(set) var barHidden: Bool {
+        set(value) { self._rootLayout.barHidden = value }
+        get { return self._rootLayout.barHidden }
+    }
     public var containers: [IQGroupContentContainer] {
         return self._items.compactMap({ $0.container })
+    }
+    public var backwardContainer: IQGroupContentContainer? {
+        guard let current = self._current else { return nil }
+        guard let index = self._items.firstIndex(where: { $0 === current }) else { return nil }
+        return index > 0 ? self._items[index - 1].container : nil
     }
     public var currentContainer: IQGroupContentContainer? {
         return self._current?.container
     }
+    public var forwardContainer: IQGroupContentContainer? {
+        guard let current = self._current else { return nil }
+        guard let index = self._items.firstIndex(where: { $0 === current }) else { return nil }
+        return index < self._items.count - 1 ? self._items[index + 1].container : nil
+    }
+    public var animationVelocity: QFloat
     
-    private var _barView: QScrollView
-    private var _barLayout: BarLayout
+    private var _barView: IQGroupBarView
     private var _rootView: QCustomView
     private var _rootLayout: RootLayout
     private var _items: [Item]
     private var _current: Item?
     
-    public init(screen: Screen) {
+    public init(
+        screen: Screen,
+        containers: [IQGroupContentContainer],
+        current: IQGroupContentContainer?
+    ) {
         self.isPresented = false
         self.screen = screen
-        self._barLayout = BarLayout()
-        self._barView = QScrollView(
-            direction: .horizontal,
-            layout: self._barLayout
-        )
+        #if os(iOS)
+        self.animationVelocity = UIScreen.main.animationVelocity
+        #endif
+        self._barView = screen.groupBarView
         self._rootLayout = RootLayout(
-            barItem: QLayoutItem(view: self._barView)
+            barItem: QLayoutItem(view: self._barView),
+            barInset: 0,
+            barSize: screen.groupBarSize,
+            barVisibility: screen.groupBarVisibility,
+            barHidden: screen.groupBarHidden
         )
         self._rootView = QCustomView(
+            name: "QGroupContainer-RootView",
             layout: self._rootLayout
         )
-        self._items = []
+        self._items = containers.compactMap({ Item(container: $0) })
+        if let current = current {
+            if let index = self._items.firstIndex(where: { $0.container === current }) {
+                self._current = self._items[index]
+            } else {
+                self._current = self._items.first
+            }
+        } else {
+            self._current = self._items.first
+        }
         self._init()
+    }
+    
+    deinit {
+        self.screen.destroy()
     }
     
     public func insets(of container: IQContainer) -> QInset {
         let inheritedInsets = self.inheritedInsets
-        if let item = self._items.first(where: { $0.container === container }) {
+        if self._items.contains(where: { $0.container === container }) == true {
             return QInset(
                 top: inheritedInsets.top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
-                bottom: inheritedInsets.bottom + item.container.groupBarSize
+                bottom: inheritedInsets.bottom + self.barSize
             )
         }
         return inheritedInsets
@@ -83,7 +139,7 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
     
     public func didChangeInsets() {
         let inheritedInsets = self.inheritedInsets
-        self._barView.contentInset(QInset(left: inheritedInsets.left, right: inheritedInsets.right, bottom: inheritedInsets.bottom))
+        self._barView.safeArea(QInset(left: inheritedInsets.left, right: inheritedInsets.right, bottom: inheritedInsets.bottom))
         self._rootLayout.barInset = inheritedInsets.bottom
         for item in self._items {
             item.container.didChangeInsets()
@@ -91,29 +147,41 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
     }
     
     public func prepareShow(interactive: Bool) {
+        self.screen.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
     }
     
     public func finishShow(interactive: Bool) {
         self.isPresented = true
+        self.screen.finishShow(interactive: interactive)
         self.currentContainer?.finishShow(interactive: interactive)
     }
     
     public func cancelShow(interactive: Bool) {
+        self.screen.cancelShow(interactive: interactive)
         self.currentContainer?.cancelShow(interactive: interactive)
     }
     
     public func prepareHide(interactive: Bool) {
+        self.screen.prepareHide(interactive: interactive)
         self.currentContainer?.prepareHide(interactive: interactive)
     }
     
     public func finishHide(interactive: Bool) {
         self.isPresented = false
+        self.screen.finishHide(interactive: interactive)
         self.currentContainer?.finishHide(interactive: interactive)
     }
     
     public func cancelHide(interactive: Bool) {
+        self.screen.cancelHide(interactive: interactive)
         self.currentContainer?.cancelHide(interactive: interactive)
+    }
+    
+    public func updateBar(animated: Bool, completion: (() -> Void)?) {
+        self._barView = self.screen.groupBarView
+        self.barSize = self.screen.groupBarSize
+        completion?()
     }
     
     public func update(container: IQGroupContentContainer, animated: Bool, completion: (() -> Void)?) {
@@ -122,10 +190,7 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
             return
         }
         item.update()
-        let barSize = self._groupBarSize()
-        self._barLayout.itemSize = barSize
-        self._barLayout.items = self._items.compactMap({ $0.barItem })
-        self._rootLayout.barSize = barSize
+        self._barView.itemViews(self._items.compactMap({ $0.barView }))
     }
     
     public func set(containers: [IQGroupContentContainer], current: IQGroupContentContainer?, animated: Bool, completion: (() -> Void)?) {
@@ -134,17 +199,14 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
             return containers.contains(where: { item.container === $0 && oldCurrent?.container !== $0 }) == false
         })
         for item in removeItems {
-            item.container.groupContainer = nil
+            item.container.parent = nil
         }
         let inheritedInsets = self.inheritedInsets
         self._items = containers.compactMap({ Item(container: $0, insets: inheritedInsets) })
         for item in self._items {
-            item.container.groupContainer = self
+            item.container.parent = self
         }
-        let barSize = self._groupBarSize()
-        self._barLayout.itemSize = barSize
-        self._barLayout.items = self._items.compactMap({ $0.barItem })
-        self._rootLayout.barSize = barSize
+        self._barView.itemViews(self._items.compactMap({ $0.barView }))
         let newCurrent: Item?
         if current != nil {
             newCurrent = self._items.first(where: { $0.container === current })
@@ -168,9 +230,9 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
         }
         let newCurrent = self._items[newIndex]
         if let oldCurrent = self._current {
-            if oldCurrent !== current {
+            if oldCurrent !== newCurrent {
                 self._current = newCurrent
-                let oldIndex = self._items.firstIndex(where: { $0.container === oldCurrent })!
+                let oldIndex = self._items.firstIndex(where: { $0 === oldCurrent })!
                 if newIndex > oldIndex {
                     self._set(current: oldCurrent, forward: newCurrent, animated: animated, completion: completion)
                 } else {
@@ -186,154 +248,143 @@ public class QGroupContainer< Screen : IQScreen > : IQGroupContainer, IQContaine
     
 }
 
+extension QGroupContainer : IQGroupBarViewDelegate {
+    
+    public func pressed(groupBar: IQGroupBarView, itemView: IQView) {
+        guard let item = self._items.first(where: { $0.barView === itemView }) else { return }
+        self.set(current: item.container, animated: true, completion: nil)
+    }
+    
+}
+
+extension QGroupContainer : IQRootContentContainer {
+}
+
+extension QGroupContainer : IQStackContentContainer where Screen : IQScreenStackable {
+    
+    public var stackBarView: IQStackBarView {
+        return self.screen.stackBarView
+    }
+    
+    public var stackBarSize: QFloat {
+        return self.screen.stackBarSize
+    }
+    
+    public var stackBarVisibility: QFloat {
+        return self.screen.stackBarVisibility
+    }
+    
+    public var stackBarHidden: Bool {
+        return self.screen.stackBarHidden
+    }
+    
+}
+
+extension QGroupContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
+    
+    public var dialogWidth: QDialogContentContainerSize {
+        return self.screen.dialogWidth
+    }
+    
+    public var dialogHeight: QDialogContentContainerSize {
+        return self.screen.dialogHeight
+    }
+    
+    public var dialogAlignment: QDialogContentContainerAlignment {
+        return self.screen.dialogAlignment
+    }
+    
+}
+
+extension QGroupContainer : IQHamburgerContentContainer {
+}
+
 private extension QGroupContainer {
     
     class Item {
         
         var container: IQGroupContentContainer
-        var barItem: IQLayoutItem
-        var groupItem: IQLayoutItem
+        var barView: IQBarItemView {
+            return self.barItem.view as! IQBarItemView
+        }
+        var barItem: QLayoutItem
+        var groupView: IQView {
+            return self.groupItem.view
+        }
+        var groupItem: QLayoutItem
 
         init(
             container: IQGroupContentContainer,
-            insets: QInset
+            insets: QInset = QInset()
         ) {
             self.container = container
-            self.barItem = QLayoutItem(view: container.groupBarItemView)
+            self.barItem = QLayoutItem(view: container.groupItemView)
             self.groupItem = QLayoutItem(view: container.view)
         }
         
         func update() {
-            self.barItem = QLayoutItem(view: self.container.groupBarItemView)
+            self.barItem = QLayoutItem(view: self.container.groupItemView)
         }
 
     }
-    
-}
-
-private extension QGroupContainer {
-    
-    class BarLayout : IQLayout {
-        
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
-        var itemSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
-        }
-        var itemSize: QFloat {
-            didSet { self.setNeedUpdate() }
-        }
-        var items: [IQLayoutItem] {
-            didSet { self.setNeedUpdate() }
-        }
-
-        init(
-            itemSpacing: QFloat = 0,
-            itemSize: QFloat = 0
-        ) {
-            self.itemSpacing = itemSpacing
-            self.itemSize = itemSize
-            self.items = []
-        }
-        
-        func layout(bounds: QRect) -> QSize {
-            var size = QSize(width: 0, height: self.itemSize)
-            if self.items.count > 1 {
-                var sizes: [QFloat] = []
-                for item in self.items {
-                    let itemSize = item.size(QSize(width: bounds.size.width, height: self.itemSize))
-                    sizes.append(itemSize.width)
-                    size.width += itemSize.width + self.itemSpacing
-                    size.height = self.itemSize
-                }
-                size.width -= self.itemSpacing
-                let additionalItemSize: QFloat
-                if size.width < bounds.size.width {
-                    additionalItemSize = (bounds.size.width - size.width) / QFloat(self.items.count)
-                    size.width = bounds.size.width
-                } else {
-                    additionalItemSize = 0
-                }
-                var origin = bounds.origin
-                for index in 0 ..< self.items.count {
-                    let item = self.items[index]
-                    let itemSize = sizes[index]
-                    item.frame = QRect(
-                        x: origin.x,
-                        y: origin.y,
-                        width: itemSize + additionalItemSize,
-                        height: self.itemSize
-                    )
-                    origin.x += itemSize + additionalItemSize + self.itemSpacing
-                }
-            } else if let item = self.items.first {
-                item.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y,
-                    width: bounds.size.width,
-                    height: self.itemSize
-                )
-            }
-            return size
-        }
-        
-        func size(_ available: QSize) -> QSize {
-            var size = QSize(width: 0, height: self.itemSize)
-            if self.items.count > 1 {
-                for item in self.items {
-                    let itemSize = item.size(QSize(width: available.width, height: self.itemSize))
-                    size.width += itemSize.width + self.itemSpacing
-                    size.height = self.itemSize
-                }
-                size.width -= self.itemSpacing
-                if size.width < available.width {
-                    size.width = available.width
-                }
-            } else {
-                size.width = available.width
-            }
-            return size
-        }
-        
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            return self.items
-        }
-        
-    }
-    
-}
-
-private extension QGroupContainer {
     
     class RootLayout : IQLayout {
         
-        weak var delegate: IQLayoutDelegate?
-        weak var parentView: IQView?
-        var barInset: QFloat
-        var barSize: QFloat
-        var barItem: IQLayoutItem
+        enum State {
+            case empty
+            case idle(current: QLayoutItem)
+            case forward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
+            case backward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
+        }
+        
+        unowned var delegate: IQLayoutDelegate?
+        unowned var parentView: IQView?
+        var barItem: QLayoutItem {
+            didSet { self.setNeedUpdate() }
+        }
+        var barInset: QFloat {
+            didSet { self.setNeedUpdate() }
+        }
+        var barSize: QFloat {
+            didSet { self.setNeedUpdate() }
+        }
+        var barVisibility: QFloat {
+            didSet { self.setNeedUpdate() }
+        }
+        var barHidden: Bool {
+            didSet { self.setNeedUpdate() }
+        }
         var state: State {
             didSet { self.setNeedUpdate() }
         }
 
         init(
-            barInset: QFloat = 0,
-            barSize: QFloat = 0,
-            barItem: IQLayoutItem,
+            barItem: QLayoutItem,
+            barInset: QFloat,
+            barSize: QFloat,
+            barVisibility: QFloat,
+            barHidden: Bool,
             state: State = .empty
         ) {
+            self.barItem = barItem
             self.barInset = barInset
             self.barSize = barSize
-            self.barItem = barItem
+            self.barVisibility = barVisibility
+            self.barHidden = barHidden
             self.state = state
         }
         
+        func invalidate() {
+        }
+        
         func layout(bounds: QRect) -> QSize {
+            let barSize = self.barInset + self.barSize
+            let barOffset = barSize * (1 - self.barVisibility)
             self.barItem.frame = QRect(
                 x: bounds.origin.x,
-                y: (bounds.origin.y + bounds.size.height) - (self.barInset + self.barSize),
+                y: (bounds.origin.y + bounds.size.height) - (barSize + barOffset),
                 width: bounds.size.width,
-                height: self.barInset + self.barSize
+                height: barSize
             )
             let forwardFrame = QRect(topLeft: bounds.topRight, size: bounds.size)
             let currentFrame = bounds
@@ -357,26 +408,23 @@ private extension QGroupContainer {
             return available
         }
         
-        func items(bounds: QRect) -> [IQLayoutItem] {
-            switch self.state {
-            case .empty: return [ self.barItem ]
-            case .idle(let current): return [ current, self.barItem ]
-            case .forward(let current, let next, _): return [ current, next, self.barItem ]
-            case .backward(let current, let next, _): return [ next, current, self.barItem ]
+        func items(bounds: QRect) -> [QLayoutItem] {
+            var items: [QLayoutItem] = []
+            if self.barHidden == false {
+                items.append(self.barItem)
             }
+            switch self.state {
+            case .empty: break
+            case .idle(let current):
+                items.insert(current, at: 0)
+            case .forward(let current, let next, _):
+                items.insert(contentsOf: [ current, next ], at: 0)
+            case .backward(let current, let next, _):
+                items.insert(contentsOf: [ next, current ], at: 0)
+            }
+            return items
         }
         
-    }
-    
-}
-
-private extension QGroupContainer.RootLayout {
-    
-    enum State {
-        case empty
-        case idle(current: IQLayoutItem)
-        case forward(current: IQLayoutItem, next: IQLayoutItem, progress: QFloat)
-        case backward(current: IQLayoutItem, next: IQLayoutItem, progress: QFloat)
     }
     
 }
@@ -384,14 +432,16 @@ private extension QGroupContainer.RootLayout {
 private extension QGroupContainer {
     
     func _init() {
-    }
-    
-    func _groupBarSize() -> QFloat {
-        var barSize: QFloat = 0
+        self.screen.container = self
+        self._barView.delegate = self
         for item in self._items {
-            barSize = max(barSize, item.container.groupBarSize)
+            item.container.parent = self
         }
-        return barSize
+        self._barView.itemViews(self._items.compactMap({ $0.barView }))
+        if let current = self._current {
+            self._rootLayout.state = .idle(current: current.groupItem)
+        }
+        self.screen.setup()
     }
     
     func _set(
@@ -407,20 +457,23 @@ private extension QGroupContainer {
                     forward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: 0.2,
+                    duration: self._rootView.contentSize.width / self.animationVelocity,
+                    ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._barView.contentOffset(current.barItem.frame.center)
                         self._rootLayout.state = .forward(current: current.groupItem, next: forward.groupItem, progress: progress)
                         self._rootLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self._barView.selectedItemView(forward.barView)
                         self._rootLayout.state = .idle(current: forward.groupItem)
                         if self.isPresented == true {
                             current.container.finishHide(interactive: false)
                             forward.container.finishShow(interactive: false)
                         }
+                        self.setNeedUpdateOrientations()
+                        self.setNeedUpdateStatusBar()
                         completion?()
                     }
                 )
@@ -428,22 +481,30 @@ private extension QGroupContainer {
                 if self.isPresented == true {
                     forward.container.prepareShow(interactive: false)
                 }
+                self._barView.selectedItemView(forward.barView)
                 self._rootLayout.state = .idle(current: forward.groupItem)
                 if self.isPresented == true {
                     forward.container.finishShow(interactive: false)
                 }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             } else if let current = current {
                 if self.isPresented == true {
                     current.container.prepareHide(interactive: false)
                 }
+                self._barView.selectedItemView(nil)
                 self._rootLayout.state = .empty
                 if self.isPresented == true {
                     current.container.finishHide(interactive: false)
                 }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             } else {
                 self._rootLayout.state = .empty
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             }
         } else if let current = current, let forward = forward {
@@ -451,31 +512,44 @@ private extension QGroupContainer {
                 current.container.prepareHide(interactive: false)
                 forward.container.prepareShow(interactive: false)
             }
+            self._barView.selectedItemView(forward.barView)
             self._rootLayout.state = .idle(current: forward.groupItem)
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
                 forward.container.finishShow(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
         } else if let forward = forward {
             if self.isPresented == true {
                 forward.container.prepareShow(interactive: false)
             }
+            self._barView.selectedItemView(forward.barView)
             self._rootLayout.state = .idle(current: forward.groupItem)
             if self.isPresented == true {
                 forward.container.finishShow(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         } else if let current = current {
             if self.isPresented == true {
                 current.container.prepareHide(interactive: false)
             }
+            self._barView.selectedItemView(nil)
             self._rootLayout.state = .empty
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         } else {
+            self._barView.selectedItemView(nil)
             self._rootLayout.state = .empty
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         }
     }
@@ -493,7 +567,8 @@ private extension QGroupContainer {
                     backward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: 0.2,
+                    duration: self._rootView.contentSize.width / self.animationVelocity,
+                    ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
                         self._rootLayout.state = .backward(current: current.groupItem, next: backward.groupItem, progress: progress)
@@ -501,11 +576,14 @@ private extension QGroupContainer {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self._barView.selectedItemView(backward.barView)
                         self._rootLayout.state = .idle(current: backward.groupItem)
                         if self.isPresented == true {
                             current.container.finishHide(interactive: false)
                             backward.container.finishShow(interactive: false)
                         }
+                        self.setNeedUpdateOrientations()
+                        self.setNeedUpdateStatusBar()
                         completion?()
                     }
                 )
@@ -513,22 +591,30 @@ private extension QGroupContainer {
                 if self.isPresented == true {
                     backward.container.prepareShow(interactive: false)
                 }
+                self._barView.selectedItemView(backward.barView)
                 self._rootLayout.state = .idle(current: backward.groupItem)
                 if self.isPresented == true {
                     backward.container.finishShow(interactive: false)
                 }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             } else if let current = current {
                 if self.isPresented == true {
                     current.container.prepareHide(interactive: false)
                 }
+                self._barView.selectedItemView(nil)
                 self._rootLayout.state = .empty
                 if self.isPresented == true {
                     current.container.finishHide(interactive: false)
                 }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             } else {
                 self._rootLayout.state = .empty
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
                 completion?()
             }
         } else if let current = current, let backward = backward {
@@ -536,31 +622,44 @@ private extension QGroupContainer {
                 current.container.prepareHide(interactive: false)
                 backward.container.prepareShow(interactive: false)
             }
+            self._barView.selectedItemView(backward.barView)
             self._rootLayout.state = .idle(current: backward.groupItem)
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
                 backward.container.finishShow(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
         } else if let backward = backward {
             if self.isPresented == true {
                 backward.container.prepareShow(interactive: false)
             }
+            self._barView.selectedItemView(nil)
             self._rootLayout.state = .idle(current: backward.groupItem)
             if self.isPresented == true {
                 backward.container.finishShow(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         } else if let current = current {
             if self.isPresented == true {
                 current.container.prepareHide(interactive: false)
             }
+            self._barView.selectedItemView(nil)
             self._rootLayout.state = .empty
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
             }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         } else {
+            self._barView.selectedItemView(nil)
             self._rootLayout.state = .empty
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
             completion?()
         }
     }

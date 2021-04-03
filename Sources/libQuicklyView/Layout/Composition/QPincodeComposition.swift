@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorView: IQView, ButtonView: IQView, AccessoryView: IQView > : IQLayout {
     
-    public weak var delegate: IQLayoutDelegate?
-    public weak var parentView: IQView?
+    public unowned var delegate: IQLayoutDelegate?
+    public unowned var parentView: IQView?
     public var titleInset: QInset {
         didSet(oldValue) {
             guard self.titleInset != oldValue else { return }
@@ -22,7 +22,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var titleItem: IQLayoutItem
+    public private(set) var titleItem: QLayoutItem
     public var pincodeInset: QInset {
         didSet(oldValue) {
             guard self.pincodeInset != oldValue else { return }
@@ -36,7 +36,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var pincodeItem: IQLayoutItem
+    public private(set) var pincodeItem: QLayoutItem
     public var errorInset: QInset {
         didSet(oldValue) {
             guard self.errorInset != oldValue else { return }
@@ -54,7 +54,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var errorItem: IQLayoutItem?
+    public private(set) var errorItem: QLayoutItem?
     public var buttonsInset: QInset {
         didSet(oldValue) {
             guard self.buttonsInset != oldValue else { return }
@@ -80,7 +80,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonOneItem: IQLayoutItem
+    public private(set) var buttonOneItem: QLayoutItem
     public var buttonTwoView: ButtonView {
         didSet(oldValue) {
             guard self.buttonTwoView !== oldValue else { return }
@@ -88,7 +88,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonTwoItem: IQLayoutItem
+    public private(set) var buttonTwoItem: QLayoutItem
     public var buttonThreeView: ButtonView {
         didSet(oldValue) {
             guard self.buttonThreeView !== oldValue else { return }
@@ -96,7 +96,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonThreeItem: IQLayoutItem
+    public private(set) var buttonThreeItem: QLayoutItem
     public var buttonFourView: ButtonView {
         didSet(oldValue) {
             guard self.buttonFourView !== oldValue else { return }
@@ -104,7 +104,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonFourItem: IQLayoutItem
+    public private(set) var buttonFourItem: QLayoutItem
     public var buttonFiveView: ButtonView {
         didSet(oldValue) {
             guard self.buttonFiveView !== oldValue else { return }
@@ -112,7 +112,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonFiveItem: IQLayoutItem
+    public private(set) var buttonFiveItem: QLayoutItem
     public var buttonSixView: ButtonView {
         didSet(oldValue) {
             guard self.buttonSixView !== oldValue else { return }
@@ -120,7 +120,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonSixItem: IQLayoutItem
+    public private(set) var buttonSixItem: QLayoutItem
     public var buttonEightView: ButtonView {
         didSet(oldValue) {
             guard self.buttonEightView !== oldValue else { return }
@@ -128,7 +128,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonEightItem: IQLayoutItem
+    public private(set) var buttonEightItem: QLayoutItem
     public var buttonNineView: ButtonView {
         didSet(oldValue) {
             guard self.buttonNineView !== oldValue else { return }
@@ -136,7 +136,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonNineItem: IQLayoutItem
+    public private(set) var buttonNineItem: QLayoutItem
     public var buttonZeroView: ButtonView {
         didSet(oldValue) {
             guard self.buttonZeroView !== oldValue else { return }
@@ -144,7 +144,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var buttonZeroItem: IQLayoutItem
+    public private(set) var buttonZeroItem: QLayoutItem
     public var accessoryLeftView: AccessoryView? {
         didSet(oldValue) {
             guard self.accessoryLeftView !== oldValue else { return }
@@ -156,7 +156,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var accessoryLeftItem: IQLayoutItem?
+    public private(set) var accessoryLeftItem: QLayoutItem?
     public var accessoryRightView: AccessoryView? {
         didSet(oldValue) {
             guard self.accessoryRightView !== oldValue else { return }
@@ -168,7 +168,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             self.setNeedUpdate()
         }
     }
-    public private(set) var accessoryRightItem: IQLayoutItem?
+    public private(set) var accessoryRightItem: QLayoutItem?
     
     public init(
         titleInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -232,6 +232,9 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         if let view = accessoryRightView {
             self.accessoryRightItem = QLayoutItem(view: view)
         }
+    }
+    
+    public func invalidate() {
     }
     
     public func layout(bounds: QRect) -> QSize {
@@ -322,8 +325,8 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         return result
     }
     
-    public func items(bounds: QRect) -> [IQLayoutItem] {
-        var items: [IQLayoutItem] = [
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        var items: [QLayoutItem] = [
             self.titleItem,
             self.pincodeItem,
         ]
@@ -347,7 +350,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         if let item = self.accessoryRightItem {
             items.append(item)
         }
-        return self.visible(items: items, for: bounds)
+        return items
     }
     
 }

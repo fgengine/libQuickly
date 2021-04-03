@@ -40,6 +40,20 @@ public struct QInset : Hashable {
 public extension QInset {
     
     @inlinable
+    var horizontal: QFloat {
+        return self.left + self.right
+    }
+    
+    @inlinable
+    var vertical: QFloat {
+        return self.top + self.bottom
+    }
+    
+}
+
+public extension QInset {
+    
+    @inlinable
     static prefix func - (inset: QInset) -> QInset {
         return QInset(
             top: -inset.top,

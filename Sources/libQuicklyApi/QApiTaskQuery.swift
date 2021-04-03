@@ -23,9 +23,9 @@ public final class QApiTaskQuery< RequestType: IQApiRequest, ResponseType: IQApi
     public private(set) var onUpload: ProgressClosure?
     public private(set) var onCompleted: CompleteClosure
 
-    internal var receivedResponse: URLResponse?
-    internal var receivedData: Data?
-    internal var canceled: Bool = false
+    var receivedResponse: URLResponse?
+    var receivedData: Data?
+    var canceled: Bool = false
 
     public init(
         provider: IQApiProvider,
