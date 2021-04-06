@@ -146,6 +146,16 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         }
     }
     
+    public func activate() -> Bool {
+        if self.screen.activate() == true {
+            return true
+        }
+        if let current = self._current?.container {
+            return current.activate()
+        }
+        return false
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.screen.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
@@ -252,7 +262,11 @@ extension QGroupContainer : IQGroupBarViewDelegate {
     
     public func pressed(groupBar: IQGroupBarView, itemView: IQView) {
         guard let item = self._items.first(where: { $0.barView === itemView }) else { return }
-        self.set(current: item.container, animated: true, completion: nil)
+        if self._current === item {
+            self.activate()
+        } else {
+            self.set(current: item.container, animated: true, completion: nil)
+        }
     }
     
 }

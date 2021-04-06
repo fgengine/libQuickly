@@ -79,4 +79,28 @@ public extension IQScrollView {
         return self.contentOffset(value, normalized: normalized)
     }
     
+    func scrollToTop(animated: Bool = true, completion: (() -> Void)? = nil) {
+        let contentInset = self.contentInset
+        let beginContentOffset = self.contentOffset
+        let endContentOffset = QPoint(x: -contentInset.left, y: -contentInset.top)
+        let deltaContentOffset = abs(beginContentOffset.distance(to: endContentOffset))
+        if animated == true && deltaContentOffset > 0 {
+            let velocity = max(self.bounds.width, self.bounds.height)
+            QAnimation.default.run(
+                duration: deltaContentOffset / velocity,
+                ease: QAnimation.Ease.QuadraticInOut(),
+                processing: { [unowned self] progress in
+                    let contentOffset = beginContentOffset.lerp(endContentOffset, progress: progress)
+                    self.contentOffset(contentOffset)
+                },
+                completion: {
+                    completion?()
+                }
+            )
+        } else {
+            self.contentOffset(QPoint(x: -contentInset.left, y: -contentInset.top))
+            completion?()
+        }
+    }
+    
 }

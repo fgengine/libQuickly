@@ -136,6 +136,17 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         }
     }
     
+    public func activate() -> Bool {
+        if self.screen.activate() == true {
+            return true
+        }
+        if self._items.count > 0 {
+            self.popToRoot()
+            return true
+        }
+        return self._rootItem.container.activate()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.screen.prepareShow(interactive: interactive)
         self._currentItem.container.prepareShow(interactive: interactive)
@@ -301,7 +312,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     }
     
     public func popToRoot(animated: Bool, completion: (() -> Void)?) {
-        if self._items.count > 1 {
+        if self._items.count > 0 {
             let current = self._items.last
             let removing = self._items
             self._items.removeAll()

@@ -28,4 +28,9 @@ public extension IQScreenViewable where Self : IQScreen, View : QScrollView {
         self.view.contentInset(self.inheritedInsets)
     }
     
+    func activate() -> Bool {
+        self.view.scrollToTop()
+        return true
+    }
+    
 }

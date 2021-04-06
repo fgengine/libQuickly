@@ -99,6 +99,10 @@ public class QRootContainer : IQRootContainer {
         self.container.didChangeInsets()
     }
     
+    public func activate() -> Bool {
+        return self.container.activate()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.container.prepareShow(interactive: interactive)
     }

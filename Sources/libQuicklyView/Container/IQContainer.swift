@@ -29,6 +29,8 @@ public protocol IQContainer : AnyObject {
     func insets(of container: IQContainer) -> QInset
     func didChangeInsets()
     
+    func activate() -> Bool
+    
     func prepareShow(interactive: Bool)
     func finishShow(interactive: Bool)
     func cancelShow(interactive: Bool)

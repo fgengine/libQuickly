@@ -123,6 +123,10 @@ public class QStickyContainer : IQStickyContainer {
         self._accessoryContainer.didChangeInsets()
     }
     
+    public func activate() -> Bool {
+        return self._contentContainer.activate()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self._contentContainer.prepareShow(interactive: interactive)
         self._accessoryContainer.prepareShow(interactive: interactive)

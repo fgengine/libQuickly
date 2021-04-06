@@ -62,6 +62,10 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
         self.screen.didChangeInsets()
     }
     
+    public func activate() -> Bool {
+        return self.screen.activate()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.screen.prepareShow(interactive: interactive)
     }

@@ -153,6 +153,16 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         }
     }
     
+    public func activate() -> Bool {
+        if self.screen.activate() == true {
+            return true
+        }
+        if let container = self._current?.container {
+            return container.activate()
+        }
+        return false
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.screen.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
@@ -288,6 +298,10 @@ extension QPageContainer : IQGroupContentContainer where Screen : IQScreenGroupa
     
     public var groupItemView: IQBarItemView {
         return self.screen.groupItemView
+    }
+    
+    public func pressedToGroupItem() -> Bool {
+        return false
     }
     
 }

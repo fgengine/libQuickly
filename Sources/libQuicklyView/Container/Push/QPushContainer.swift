@@ -133,6 +133,15 @@ public class QPushContainer : IQPushContainer {
         }
     }
     
+    public func activate() -> Bool {
+        if let current = self._current?.container {
+            if current.activate() == true {
+                return true
+            }
+        }
+        return self._contentContainer.activate()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self._contentContainer.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)

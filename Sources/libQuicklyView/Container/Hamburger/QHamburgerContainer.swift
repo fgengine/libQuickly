@@ -199,6 +199,29 @@ public class QHamburgerContainer : IQHamburgerContainer {
         self._trailingContainer?.didChangeInsets()
     }
     
+    public func activate() -> Bool {
+        switch self._layout.state {
+        case .idle:
+            return self._contentContainer.activate()
+        case .leading:
+            if let container = self._leadingContainer {
+                if container.activate() == true {
+                    return true
+                }
+            }
+            self.hideLeadingContainer()
+            return true
+        case .trailing:
+            if let container = self._trailingContainer {
+                if container.activate() == true {
+                    return true
+                }
+            }
+            self.hideTrailingContainer()
+            return true
+        }
+    }
+    
     public func prepareShow(interactive: Bool) {
         self._contentContainer.prepareShow(interactive: interactive)
         switch self._layout.state {
