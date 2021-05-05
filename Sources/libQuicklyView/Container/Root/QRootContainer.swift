@@ -56,8 +56,8 @@ public class QRootContainer : IQRootContainer {
         }
     }
     
-    private var _view: QCustomView
     private var _layout: Layout
+    private var _view: QCustomView< Layout >
     
     public init(
         safeArea: QInset = QInset(),

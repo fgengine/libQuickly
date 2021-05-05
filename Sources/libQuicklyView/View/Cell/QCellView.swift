@@ -8,7 +8,7 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QCellView : IQCellView {
+public class QCellView< ContentView : IQView > : IQCellView {
     
     public var parentLayout: IQLayout? {
         get { return self._view.parentLayout }
@@ -39,7 +39,7 @@ public class QCellView : IQCellView {
         get { return self._view.isHighlighted }
     }
     public private(set) var shouldPressed: Bool
-    public private(set) var contentView: IQView {
+    public private(set) var contentView: ContentView {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
             self._layout.contentItem = QLayoutItem(view: self.contentView)
@@ -62,7 +62,7 @@ public class QCellView : IQCellView {
     }
     
     private var _layout: Layout
-    private var _view: IQCustomView
+    private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _pressedGesture: IQTapGesture
     #endif
@@ -71,7 +71,7 @@ public class QCellView : IQCellView {
     public init(
         name: String? = nil,
         shouldPressed: Bool = true,
-        contentView: IQView,
+        contentView: ContentView,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -147,7 +147,7 @@ public class QCellView : IQCellView {
     }
     
     @discardableResult
-    public func contentView(_ value: IQView) -> Self {
+    public func contentView(_ value: ContentView) -> Self {
         self.contentView = value
         return self
     }
@@ -197,6 +197,12 @@ public class QCellView : IQCellView {
     @discardableResult
     public func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self {
         self._view.onChangeStyle(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onPressed(_ value: (() -> Void)?) -> Self {
+        self._onPressed = value
         return self
     }
     

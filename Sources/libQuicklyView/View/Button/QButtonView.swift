@@ -111,7 +111,7 @@ public class QButtonView : IQButtonView {
     }
     
     private var _layout: Layout
-    private var _view: IQControlView
+    private var _view: QControlView< Layout >
     private var _isHighlighted: Bool
     private var _isSelected: Bool
     private var _onChangeStyle: ((_ userIteraction: Bool) -> Void)?

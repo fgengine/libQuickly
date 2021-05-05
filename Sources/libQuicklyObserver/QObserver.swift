@@ -22,6 +22,10 @@ public final class QObserver< T > {
 
 public extension QObserver {
     
+    func add< Priority : RawRepresentable >(_ observer: T, priority: Priority) where Priority.RawValue == UInt {
+        self.add(observer, priority: priority.rawValue)
+    }
+    
     func add(_ observer: T, priority: UInt) {
         if self._isForeached == true {
             let item = Item(priority: priority, observer: observer)
@@ -60,6 +64,10 @@ public extension QObserver {
         }
     }
     
+    func notify< Priority : RawRepresentable >(priorities: [Priority], closure: (_ observer: T) -> Void) where Priority.RawValue == UInt {
+        self.notify(priorities: priorities.compactMap({ $0.rawValue }), closure: closure)
+    }
+    
     func notify(priorities: [UInt], closure: (_ observer: T) -> Void) {
         if self._isForeached == false {
             self._isForeached = true
@@ -94,6 +102,10 @@ public extension QObserver {
                 closure($0.observer)
             })
         }
+    }
+    
+    func reverseNotify< Priority : RawRepresentable >(priorities: [Priority], closure: (_ observer: T) -> Void) where Priority.RawValue == UInt {
+        self.reverseNotify(priorities: priorities.compactMap({ $0.rawValue }), closure: closure)
     }
     
     func reverseNotify(priorities: [UInt], closure: (_ observer: T) -> Void) {

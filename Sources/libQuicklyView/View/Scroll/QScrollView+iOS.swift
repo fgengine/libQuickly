@@ -123,7 +123,7 @@ extension QScrollView.ScrollView {
         self.update(indicatorDirection: view.indicatorDirection)
         self.update(contentInset: view.contentInset)
         self.update(contentOffset: view.contentOffset, normalized: false)
-        self.update(layout: view.layout)
+        self.update(contentLayout: view.contentLayout)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
@@ -133,15 +133,15 @@ extension QScrollView.ScrollView {
         self.customDelegate = view
     }
     
-    func update(layout: IQLayout) {
-        if let layout = self._layoutManager.layout {
-            layout.delegate = nil
+    func update(contentLayout: IQLayout) {
+        if let contentLayout = self._layoutManager.layout {
+            contentLayout.delegate = nil
         }
         if self.isAppeared == true {
             self._layoutManager.clear()
         }
-        self._layoutManager.layout = layout
-        layout.delegate = self
+        self._layoutManager.layout = contentLayout
+        contentLayout.delegate = self
         if self.isAppeared == true {
             self.needLayoutContent = true
             self.setNeedsLayout()

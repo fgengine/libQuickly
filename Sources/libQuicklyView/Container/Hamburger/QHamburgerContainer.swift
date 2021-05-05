@@ -140,7 +140,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     public var animationVelocity: QFloat
     
     private var _layout: Layout
-    private var _view: QCustomView
+    private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _pressedGesture: IQTapGesture
     private var _interactiveGesture: IQPanGesture

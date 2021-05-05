@@ -10,11 +10,24 @@ public protocol IQSyncDataLoader {
     associatedtype Result
     associatedtype Error
     
-    func perform(
+    mutating func perform(
         success: @escaping (_ result: Result) -> Void,
         failure: @escaping (_ error: Error) -> Void
     ) -> IQCancellable
     
+    mutating func didPerform(result: Result)
+    mutating func didPerform(error: Error)
+    
+}
+
+public extension IQSyncDataLoader {
+    
+    func didPerform(result: Result) {
+    }
+
+    func didPerform(error: Error) {
+    }
+
 }
 
 open class QSyncDataSource< Loader : IQSyncDataLoader > : IQSyncDataSource {
@@ -27,13 +40,15 @@ open class QSyncDataSource< Loader : IQSyncDataLoader > : IQSyncDataSource {
     public var isSyncing: Bool {
         return self._query != nil
     }
-    public private(set) var isNeedSync: Bool
+    public var isNeedSync: Bool {
+        return self._syncAt == nil
+    }
     
     private var _loader: Loader
     private var _query: IQCancellable?
+    private var _syncAt: Date?
     
     public init(loader: Loader) {
-        self.isNeedSync = true
         self._loader = loader
     }
     
@@ -42,14 +57,14 @@ open class QSyncDataSource< Loader : IQSyncDataLoader > : IQSyncDataSource {
     }
     
     public func setNeedSync() {
-        self.isNeedSync = true
+        self._syncAt = nil
     }
     
     public func syncIfNeeded() {
         guard self.isSyncing == false && self.isNeedSync == true else { return }
         self._query = self._loader.perform(
-            success: { [weak self] result in self?._didSync(result: result) },
-            failure: { [weak self] error in self?._didSync(error: error) }
+            success: { [unowned self] result in self._didSync(result: result) },
+            failure: { [unowned self] error in self._didSync(error: error) }
         )
     }
     
@@ -71,13 +86,15 @@ private extension QSyncDataSource {
     func _didSync(result: Result) {
         self._query = nil
         self.result = result
-        self.isNeedSync = false
+        self._syncAt = Date()
+        self._loader.didPerform(result: result)
         self.didSync(result: result)
     }
 
     func _didSync(error: Error) {
         self._query = nil
         self.error = error
+        self._loader.didPerform(error: error)
         self.didSync(error: error)
     }
     

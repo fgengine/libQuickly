@@ -5,378 +5,235 @@
 import Foundation
 import libQuicklyCore
 
-public struct QStackLayoutHelper {
+public extension QListLayout {
     
-    public typealias CacheClosure = (_ index: Int, _ item: QLayoutItem) -> QSize
-    
-    static func layout(
-        bounds: QRect,
-        direction: Direction,
-        origin: Origin,
-        alignment: Alignment = .fill,
-        inset: QInset,
-        spacing: QFloat,
-        minSpacing: QFloat? = nil,
-        maxSpacing: QFloat? = nil,
-        minSize: QFloat? = nil,
-        maxSize: QFloat? = nil,
-        items: [QLayoutItem],
-        sizeCache: inout [Int : QSize]
-    ) -> QSize {
-        switch direction {
-        case .horizontal:
-            guard items.count > 0 else { return QSize(width: 0, height: bounds.size.height) }
-            let size = self._passSize(
-                available: QSize(width: .infinity, height: bounds.size.height - inset.vertical),
-                items: items,
-                sizeCache: &sizeCache
-            )
-            var pass = Pass(
-                inset: inset.horizontal,
-                spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
-                items: size.full.width
-            )
-            var spacing = spacing
-            if items.count > 1 {
-                pass = self._layoutPassSpacing(
+    struct Helper {
+        
+        static func layout(
+            bounds: QRect,
+            direction: Direction,
+            origin: Origin,
+            alignment: Alignment = .fill,
+            inset: QInset,
+            spacing: QFloat,
+            minSpacing: QFloat? = nil,
+            maxSpacing: QFloat? = nil,
+            minSize: QFloat? = nil,
+            maxSize: QFloat? = nil,
+            operations: [Operation] = [],
+            items: [QLayoutItem],
+            cache: inout [QSize?]
+        ) -> QSize {
+            switch direction {
+            case .horizontal:
+                guard items.count > 0 else { return QSize(width: 0, height: bounds.size.height) }
+                var size = self._passSize(
+                    available: QSize(width: .infinity, height: bounds.size.height - inset.vertical),
+                    items: items,
+                    operations: operations,
+                    cache: &cache,
+                    keyPath: \.width
+                )
+                var pass = Pass(
+                    inset: inset.horizontal,
+                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    items: size.full.width
+                )
+                var spacing = spacing
+                if items.count > 1 {
+                    pass = self._layoutPassSpacing(
+                        pass: pass,
+                        available: bounds.size.width,
+                        inset: inset.horizontal,
+                        spacing: &spacing,
+                        itemsCount: items.count,
+                        minSpacing: minSpacing,
+                        maxSpacing: maxSpacing
+                    )
+                }
+                pass = self._layoutPassSize(
                     pass: pass,
                     available: bounds.size.width,
                     inset: inset.horizontal,
-                    spacing: &spacing,
+                    spacing: spacing,
                     itemsCount: items.count,
-                    minSpacing: minSpacing,
-                    maxSpacing: maxSpacing
+                    minSize: minSize,
+                    maxSize: maxSize,
+                    sizes: &size.sizes,
+                    keyPath: \.width
                 )
-            }
-            var sizes = sizeCache
-            pass = self._layoutPassSize(
-                pass: pass,
-                available: bounds.size.width,
-                inset: inset.horizontal,
-                spacing: spacing,
-                itemsCount: items.count,
-                minSize: minSize,
-                maxSize: maxSize,
-                sizeCache: &sizes,
-                keyPath: \.width
-            )
-            switch origin {
-            case .forward:
-                switch alignment {
-                case .leading:
-                    return self._hForwardLeadingLayout(
-                        size: size,
+                switch origin {
+                case .forward:
+                    switch alignment {
+                    case .leading: return self._hForwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .center: return self._hForwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .trailing: return self._hForwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .fill: return self._hForwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    }
+                case .backward:
+                    switch alignment {
+                    case .leading: return self._hBackwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .center: return self._hBackwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .trailing: return self._hBackwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .fill: return self._hBackwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    }
+                }
+            case .vertical:
+                guard items.count > 0 else { return QSize(width: bounds.size.width, height: 0) }
+                var size = self._passSize(
+                    available: QSize(width: bounds.size.width - inset.horizontal, height: .infinity),
+                    items: items,
+                    operations: operations,
+                    cache: &cache,
+                    keyPath: \.height
+                )
+                var pass = Pass(
+                    inset: inset.vertical,
+                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    items: size.full.height
+                )
+                var spacing = spacing
+                if items.count > 1 {
+                    pass = self._layoutPassSpacing(
                         pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .center:
-                    return self._hForwardCenterLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .trailing:
-                    return self._hForwardTrailingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .fill:
-                    return self._hForwardFillLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
+                        available: bounds.size.height,
+                        inset: inset.vertical,
+                        spacing: &spacing,
+                        itemsCount: items.count,
+                        minSpacing: minSpacing,
+                        maxSpacing: maxSpacing
                     )
                 }
-            case .backward:
-                switch alignment {
-                case .leading:
-                    return self._hBackwardLeadingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .center:
-                    return self._hBackwardCenterLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .trailing:
-                    return self._hBackwardTrailingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .fill:
-                    return self._hBackwardFillLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                }
-            }
-        case .vertical:
-            guard items.count > 0 else { return QSize(width: bounds.size.width, height: 0) }
-            let size = self._passSize(
-                available: QSize(width: bounds.size.width - inset.horizontal, height: .infinity),
-                items: items,
-                sizeCache: &sizeCache
-            )
-            var pass = Pass(
-                inset: inset.vertical,
-                spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
-                items: size.full.height
-            )
-            var spacing = spacing
-            if items.count > 1 {
-                pass = self._layoutPassSpacing(
+                pass = self._layoutPassSize(
                     pass: pass,
                     available: bounds.size.height,
                     inset: inset.vertical,
-                    spacing: &spacing,
+                    spacing: spacing,
                     itemsCount: items.count,
-                    minSpacing: minSpacing,
-                    maxSpacing: maxSpacing
+                    minSize: minSize,
+                    maxSize: maxSize,
+                    sizes: &size.sizes,
+                    keyPath: \.height
                 )
-            }
-            var sizes = sizeCache
-            pass = self._layoutPassSize(
-                pass: pass,
-                available: bounds.size.height,
-                inset: inset.vertical,
-                spacing: spacing,
-                itemsCount: items.count,
-                minSize: minSize,
-                maxSize: maxSize,
-                sizeCache: &sizes,
-                keyPath: \.height
-            )
-            switch origin {
-            case .forward:
-                switch alignment {
-                case .leading:
-                    return self._vForwardLeadingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .center:
-                    return self._vForwardCenterLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .trailing:
-                    return self._vForwardTrailingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .fill:
-                    return self._vForwardFillLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                }
-            case .backward:
-                switch alignment {
-                case .leading:
-                    return self._vBackwardLeadingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .center:
-                    return self._vBackwardCenterLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .trailing:
-                    return self._vBackwardTrailingLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
-                case .fill:
-                    return self._vBackwardFillLayout(
-                        size: size,
-                        pass: pass,
-                        bounds: bounds,
-                        inset: inset,
-                        spacing: spacing,
-                        items: items,
-                        sizeCache: sizes
-                    )
+                switch origin {
+                case .forward:
+                    switch alignment {
+                    case .leading: return self._vForwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .center: return self._vForwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .trailing: return self._vForwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .fill: return self._vForwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    }
+                case .backward:
+                    switch alignment {
+                    case .leading: return self._vBackwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .center: return self._vBackwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .trailing: return self._vBackwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    case .fill: return self._vBackwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                    }
                 }
             }
         }
-    }
-    
-    static func size(
-        available: QSize,
-        direction: Direction,
-        alignment: Alignment = .fill,
-        inset: QInset,
-        spacing: QFloat,
-        minSpacing: QFloat? = nil,
-        maxSpacing: QFloat? = nil,
-        minSize: QFloat? = nil,
-        maxSize: QFloat? = nil,
-        items: [QLayoutItem]
-    ) -> QSize {
-        switch direction {
-        case .horizontal:
-            guard items.count > 0 else { return QSize(width: available.width, height: 0) }
-            var sizeCache: [Int : QSize] = Dictionary(minimumCapacity: items.count)
-            let size = self._passSize(
-                available: QSize(width: .infinity, height: available.height - inset.vertical),
-                items: items,
-                sizeCache: &sizeCache
-            )
-            var pass = Pass(
-                inset: inset.horizontal,
-                spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
-                items: size.full.width
-            )
-            if items.count > 1 {
-                pass = self._boundsPassSpacing(
+        
+        static func size(
+            available: QSize,
+            direction: Direction,
+            alignment: Alignment = .fill,
+            inset: QInset,
+            spacing: QFloat,
+            minSpacing: QFloat? = nil,
+            maxSpacing: QFloat? = nil,
+            minSize: QFloat? = nil,
+            maxSize: QFloat? = nil,
+            items: [QLayoutItem],
+            operations: [Operation] = []
+        ) -> QSize {
+            switch direction {
+            case .horizontal:
+                guard items.count > 0 else { return QSize(width: available.width, height: 0) }
+                var cache = Array< QSize? >(repeating: nil, count: items.count)
+                let size = self._passSize(
+                    available: QSize(width: .infinity, height: available.height - inset.vertical),
+                    items: items,
+                    operations: operations,
+                    cache: &cache,
+                    keyPath: \.width
+                )
+                var pass = Pass(
+                    inset: inset.horizontal,
+                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    items: size.full.width
+                )
+                if items.count > 1 {
+                    pass = self._boundsPassSpacing(
+                        pass: pass,
+                        available: available.width,
+                        inset: inset.horizontal,
+                        itemsCount: items.count,
+                        minSpacing: minSpacing,
+                        maxSpacing: maxSpacing
+                    )
+                }
+                pass = self._boundsPassSize(
                     pass: pass,
                     available: available.width,
                     inset: inset.horizontal,
                     itemsCount: items.count,
-                    minSpacing: minSpacing,
-                    maxSpacing: maxSpacing
+                    minSize: minSize,
+                    maxSize: maxSize
                 )
-            }
-            pass = self._boundsPassSize(
-                pass: pass,
-                available: available.width,
-                inset: inset.horizontal,
-                itemsCount: items.count,
-                minSize: minSize,
-                maxSize: maxSize,
-                sizeCache: sizeCache,
-                keyPath: \.width
-            )
-            let height: QFloat
-            switch alignment {
-            case .leading, .center, .trailing: height = size.max.height + inset.vertical
-            case .fill: height = available.height
-            }
-            return QSize(width: pass.full, height: height)
-        case .vertical:
-            guard items.count > 0 else { return QSize(width: available.width, height: 0) }
-            var sizeCache: [Int : QSize] = Dictionary(minimumCapacity: items.count)
-            let size = self._passSize(
-                available: QSize(width: available.width - inset.horizontal, height: .infinity),
-                items: items,
-                sizeCache: &sizeCache
-            )
-            var pass = Pass(
-                inset: inset.vertical,
-                spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
-                items: size.full.height
-            )
-            if items.count > 1 {
-                pass = self._boundsPassSpacing(
+                let height: QFloat
+                switch alignment {
+                case .leading, .center, .trailing: height = size.max.height + inset.vertical
+                case .fill: height = available.height
+                }
+                return QSize(width: pass.full, height: height)
+            case .vertical:
+                guard items.count > 0 else { return QSize(width: available.width, height: 0) }
+                var cache = Array< QSize? >(repeating: nil, count: items.count)
+                let size = self._passSize(
+                    available: QSize(width: available.width - inset.horizontal, height: .infinity),
+                    items: items,
+                    operations: operations,
+                    cache: &cache,
+                    keyPath: \.height
+                )
+                var pass = Pass(
+                    inset: inset.vertical,
+                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    items: size.full.height
+                )
+                if items.count > 1 {
+                    pass = self._boundsPassSpacing(
+                        pass: pass,
+                        available: available.height,
+                        inset: inset.vertical,
+                        itemsCount: items.count,
+                        minSpacing: minSpacing,
+                        maxSpacing: maxSpacing
+                    )
+                }
+                pass = self._boundsPassSize(
                     pass: pass,
                     available: available.height,
                     inset: inset.vertical,
                     itemsCount: items.count,
-                    minSpacing: minSpacing,
-                    maxSpacing: maxSpacing
+                    minSize: minSize,
+                    maxSize: maxSize
                 )
+                let width: QFloat
+                switch alignment {
+                case .leading, .center, .trailing: width = size.max.width + inset.horizontal
+                case .fill: width = available.width
+                }
+                return QSize(width: width, height: pass.full)
             }
-            pass = self._boundsPassSize(
-                pass: pass,
-                available: available.height,
-                inset: inset.vertical,
-                itemsCount: items.count,
-                minSize: minSize,
-                maxSize: maxSize,
-                sizeCache: sizeCache,
-                keyPath: \.height
-            )
-            let width: QFloat
-            switch alignment {
-            case .leading, .center, .trailing: width = size.max.width + inset.horizontal
-            case .fill: width = available.width
-            }
-            return QSize(width: width, height: pass.full)
         }
+        
     }
     
 }
 
-public extension QStackLayoutHelper {
-    
-    enum Direction {
-        case horizontal
-        case vertical
-    }
+public extension QListLayout.Helper {
     
     enum Origin {
         case forward
@@ -390,22 +247,54 @@ public extension QStackLayoutHelper {
         case fill
     }
     
+    enum OperationType {
+        case insert
+        case delete
+    }
+    
+    class Operation {
+        
+        public var type: OperationType
+        public var indecies: Set< Int >
+        public var progress: QFloat
+        
+        public init(
+            type: OperationType,
+            indecies: Set< Int >,
+            progress: QFloat
+        ) {
+            self.type = type
+            self.indecies = indecies
+            self.progress = progress
+        }
+
+    }
+    
 }
 
-private extension QStackLayoutHelper {
+extension QListLayout.Helper.Operation : Equatable {
+    
+    public static func == (lhs: QListLayout.Helper.Operation, rhs: QListLayout.Helper.Operation) -> Bool {
+        return lhs.type == rhs.type && lhs.indecies == rhs.indecies
+    }
+    
+}
+
+private extension QListLayout.Helper {
     
     struct SizePass {
         
-        let full: QSize
-        let max: QSize
+        var full: QSize
+        var max: QSize
+        var sizes: [QSize]
         
     }
     
     struct Pass {
         
-        let full: QFloat
-        let spacings: QFloat
-        let items: QFloat
+        var full: QFloat
+        var spacings: QFloat
+        var items: QFloat
         
         init(
             full: QFloat,
@@ -431,7 +320,21 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper.Operation {
+    
+    @inline(__always)
+    func _process(itemSize: QSize, keyPath: WritableKeyPath< QSize, QFloat >) -> QSize {
+        var result = itemSize
+        switch self.type {
+        case .insert: result[keyPath: keyPath] = result[keyPath: keyPath] * self.progress
+        case .delete: result[keyPath: keyPath] = result[keyPath: keyPath] * (1 - self.progress)
+        }
+        return result
+    }
+    
+}
+
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _hForwardLeadingLayout(
@@ -441,14 +344,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
             y: bounds.origin.y + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topLeft: origin, size: size)
             origin.x += size.width + spacing
@@ -467,14 +370,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + (bounds.size.height / 2)) + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(left: origin, size: size)
             origin.x += size.width + spacing
@@ -493,14 +396,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomLeft: origin, size: size)
             origin.x += size.width + spacing
@@ -519,7 +422,7 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
@@ -527,7 +430,7 @@ private extension QStackLayoutHelper {
         )
         let height = bounds.size.height - inset.vertical
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y, width: size.width, height: height)
             origin.x += size.width + spacing
@@ -540,7 +443,7 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _hBackwardLeadingLayout(
@@ -550,14 +453,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: bounds.origin.y + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topRight: origin, size: size)
             origin.x -= size.width + spacing
@@ -576,14 +479,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: (bounds.origin.y + (bounds.size.height / 2)) + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(right: origin, size: size)
             origin.x -= size.width + spacing
@@ -602,14 +505,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: (bounds.origin.y + bounds.size.height) + inset.bottom
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomRight: origin, size: size)
             origin.x -= size.width + spacing
@@ -628,7 +531,7 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
@@ -636,7 +539,7 @@ private extension QStackLayoutHelper {
         )
         let height = bounds.size.height - inset.vertical
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x - size.width, y: origin.y, width: size.width, height: height)
             origin.x -= size.width + spacing
@@ -649,7 +552,7 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _vForwardLeadingLayout(
@@ -659,14 +562,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
             y: bounds.origin.y + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topLeft: origin, size: size)
             origin.y += size.height + spacing
@@ -685,14 +588,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
             y: bounds.origin.y + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(top: origin, size: size)
             origin.y += size.height + spacing
@@ -711,14 +614,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: bounds.origin.y + inset.top
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topRight: origin, size: size)
             origin.y += size.height + spacing
@@ -737,7 +640,7 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
@@ -745,7 +648,7 @@ private extension QStackLayoutHelper {
         )
         let width = bounds.size.width - inset.horizontal
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y, width: width, height: size.height)
             origin.y += size.height + spacing
@@ -758,7 +661,7 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _vBackwardLeadingLayout(
@@ -768,14 +671,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomLeft: origin, size: size)
             origin.y -= size.height + spacing
@@ -794,14 +697,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottom: origin, size: size)
             origin.y -= size.height + spacing
@@ -820,14 +723,14 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomRight: origin, size: size)
             origin.y -= size.height + spacing
@@ -846,7 +749,7 @@ private extension QStackLayoutHelper {
         inset: QInset,
         spacing: QFloat,
         items: [QLayoutItem],
-        sizeCache: [Int : QSize]
+        sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
             x: bounds.origin.x + inset.left,
@@ -854,7 +757,7 @@ private extension QStackLayoutHelper {
         )
         let width = bounds.size.width - inset.horizontal
         for index in 0..<items.count {
-            guard let size = sizeCache[index] else { continue }
+            guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y - size.height, width: width, height: size.height)
             origin.y -= size.height + spacing
@@ -867,7 +770,7 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _layoutPassSpacing(
@@ -938,7 +841,7 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _layoutPassSize(
@@ -949,7 +852,7 @@ private extension QStackLayoutHelper {
         itemsCount: Int,
         minSize: QFloat?,
         maxSize: QFloat?,
-        sizeCache: inout [Int : QSize],
+        sizes: inout [QSize],
         keyPath: WritableKeyPath< QSize, QFloat >
     ) -> Pass {
         var newFull: QFloat
@@ -958,19 +861,19 @@ private extension QStackLayoutHelper {
             let itemSize = min((available - inset - pass.spacings) / QFloat(itemsCount), maxSize)
             newItems = itemSize * QFloat(itemsCount)
             newFull = (newItems + pass.spacings) + inset
-            for cacheItem in sizeCache {
-                var size = cacheItem.value
+            for (index, value) in sizes.enumerated() {
+                var size = value
                 size[keyPath: keyPath] = itemSize
-                sizeCache[cacheItem.key] = size
+                sizes[index] = size
             }
         } else if let minSize = minSize, pass.full > available {
             let itemSize = max((available - inset - pass.spacings) / QFloat(itemsCount), minSize)
             newItems = itemSize * QFloat(itemsCount)
             newFull = (newItems + pass.spacings) + inset
-            for cacheItem in sizeCache {
-                var size = cacheItem.value
+            for (index, value) in sizes.enumerated() {
+                var size = value
                 size[keyPath: keyPath] = itemSize
-                sizeCache[cacheItem.key] = size
+                sizes[index] = size
             }
         } else {
             newFull = pass.full
@@ -990,9 +893,7 @@ private extension QStackLayoutHelper {
         inset: QFloat,
         itemsCount: Int,
         minSize: QFloat?,
-        maxSize: QFloat?,
-        sizeCache: [Int : QSize],
-        keyPath: KeyPath< QSize, QFloat >
+        maxSize: QFloat?
     ) -> Pass {
         var newFull: QFloat
         var newItems: QFloat
@@ -1017,32 +918,40 @@ private extension QStackLayoutHelper {
     
 }
 
-private extension QStackLayoutHelper {
+private extension QListLayout.Helper {
     
     @inline(__always)
     static func _passSize(
         available: QSize,
         items: [QLayoutItem],
-        sizeCache: inout [Int : QSize]
+        operations: [Operation],
+        cache: inout [QSize?],
+        keyPath: WritableKeyPath< QSize, QFloat >
     ) -> SizePass {
-        var rf = QSize()
-        var rm = QSize()
+        var fillSize = QSize()
+        var maxSize = QSize()
+        var sizes = Array< QSize >()
         for index in 0..<items.count {
-            let size: QSize
-            if let cacheSize = sizeCache[index] {
-                size = cacheSize
+            var itemSize: QSize
+            if let cacheSize = cache[index] {
+                itemSize = cacheSize
             } else {
-                size = items[index].size(available)
-                sizeCache[index] = size
+                itemSize = items[index].size(available)
+                cache[index] = itemSize
             }
-            rf.width += size.width
-            rf.height += size.height
-            rm.width = max(rm.width, size.width)
-            rm.height = max(rm.height, size.height)
+            if let operation = operations.first(where: { $0.indecies.contains(index) }) {
+                itemSize = operation._process(itemSize: itemSize, keyPath: keyPath)
+            }
+            fillSize.width += itemSize.width
+            fillSize.height += itemSize.height
+            maxSize.width = max(maxSize.width, itemSize.width)
+            maxSize.height = max(maxSize.height, itemSize.height)
+            sizes.append(itemSize)
         }
         return SizePass(
-            full: rf,
-            max: rm
+            full: fillSize,
+            max: maxSize,
+            sizes: sizes
         )
     }
     

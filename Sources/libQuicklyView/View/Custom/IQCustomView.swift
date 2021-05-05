@@ -7,8 +7,10 @@ import libQuicklyCore
 
 public protocol IQCustomView : IQView, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
+    associatedtype Layout : IQLayout
+    
     var gestures: [IQGesture] { get }
-    var layout: IQLayout { get }
+    var layout: Layout { get }
     var contentSize: QSize { get }
     var shouldHighlighting: Bool { get }
     
@@ -22,7 +24,7 @@ public protocol IQCustomView : IQView, IQViewHighlightable, IQViewColorable, IQV
     func remove(gesture: IQGesture) -> Self
     
     @discardableResult
-    func layout(_ value: IQLayout) -> Self
+    func layout(_ value: Layout) -> Self
     
     @discardableResult
     func shouldHighlighting(_ value: Bool) -> Self

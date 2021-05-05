@@ -40,7 +40,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
     }
     
     private var _contentLayout: Layout
-    private var _contentView: QCustomView
+    private var _contentView: QCustomView< Layout >
     private var _itemViews: [IQBarItemView]
     private var _selectedItemView: IQBarItemView?
     
@@ -129,7 +129,7 @@ private extension QGroupBarView {
             }
         }
         
-        private var _cache: [Int : QSize]
+        private var _cache: [QSize?]
 
         init(
             itemInset: QInset,
@@ -139,15 +139,15 @@ private extension QGroupBarView {
             self.itemInset = itemInset
             self.itemSpacing = itemSpacing
             self.items = items
-            self._cache = [:]
+            self._cache = Array< QSize? >(repeating: nil, count: items.count)
         }
         
         func invalidate() {
-            self._cache.removeAll()
+            self._cache = Array< QSize? >(repeating: nil, count: self.items.count)
         }
         
         func layout(bounds: QRect) -> QSize {
-            return QStackLayoutHelper.layout(
+            return QListLayout.Helper.layout(
                 bounds: bounds,
                 direction: .horizontal,
                 origin: .forward,
@@ -156,12 +156,12 @@ private extension QGroupBarView {
                 minSize: bounds.size.width / QFloat(self.items.count),
                 maxSize: bounds.size.width,
                 items: self.items,
-                sizeCache: &self._cache
+                cache: &self._cache
             )
         }
         
         func size(_ available: QSize) -> QSize {
-            return QStackLayoutHelper.size(
+            return QListLayout.Helper.size(
                 available: available,
                 direction: .horizontal,
                 inset: self.itemInset,

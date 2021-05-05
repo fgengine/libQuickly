@@ -69,7 +69,7 @@ public class QBarItemView : IQBarItemView {
     }
     
     private var _layout: Layout
-    private var _view: IQCustomView
+    private var _view: QCustomView< Layout >
     private var _tapGesture: IQTapGesture
     private var _isSelected: Bool
     

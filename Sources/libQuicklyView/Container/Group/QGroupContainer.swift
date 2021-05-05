@@ -80,15 +80,15 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
     public var animationVelocity: QFloat
     
     private var _barView: IQGroupBarView
-    private var _rootView: QCustomView
     private var _rootLayout: RootLayout
+    private var _rootView: QCustomView< RootLayout >
     private var _items: [Item]
     private var _current: Item?
     
     public init(
         screen: Screen,
         containers: [IQGroupContentContainer],
-        current: IQGroupContentContainer?
+        current: IQGroupContentContainer? = nil
     ) {
         self.isPresented = false
         self.screen = screen
@@ -263,7 +263,7 @@ extension QGroupContainer : IQGroupBarViewDelegate {
     public func pressed(groupBar: IQGroupBarView, itemView: IQView) {
         guard let item = self._items.first(where: { $0.barView === itemView }) else { return }
         if self._current === item {
-            self.activate()
+            _ = self.activate()
         } else {
             self.set(current: item.container, animated: true, completion: nil)
         }

@@ -29,29 +29,42 @@ public final class QListLayout : IQLayout {
         }
     }
     public var items: [QLayoutItem] {
-        didSet {
+        set(value) {
+            self._items = value
             self.invalidate()
             self.setNeedUpdate()
         }
+        get { return self._items }
     }
     public var views: [IQView] {
-        set(value) { self.items = value.compactMap({ return QLayoutItem(view: $0) }) }
-        get { return self.items.compactMap({ $0.view }) }
+        set(value) {
+            self._items = value.compactMap({ return QLayoutItem(view: $0) })
+            self.invalidate()
+            self.setNeedUpdate()
+        }
+        get { return self._items.compactMap({ $0.view }) }
     }
+    public private(set) var isAnimating: Bool
     
-    private var _cache: [Int : QSize]
+    private var _items: [QLayoutItem]
+    private var _animations: [Animation]
+    private var _operations: [Helper.Operation]
+    private var _cache: [QSize?]
 
     public init(
         direction: Direction,
         inset: QInset = QInset(),
         spacing: QFloat = 0,
-        items: [QLayoutItem]
+        items: [QLayoutItem] = []
     ) {
         self.direction = direction
         self.inset = inset
         self.spacing = spacing
-        self.items = items
-        self._cache = [:]
+        self.isAnimating = false
+        self._items = items
+        self._animations = []
+        self._operations = []
+        self._cache = Array< QSize? >(repeating: nil, count: items.count)
     }
 
     public convenience init(
@@ -68,35 +81,83 @@ public final class QListLayout : IQLayout {
         )
     }
     
+    public func animate(
+        duration: QFloat,
+        ease: IQAnimationEase = QAnimation.Ease.Linear(),
+        perform: @escaping (_ layout: QListLayout) -> Void,
+        completion: (() -> Void)? = nil
+    ) {
+        let animation = Animation(duration: duration, ease: ease, perform: perform, completion: completion)
+        self._animations.append(animation)
+        if self._animations.count == 1 {
+            self._animate(animation: animation)
+        }
+    }
+    
+    public func insert(index: Int, items: [QLayoutItem]) {
+        self._items.insert(contentsOf: items, at: index)
+        self._cache.insert(contentsOf: Array< QSize? >(repeating: nil, count: items.count), at: index)
+        if self._animations.isEmpty == false {
+            self._operations.append(Helper.Operation(
+                type: .insert,
+                indecies: Set< Int >(range: index ..< index + items.count),
+                progress: 0
+            ))
+        }
+    }
+    
+    public func insert(index: Int, views: [IQView]) {
+        self.insert(
+            index: index,
+            items: views.compactMap({ return QLayoutItem(view: $0) })
+        )
+    }
+    
+    public func delete(range: Range< Int >) {
+        if self._animations.isEmpty == false {
+            self._operations.append(Helper.Operation(
+                type: .insert,
+                indecies: Set< Int >(range: range),
+                progress: 0
+            ))
+        } else {
+            self._items.removeSubrange(range)
+            self._cache.removeSubrange(range)
+        }
+    }
+    
     public func invalidate() {
-        self._cache.removeAll()
+        guard self.isAnimating == false else { return }
+        self._cache = Array< QSize? >(repeating: nil, count: self._items.count)
     }
     
     public func layout(bounds: QRect) -> QSize {
-        return QStackLayoutHelper.layout(
+        return Helper.layout(
             bounds: bounds,
-            direction: QStackLayoutHelper.Direction(self.direction),
+            direction: self.direction,
             origin: .forward,
             alignment: .fill,
             inset: self.inset,
             spacing: self.spacing,
-            items: self.items,
-            sizeCache: &self._cache
+            operations: self._operations,
+            items: self._items,
+            cache: &self._cache
         )
     }
     
     public func size(_ available: QSize) -> QSize {
-        return QStackLayoutHelper.size(
+        return Helper.size(
             available: available,
-            direction: QStackLayoutHelper.Direction(self.direction),
+            direction: self.direction,
             inset: self.inset,
             spacing: self.spacing,
-            items: self.items
+            items: self._items,
+            operations: self._operations
         )
     }
     
     public func items(bounds: QRect) -> [QLayoutItem] {
-        return self.visible(items: self.items, for: bounds)
+        return self.visible(items: self._items, for: bounds)
     }
     
 }
@@ -110,14 +171,72 @@ public extension QListLayout {
     
 }
 
-fileprivate extension QStackLayoutHelper.Direction {
+private extension QListLayout {
     
-    @inline(__always)
-    init(_ direction: QListLayout.Direction) {
-        switch direction {
-        case .horizontal: self = .horizontal
-        case .vertical: self = .vertical
+    class Animation {
+        
+        let duration: QFloat
+        let ease: IQAnimationEase
+        let perform: (_ layout: QListLayout) -> Void
+        let completion: (() -> Void)?
+        
+        public init(
+            duration: QFloat,
+            ease: IQAnimationEase,
+            perform: @escaping (_ layout: QListLayout) -> Void,
+            completion: (() -> Void)?
+        ) {
+            self.duration = duration
+            self.ease = ease
+            self.perform = perform
+            self.completion = completion
         }
+
+    }
+    
+}
+
+private extension QListLayout {
+    
+    func _animate(animation: Animation) {
+        self.isAnimating = true
+        animation.perform(self)
+        QAnimation.default.run(
+            duration: animation.duration,
+            ease: animation.ease,
+            processing: { [unowned self] progress in
+                for operation in self._operations {
+                    operation.progress = progress
+                }
+                self.setNeedUpdate(true)
+                self.updateIfNeeded()
+            },
+            completion: { [unowned self] in
+                for operation in self._operations {
+                    switch operation.type {
+                    case .delete:
+                        for index in operation.indecies.reversed() {
+                            self._items.remove(at: index)
+                            self._cache.remove(at: index)
+                        }
+                    default:
+                        break
+                    }
+                }
+                self.setNeedUpdate(true)
+                self.updateIfNeeded()
+                self._operations.removeAll()
+                if let index = self._animations.firstIndex(where: { $0 === animation }) {
+                    self._animations.remove(at: index)
+                }
+                if let animation = self._animations.first {
+                    self._animate(animation: animation)
+                } else {
+                    self.isAnimating = false
+                }
+                animation.completion?()
+            }
+        )
     }
     
 }

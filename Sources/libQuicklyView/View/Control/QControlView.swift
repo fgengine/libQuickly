@@ -5,17 +5,17 @@
 import Foundation
 import libQuicklyCore
 
-protocol ControlViewDelegate : AnyObject {
+protocol NativeControlViewDelegate : AnyObject {
     
-    func shouldHighlighting(view: QControlView.ControlView) -> Bool
-    func set(view: QControlView.ControlView, highlighted: Bool)
+    func shouldHighlighting(view: NativeControlView) -> Bool
+    func set(view: NativeControlView, highlighted: Bool)
     
-    func shouldPressing(view: QControlView.ControlView) -> Bool
-    func pressed(view: QControlView.ControlView)
+    func shouldPressing(view: NativeControlView) -> Bool
+    func pressed(view: NativeControlView)
     
 }
 
-public class QControlView : IQControlView {
+public class QControlView< Layout : IQLayout > : IQControlView {
     
     public private(set) unowned var parentLayout: IQLayout?
     public unowned var item: QLayoutItem?
@@ -34,7 +34,7 @@ public class QControlView : IQControlView {
         guard self.isLoaded == true else { return QRect() }
         return QRect(self._view.bounds)
     }
-    public private(set) var layout: IQLayout {
+    public private(set) var layout: Layout {
         willSet {
             self.layout.parentView = nil
         }
@@ -100,8 +100,8 @@ public class QControlView : IQControlView {
         }
     }
     
-    private var _reuse: QReuseItem< ControlView >
-    private var _view: ControlView {
+    private var _reuse: QReuseItem< Reusable >
+    private var _view: Reusable.Content {
         if self.isLoaded == false { self._reuse.load(owner: self) }
         return self._reuse.content!
     }
@@ -113,7 +113,7 @@ public class QControlView : IQControlView {
     
     public init(
         name: String? = nil,
-        layout: IQLayout,
+        layout: Layout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
         shouldPressed: Bool = false,
@@ -157,7 +157,7 @@ public class QControlView : IQControlView {
     }
     
     @discardableResult
-    public func layout(_ value: IQLayout) -> Self {
+    public func layout(_ value: Layout) -> Self {
         self.layout = value
         return self
     }
@@ -236,24 +236,24 @@ public class QControlView : IQControlView {
     
 }
 
-extension QControlView : ControlViewDelegate {
+extension QControlView : NativeControlViewDelegate {
     
-    func shouldHighlighting(view: QControlView.ControlView) -> Bool {
+    func shouldHighlighting(view: NativeControlView) -> Bool {
         return self.shouldHighlighting
     }
     
-    func set(view: QControlView.ControlView, highlighted: Bool) {
+    func set(view: NativeControlView, highlighted: Bool) {
         if self._isHighlighted != highlighted {
             self._isHighlighted = highlighted
             self._onChangeStyle?(true)
         }
     }
     
-    func shouldPressing(view: QControlView.ControlView) -> Bool {
+    func shouldPressing(view: NativeControlView) -> Bool {
         return self.shouldPressed
     }
     
-    func pressed(view: QControlView.ControlView) {
+    func pressed(view: NativeControlView) {
         self._onPressed?()
     }
     

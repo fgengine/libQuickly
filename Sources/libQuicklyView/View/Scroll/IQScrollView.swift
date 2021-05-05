@@ -36,7 +36,7 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     var contentInset: QInset { get }
     var contentOffset: QPoint { get }
     var contentSize: QSize { get }
-    var layout: IQLayout { get }
+    var contentLayout: IQLayout { get }
 
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint?
     
@@ -53,7 +53,7 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     func contentOffset(_ value: QPoint, normalized: Bool) -> Self
     
     @discardableResult
-    func layout(_ value: IQLayout) -> Self
+    func contentLayout(_ value: IQLayout) -> Self
     
     @discardableResult
     func onBeginScrolling(_ value: (() -> Void)?) -> Self
@@ -73,6 +73,17 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
 }
 
 public extension IQScrollView {
+    
+    var estimatedContentOffset: QPoint {
+        let size = self.bounds.size
+        let contentOffset = self.contentOffset
+        let contentSize = self.contentSize
+        let contentInset = self.contentInset
+        return QPoint(
+            x: (contentInset.left + contentSize.width + contentInset.right) - (contentOffset.x + size.width),
+            y: (contentInset.top + contentSize.height + contentInset.bottom) - (contentOffset.y + size.height)
+        )
+    }
     
     @discardableResult
     func contentOffset(_ value: QPoint, normalized: Bool = false) -> Self {

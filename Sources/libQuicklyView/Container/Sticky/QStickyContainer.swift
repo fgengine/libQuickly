@@ -81,7 +81,7 @@ public class QStickyContainer : IQStickyContainer {
     }
     
     private var _rootLayout: RootLayout
-    private var _rootView: QCustomView
+    private var _rootView: QCustomView< RootLayout >
     private var _contentContainer: IQStickyContentContainer
     private var _accessoryContainer: IQStickyAccessoryContainer
     

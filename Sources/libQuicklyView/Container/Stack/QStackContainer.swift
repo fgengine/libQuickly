@@ -56,7 +56,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     private var _rootItem: Item
     private var _items: [Item]
     private var _layout: Layout
-    private var _view: QCustomView
+    private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: IQPanGesture
     private var _interactiveBeginLocation: QPoint?

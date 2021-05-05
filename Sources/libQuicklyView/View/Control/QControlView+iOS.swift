@@ -9,86 +9,137 @@ import libQuicklyCore
 
 extension QControlView {
     
-    final class ControlView : UIControl {
+    struct Reusable : IQReusable {
         
-        unowned var customDelegate: ControlViewDelegate!
-        var contentSize: QSize {
-            return self._layoutManager.size
-        }
-        override var frame: CGRect {
-            didSet(oldValue) {
-                guard let view = self._view, self.frame != oldValue else { return }
-                self.update(cornerRadius: view.cornerRadius)
-                self.updateShadowPath()
-            }
-        }
-        override var debugDescription: String {
-            guard let view = self._view else { return super.debugDescription }
-            return view.debugDescription
-        }
-        
-        private unowned var _view: QControlView?
-        private var _layoutManager: QLayoutManager!
-        
-        override init(frame: CGRect) {
-            super.init(frame: frame)
-            
-            self.clipsToBounds = true
-            
-            self.addTarget(self, action: #selector(self._touchDown(_:)), for: .touchDown)
-            self.addTarget(self, action: #selector(self._touchDragEnter(_:)), for: .touchDragEnter)
-            self.addTarget(self, action: #selector(self._touchDragExit(_:)), for: .touchDragExit)
-            self.addTarget(self, action: #selector(self._touchUpInside(_:)), for: .touchUpInside)
-            self.addTarget(self, action: #selector(self._touchUpOutside(_:)), for: .touchUpOutside)
-            self.addTarget(self, action: #selector(self._touchUpOutside(_:)), for: .touchCancel)
-            
-            self._layoutManager = QLayoutManager(contentView: self)
-        }
-        
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
+        typealias Owner = QControlView
+        typealias Content = NativeControlView
 
-        override func willMove(toSuperview superview: UIView?) {
-            super.willMove(toSuperview: superview)
-            
-            if superview != nil {
-                self.setNeedsLayout()
-            } else {
-                self._layoutManager.clear()
-            }
+        static var reuseIdentificator: String {
+            return "QControlView"
         }
         
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            
-            let frame = QRect(self.frame)
-            self._layoutManager.layout(bounds: QRect(self.bounds))
-            if self._layoutManager.size != frame.size {
-                self._layoutManager.setNeedUpdate(true)
-            }
-            self._layoutManager.visible(bounds: QRect(self.bounds))
+        static func createReuse(owner: Owner) -> Content {
+            return Content(frame: .zero)
         }
         
-        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-            if self.customDelegate.shouldHighlighting(view: self) == true || self.customDelegate.shouldPressing(view: self) == true {
-                return super.hitTest(point, with: event)
-            }
-            if let hitView = super.hitTest(point, with: event) {
-                if hitView != self {
-                    return hitView
-                }
-            }
-            return nil
+        static func configureReuse(owner: Owner, content: Content) {
+            content.update(view: owner)
+        }
+        
+        static func cleanupReuse(owner: Owner, content: Content) {
+            content.cleanup()
         }
         
     }
-
+    
 }
 
-extension QControlView.ControlView {
+final class NativeControlView : UIControl {
     
-    func update(view: QControlView) {
+    typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+    
+    unowned var customDelegate: NativeControlViewDelegate!
+    var contentSize: QSize {
+        return self._layoutManager.size
+    }
+    override var frame: CGRect {
+        didSet(oldValue) {
+            guard let view = self._view, self.frame != oldValue else { return }
+            self.update(cornerRadius: view.cornerRadius)
+            self.updateShadowPath()
+        }
+    }
+    override var debugDescription: String {
+        guard let view = self._view else { return super.debugDescription }
+        return view.debugDescription
+    }
+    
+    private unowned var _view: View?
+    private var _layoutManager: QLayoutManager!
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.clipsToBounds = true
+        
+        self._layoutManager = QLayoutManager(contentView: self)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func willMove(toSuperview superview: UIView?) {
+        super.willMove(toSuperview: superview)
+        
+        if superview != nil {
+            self.setNeedsLayout()
+        } else {
+            self._layoutManager.clear()
+        }
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        let frame = QRect(self.frame)
+        self._layoutManager.layout(bounds: QRect(self.bounds))
+        if self._layoutManager.size != frame.size {
+            self._layoutManager.setNeedUpdate(true)
+        }
+        self._layoutManager.visible(bounds: QRect(self.bounds))
+    }
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        if self.customDelegate.shouldHighlighting(view: self) == true || self.customDelegate.shouldPressing(view: self) == true {
+            return super.hitTest(point, with: event)
+        }
+        if let hitView = super.hitTest(point, with: event) {
+            if hitView != self {
+                return hitView
+            }
+        }
+        return nil
+    }
+    
+    override func sendActions(for controlEvents: UIControl.Event) {
+        super.sendActions(for: controlEvents)
+        
+        switch controlEvents {
+        case .touchDown:
+            if self.customDelegate.shouldHighlighting(view: self) == true {
+                self.customDelegate.set(view: self, highlighted: true)
+            }
+        case .touchDragEnter:
+            if self.customDelegate.shouldHighlighting(view: self) == true {
+                self.customDelegate.set(view: self, highlighted: true)
+            }
+        case .touchDragExit:
+            if self.customDelegate.shouldHighlighting(view: self) == true {
+                self.customDelegate.set(view: self, highlighted: false)
+            }
+        case .touchUpInside:
+            if self.customDelegate.shouldPressing(view: self) == true {
+                self.customDelegate.pressed(view: self)
+            }
+            if self.customDelegate.shouldHighlighting(view: self) == true {
+                self.customDelegate.set(view: self, highlighted: false)
+            }
+        case .touchUpOutside, .touchCancel:
+            if self.customDelegate.shouldHighlighting(view: self) == true {
+                self.customDelegate.set(view: self, highlighted: false)
+            }
+            
+        default:
+            break
+        }
+    }
+    
+}
+
+extension NativeControlView {
+    
+    func update< View : IQControlView & NativeControlViewDelegate >(view: View) {
         self._view = view
         self.update(layout: view.layout)
         self.update(color: view.color)
@@ -121,49 +172,7 @@ extension QControlView.ControlView {
     
 }
 
-private extension QControlView.ControlView {
-    
-    @objc
-    func _touchDown(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: true)
-        }
-    }
-    
-    @objc
-    func _touchDragEnter(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: true)
-        }
-    }
-    
-    @objc
-    func _touchDragExit(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
-        }
-    }
-    
-    @objc
-    func _touchUpInside(_ sender: Any) {
-        if self.customDelegate.shouldPressing(view: self) == true {
-            self.customDelegate.pressed(view: self)
-        }
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
-        }
-    }
-    
-    @objc
-    func _touchUpOutside(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
-        }
-    }
-    
-}
-
-extension QControlView.ControlView : IQLayoutDelegate {
+extension NativeControlView : IQLayoutDelegate {
     
     func setNeedUpdate(_ parentLayout: IQLayout) {
         self.setNeedsLayout()
@@ -172,29 +181,6 @@ extension QControlView.ControlView : IQLayoutDelegate {
     func updateIfNeeded(_ parentLayout: IQLayout) {
         self._layoutManager.layout?.parentView?.parentLayout?.updateIfNeeded()
         self.layoutIfNeeded()
-    }
-    
-}
-
-extension QControlView.ControlView : IQReusable {
-    
-    typealias Owner = QControlView
-    typealias Content = QControlView.ControlView
-
-    static var reuseIdentificator: String {
-        return "QControlView"
-    }
-    
-    static func createReuse(owner: Owner) -> Content {
-        return Content(frame: .zero)
-    }
-    
-    static func configureReuse(owner: Owner, content: Content) {
-        content.update(view: owner)
-    }
-    
-    static func cleanupReuse(owner: Owner, content: Content) {
-        content.cleanup()
     }
     
 }

@@ -8,7 +8,7 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QSwipeCellView : IQSwipeCellView {
+public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     
     public var parentLayout: IQLayout? {
         get { return self._view.parentLayout }
@@ -39,7 +39,7 @@ public class QSwipeCellView : IQSwipeCellView {
         get { return self._view.isHighlighted }
     }
     public private(set) var shouldPressed: Bool
-    public private(set) var contentView: IQView {
+    public private(set) var contentView: ContentView {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
             self._layout.contentItem = QLayoutItem(view: self.contentView)
@@ -105,7 +105,7 @@ public class QSwipeCellView : IQSwipeCellView {
     }
     
     private var _layout: Layout
-    private var _view: IQCustomView
+    private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _pressedGesture: IQTapGesture
     private var _interactiveGesture: IQPanGesture
@@ -121,7 +121,7 @@ public class QSwipeCellView : IQSwipeCellView {
     public init(
         name: String? = nil,
         shouldPressed: Bool = true,
-        contentView: IQView,
+        contentView: ContentView,
         leadingView: IQView? = nil,
         leadingLimit: QFloat = 0,
         leadingSize: QFloat = 0,
@@ -348,7 +348,7 @@ public class QSwipeCellView : IQSwipeCellView {
     }
     
     @discardableResult
-    public func contentView(_ value: IQView) -> Self {
+    public func contentView(_ value: ContentView) -> Self {
         self.contentView = value
         return self
     }

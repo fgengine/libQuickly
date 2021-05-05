@@ -66,14 +66,14 @@ public class QScrollView : IQScrollView {
         get { return self._contentOffset }
     }
     public private(set) var contentSize: QSize
-    public private(set) var layout: IQLayout {
+    public private(set) var contentLayout: IQLayout {
         willSet {
-            self.layout.parentView = nil
+            self.contentLayout.parentView = nil
         }
         didSet(oldValue) {
-            self.layout.parentView = self
+            self.contentLayout.parentView = self
             guard self.isLoaded == true else { return }
-            self._view.update(layout: self.layout)
+            self._view.update(contentLayout: self.contentLayout)
         }
     }
     public private(set) var color: QColor? {
@@ -139,7 +139,7 @@ public class QScrollView : IQScrollView {
         self.name = name ?? String(describing: Self.self)
         self.direction = direction
         self.indicatorDirection = indicatorDirection
-        self.layout = layout
+        self.contentLayout = layout
         self.contentInset = contentInset
         self._contentOffset = QPoint()
         self.contentSize = QSize()
@@ -151,11 +151,11 @@ public class QScrollView : IQScrollView {
         self.shadow = shadow
         self.alpha = alpha
         self._reuse = QReuseItem()
-        self.layout.parentView = self
+        self.contentLayout.parentView = self
     }
     
     public func size(_ available: QSize) -> QSize {
-        return self.layout.size(available)
+        return self.contentLayout.size(available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -201,8 +201,8 @@ public class QScrollView : IQScrollView {
     }
     
     @discardableResult
-    public func layout(_ value: IQLayout) -> Self {
-        self.layout = value
+    public func contentLayout(_ value: IQLayout) -> Self {
+        self.contentLayout = value
         return self
     }
     

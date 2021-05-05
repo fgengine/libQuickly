@@ -5,14 +5,14 @@
 import Foundation
 import libQuicklyCore
 
-protocol CustomViewDelegate : AnyObject {
+protocol NativeCustomViewDelegate : AnyObject {
     
-    func shouldHighlighting(view: QCustomView.CustomView) -> Bool
-    func set(view: QCustomView.CustomView, highlighted: Bool)
+    func shouldHighlighting(view: NativeCustomView) -> Bool
+    func set(view: NativeCustomView, highlighted: Bool)
     
 }
 
-public class QCustomView : IQCustomView {
+public class QCustomView< Layout : IQLayout > : IQCustomView {
     
     public private(set) unowned var parentLayout: IQLayout?
     public unowned var item: QLayoutItem?
@@ -40,7 +40,7 @@ public class QCustomView : IQCustomView {
         }
         get { return self._gestures }
     }
-    public private(set) var layout: IQLayout {
+    public private(set) var layout: Layout {
         willSet {
             self.layout.parentView = nil
         }
@@ -105,8 +105,8 @@ public class QCustomView : IQCustomView {
         }
     }
     
-    private var _reuse: QReuseItem< CustomView >
-    private var _view: CustomView {
+    private var _reuse: QReuseItem< Reusable >
+    private var _view: Reusable.Content {
         if self.isLoaded == false { self._reuse.load(owner: self) }
         return self._reuse.content!
     }
@@ -119,7 +119,7 @@ public class QCustomView : IQCustomView {
     public init(
         name: String? = nil,
         gestures: [IQGesture] = [],
-        layout: IQLayout,
+        layout: Layout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
         color: QColor? = QColor(rgba: 0x00000000),
@@ -190,7 +190,7 @@ public class QCustomView : IQCustomView {
     }
     
     @discardableResult
-    public func layout(_ value: IQLayout) -> Self {
+    public func layout(_ value: Layout) -> Self {
         self.layout = value
         return self
     }
@@ -257,13 +257,13 @@ public class QCustomView : IQCustomView {
 
 }
 
-extension QCustomView : CustomViewDelegate {
+extension QCustomView : NativeCustomViewDelegate {
     
-    func shouldHighlighting(view: QCustomView.CustomView) -> Bool {
+    func shouldHighlighting(view: NativeCustomView) -> Bool {
         return self.shouldHighlighting
     }
     
-    func set(view: QCustomView.CustomView, highlighted: Bool) {
+    func set(view: NativeCustomView, highlighted: Bool) {
         if self._isHighlighted != highlighted {
             self._isHighlighted = highlighted
             self._onChangeStyle?(true)

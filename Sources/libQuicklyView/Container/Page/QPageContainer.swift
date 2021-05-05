@@ -83,8 +83,8 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     #endif
     
     private var _barView: IQPageBarView
-    private var _view: QCustomView
     private var _layout: Layout
+    private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: QPanGesture
     private var _interactiveBeginLocation: QPoint?

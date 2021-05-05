@@ -10,12 +10,25 @@ public protocol IQSimpleParamsActionDataLoader {
     associatedtype Params
     associatedtype Error
     
-    func perform(
+    mutating func perform(
         params: Params,
         success: @escaping () -> Void,
         failure: @escaping (_ error: Error) -> Void
     ) -> IQCancellable
     
+    mutating func didPerform()
+    mutating func didPerform(error: Error)
+    
+}
+
+public extension IQSimpleParamsActionDataLoader {
+    
+    func didPerform() {
+    }
+
+    func didPerform(error: Error) {
+    }
+
 }
 
 open class QSimpleParamsActionDataSource< Loader : IQSimpleParamsActionDataLoader > : IQSimpleParamsActionDataSource {
@@ -43,8 +56,8 @@ open class QSimpleParamsActionDataSource< Loader : IQSimpleParamsActionDataLoade
         guard self.isPerforming == false else { return }
         self._query = self._loader.perform(
             params: params,
-            success: { [weak self] in self?._didPerform() },
-            failure: { [weak self] error in self?._didPerform(error: error) }
+            success: { [unowned self] in self._didPerform() },
+            failure: { [unowned self] error in self._didPerform(error: error) }
         )
     }
     
@@ -65,12 +78,14 @@ private extension QSimpleParamsActionDataSource {
 
     func _didPerform() {
         self._query = nil
+        self._loader.didPerform()
         self.didPerform()
     }
 
     func _didPerform(error: Error) {
         self._query = nil
         self.error = error
+        self._loader.didPerform(error: error)
         self.didPerform(error: error)
     }
     

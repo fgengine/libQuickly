@@ -9,11 +9,24 @@ public protocol IQSimpleEmptyActionDataLoader {
     
     associatedtype Error
     
-    func perform(
+    mutating func perform(
         success: @escaping () -> Void,
         failure: @escaping (_ error: Error) -> Void
     ) -> IQCancellable
     
+    mutating func didPerform()
+    mutating func didPerform(error: Error)
+    
+}
+
+public extension IQSimpleEmptyActionDataLoader {
+    
+    func didPerform() {
+    }
+
+    func didPerform(error: Error) {
+    }
+
 }
 
 open class QSimpleEmptyActionDataSource< Loader : IQSimpleEmptyActionDataLoader > : IQSimpleEmptyActionDataSource {
@@ -39,8 +52,8 @@ open class QSimpleEmptyActionDataSource< Loader : IQSimpleEmptyActionDataLoader 
     public func perform() {
         guard self.isPerforming == false else { return }
         self._query = self._loader.perform(
-            success: { [weak self] in self?._didPerform() },
-            failure: { [weak self] error in self?._didPerform(error: error) }
+            success: { [unowned self] in self._didPerform() },
+            failure: { [unowned self] error in self._didPerform(error: error) }
         )
     }
     
@@ -61,12 +74,14 @@ private extension QSimpleEmptyActionDataSource {
 
     func _didPerform() {
         self._query = nil
+        self._loader.didPerform()
         self.didPerform()
     }
 
     func _didPerform(error: Error) {
         self._query = nil
         self.error = error
+        self._loader.didPerform(error: error)
         self.didPerform(error: error)
     }
     

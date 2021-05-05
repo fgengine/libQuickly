@@ -358,6 +358,13 @@ public extension QDatabase {
         return self.numberOfChangedRows
     }
     
+    func updateOrInsert(table: Table, data: [Column : IQDatabaseInputValue], where: IQDatabaseExpressable) throws {
+        let numberOfChanges = try self.update(table: table, data: data, where: `where`)
+        if numberOfChanges == 0 {
+            try self.insert(table: table, data: data)
+        }
+    }
+    
     @discardableResult
     func delete(table: Table, where: IQDatabaseExpressable? = nil, orderBy: OrderBy? = nil, pagination: Pagination? = nil) throws -> Int {
         var bindables: [IQDatabaseInputValue] = []
@@ -382,7 +389,7 @@ public extension QDatabase {
         return self.numberOfChangedRows
     }
     
-    func select< Type >(table: Table, columns: [Column]? = nil, where: IQDatabaseExpressable? = nil, orderBy: OrderBy? = nil, pagination: Pagination? = nil, processing: (QDatabase.Statement) throws -> Type) throws -> [Type] {
+    func select< Type >(table: Table, columns: [Column]? = nil, where: IQDatabaseExpressable? = nil, orderBy: OrderBy? = nil, pagination: Pagination? = nil, map: (QDatabase.Statement) throws -> Type) throws -> [Type] {
         var bindables: [IQDatabaseInputValue] = []
         var query = "SELECT "
         if let columns = columns {
@@ -407,10 +414,10 @@ public extension QDatabase {
         }
         let statement = try self.statement(query: query)
         try statement.bind(bindables)
-        return try statement.executeRows(processing)
+        return try statement.executeRows(map)
     }
     
-    func selectFirst< Type >(table: Table, columns: [Column]? = nil, where: IQDatabaseExpressable? = nil, orderBy: OrderBy? = nil, pagination: Pagination? = nil, processing: (QDatabase.Statement) throws -> Type) throws -> Type? {
+    func selectFirst< Type >(table: Table, columns: [Column]? = nil, where: IQDatabaseExpressable? = nil, orderBy: OrderBy? = nil, pagination: Pagination? = nil, map: (QDatabase.Statement) throws -> Type) throws -> Type? {
         var bindables: [IQDatabaseInputValue] = []
         var query = "SELECT "
         if let columns = columns {
@@ -435,7 +442,7 @@ public extension QDatabase {
         }
         let statement = try self.statement(query: query)
         try statement.bind(bindables)
-        return try statement.executeFirstRow(processing)
+        return try statement.executeFirstRow(map)
     }
     
 }

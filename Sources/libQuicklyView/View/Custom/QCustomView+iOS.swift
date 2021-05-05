@@ -9,103 +9,128 @@ import libQuicklyCore
 
 extension QCustomView {
     
-    final class CustomView : UIView {
+    struct Reusable : IQReusable {
         
-        unowned var customDelegate: CustomViewDelegate!
-        var contentSize: QSize {
-            return self._layoutManager.size
-        }
-        override var frame: CGRect {
-            didSet(oldValue) {
-                guard let view = self._view, self.frame != oldValue else { return }
-                self.update(cornerRadius: view.cornerRadius)
-                self.updateShadowPath()
-            }
-        }
-        override var debugDescription: String {
-            guard let view = self._view else { return super.debugDescription }
-            return view.debugDescription
-        }
-        
-        private unowned var _view: QCustomView?
-        private var _layoutManager: QLayoutManager!
-        private var _gestures: [IQGesture]
-        
-        override init(frame: CGRect) {
-            self._gestures = []
-            
-            super.init(frame: frame)
-            
-            self.clipsToBounds = true
-            
-            self._layoutManager = QLayoutManager(contentView: self)
-        }
-        
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
+        typealias Owner = QCustomView
+        typealias Content = NativeCustomView
 
-        override func willMove(toSuperview superview: UIView?) {
-            super.willMove(toSuperview: superview)
-            
-            if superview != nil {
-                self.setNeedsLayout()
-            } else {
-                self._layoutManager.clear()
-            }
+        static var reuseIdentificator: String {
+            return "QCustomView"
         }
         
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            
-            let frame = QRect(self.frame)
-            self._layoutManager.layout(bounds: QRect(self.bounds))
-            if self._layoutManager.size != frame.size {
-                self._layoutManager.setNeedUpdate(true)
-            }
-            self._layoutManager.visible(bounds: QRect(self.bounds))
+        static func createReuse(owner: Owner) -> Content {
+            return Content(frame: .zero)
         }
         
-        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-            if self.customDelegate.shouldHighlighting(view: self) == true || self._gestures.count > 0 {
-                return super.hitTest(point, with: event)
-            }
-            if let hitView = super.hitTest(point, with: event) {
-                if hitView != self {
-                    return hitView
-                }
-            }
-            return nil
+        static func configureReuse(owner: Owner, content: Content) {
+            content.update(view: owner)
         }
         
-        override func touchesBegan(_ touches: Set< UITouch >, with event: UIEvent?) {
-            super.touchesBegan(touches, with: event)
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: true)
-            }
-        }
-        
-        override func touchesEnded(_ touches: Set< UITouch >, with event: UIEvent?) {
-            super.touchesEnded(touches, with: event)
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: false)
-            }
-        }
-        
-        override func touchesCancelled(_ touches: Set< UITouch >, with event: UIEvent?) {
-            super.touchesCancelled(touches, with: event)
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: false)
-            }
+        static func cleanupReuse(owner: Owner, content: Content) {
+            content.cleanup()
         }
         
     }
-
+    
 }
 
-extension QCustomView.CustomView {
+final class NativeCustomView : UIView {
     
-    func update(view: QCustomView) {
+    typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+    
+    unowned var customDelegate: NativeCustomViewDelegate!
+    var contentSize: QSize {
+        return self._layoutManager.size
+    }
+    override var frame: CGRect {
+        didSet(oldValue) {
+            guard let view = self._view, self.frame != oldValue else { return }
+            self.update(cornerRadius: view.cornerRadius)
+            self.updateShadowPath()
+        }
+    }
+    override var debugDescription: String {
+        guard let view = self._view else { return super.debugDescription }
+        return view.debugDescription
+    }
+    
+    private unowned var _view: View?
+    private var _layoutManager: QLayoutManager!
+    private var _gestures: [IQGesture]
+    
+    override init(frame: CGRect) {
+        self._gestures = []
+        
+        super.init(frame: frame)
+        
+        self.clipsToBounds = true
+        
+        self._layoutManager = QLayoutManager(contentView: self)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func willMove(toSuperview superview: UIView?) {
+        super.willMove(toSuperview: superview)
+        
+        if superview != nil {
+            self.setNeedsLayout()
+        } else {
+            self._layoutManager.clear()
+        }
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        let frame = QRect(self.frame)
+        self._layoutManager.layout(bounds: QRect(self.bounds))
+        if self._layoutManager.size != frame.size {
+            self._layoutManager.setNeedUpdate(true)
+        }
+        self._layoutManager.visible(bounds: QRect(self.bounds))
+    }
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        if self.customDelegate.shouldHighlighting(view: self) == true || self._gestures.count > 0 {
+            return super.hitTest(point, with: event)
+        }
+        if let hitView = super.hitTest(point, with: event) {
+            if hitView != self {
+                return hitView
+            }
+        }
+        return nil
+    }
+    
+    override func touchesBegan(_ touches: Set< UITouch >, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: true)
+        }
+    }
+    
+    override func touchesEnded(_ touches: Set< UITouch >, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: false)
+        }
+    }
+    
+    override func touchesCancelled(_ touches: Set< UITouch >, with event: UIEvent?) {
+        super.touchesCancelled(touches, with: event)
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: false)
+        }
+    }
+    
+}
+
+extension NativeCustomView {
+    
+    func update< View : IQCustomView & NativeCustomViewDelegate >(view: View) {
         self._view = view
         self.update(gestures: view.gestures)
         self.update(layout: view.layout)
@@ -163,7 +188,7 @@ extension QCustomView.CustomView {
     
 }
 
-extension QCustomView.CustomView : IQLayoutDelegate {
+extension NativeCustomView : IQLayoutDelegate {
     
     func setNeedUpdate(_ parentLayout: IQLayout) {
         self.setNeedsLayout()
@@ -172,29 +197,6 @@ extension QCustomView.CustomView : IQLayoutDelegate {
     func updateIfNeeded(_ parentLayout: IQLayout) {
         self._layoutManager.layout?.parentView?.parentLayout?.updateIfNeeded()
         self.layoutIfNeeded()
-    }
-    
-}
-
-extension QCustomView.CustomView : IQReusable {
-    
-    typealias Owner = QCustomView
-    typealias Content = QCustomView.CustomView
-
-    static var reuseIdentificator: String {
-        return "QCustomView"
-    }
-    
-    static func createReuse(owner: Owner) -> Content {
-        return Content(frame: .zero)
-    }
-    
-    static func configureReuse(owner: Owner, content: Content) {
-        content.update(view: owner)
-    }
-    
-    static func cleanupReuse(owner: Owner, content: Content) {
-        content.cleanup()
     }
     
 }

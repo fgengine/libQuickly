@@ -23,7 +23,7 @@ public extension QAnimation {
         func start() {
             if self._displayLink == nil {
                 let displayLink = CADisplayLink(target: self, selector: #selector(self._handle))
-                displayLink.add(to: .main, forMode: .default)
+                displayLink.add(to: .main, forMode: .common)
                 self._displayLink = displayLink
                 self._prevTime = CACurrentMediaTime()
             }
@@ -31,7 +31,7 @@ public extension QAnimation {
         
         func stop() {
             if let displayLink = self._displayLink {
-                displayLink.remove(from: .main, forMode: .default)
+                displayLink.remove(from: .main, forMode: .common)
                 displayLink.isPaused = true
                 displayLink.invalidate()
             }

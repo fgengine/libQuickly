@@ -24,4 +24,8 @@ public extension IQPageDataSource {
         return self.result != nil
     }
     
+    func load(reload: Bool = false) {
+        self.load(reload: reload)
+    }
+    
 }

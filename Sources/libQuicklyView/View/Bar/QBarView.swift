@@ -60,7 +60,7 @@ public class QBarView : IQBarView {
     }
     
     private var _layout: Layout
-    private var _view: IQCustomView
+    private var _view: QCustomView< Layout >
     
     public init(
         name: String? = nil,

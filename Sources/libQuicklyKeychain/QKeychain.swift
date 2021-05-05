@@ -75,6 +75,14 @@ public extension QKeychain {
         }
         return self._processSet(value, key: key, access: access)
     }
+    
+    @discardableResult
+    func set< ValueType: BinaryInteger >(_ value: ValueType?, key: String, access: AccessOptions = .defaultOption) -> Bool {
+        guard let value = value else {
+            return self._processDelete(key)
+        }
+        return self._processSet(String(value), key: key, access: access)
+    }
 
     func get(_ key: String) -> Data? {
         let query = self._process(query: [
@@ -103,6 +111,16 @@ public extension QKeychain {
         guard let data: Data = self.get(key) else { return nil }
         guard let firstBit = data.first else { return nil }
         return firstBit != 0
+    }
+    
+    func get(_ key: String, radix: Int = 10) -> Int? {
+        guard let string: String = self.get(key) else { return nil }
+        return Int(string, radix: radix)
+    }
+
+    func get(_ key: String, radix: Int = 10) -> UInt? {
+        guard let string: String = self.get(key) else { return nil }
+        return UInt(string, radix: radix)
     }
 
     @discardableResult

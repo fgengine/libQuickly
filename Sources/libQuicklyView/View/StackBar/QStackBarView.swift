@@ -51,7 +51,7 @@ public class QStackBarView : QBarView, IQStackBarView {
     }
 
     private var _contentLayout: Layout
-    private var _contentView: QCustomView
+    private var _contentView: QCustomView< Layout >
     
     public init(
         name: String? = nil,
@@ -197,8 +197,8 @@ private extension QStackBarView {
             didSet { self.setNeedUpdate() }
         }
         
-        private var _leadingItemsCache: [Int : QSize]
-        private var _trailingItemsCache: [Int : QSize]
+        private var _leadingItemsCache: [QSize?]
+        private var _trailingItemsCache: [QSize?]
 
         init(
             inset: QInset,
@@ -220,13 +220,13 @@ private extension QStackBarView {
             self.detailSpacing = detailSpacing
             self.trailingItems = trailingItems
             self.trailingItemSpacing = trailingItemSpacing
-            self._leadingItemsCache = [:]
-            self._trailingItemsCache = [:]
+            self._leadingItemsCache = Array< QSize? >(repeating: nil, count: leadingItems.count)
+            self._trailingItemsCache = Array< QSize? >(repeating: nil, count: trailingItems.count)
         }
         
         func invalidate() {
-            self._leadingItemsCache.removeAll()
-            self._trailingItemsCache.removeAll()
+            self._leadingItemsCache = Array< QSize? >(repeating: nil, count: self.leadingItems.count)
+            self._trailingItemsCache = Array< QSize? >(repeating: nil, count: self.trailingItems.count)
         }
         
         func layout(bounds: QRect) -> QSize {
@@ -248,23 +248,23 @@ private extension QStackBarView {
                 width: safeBounds.size.width,
                 height: safeBounds.size.height - footerHeight
             )
-            let leadingSize = QStackLayoutHelper.layout(
+            let leadingSize = QListLayout.Helper.layout(
                 bounds: headerBounds,
                 direction: .horizontal,
                 origin: .forward,
                 inset: QInset(),
                 spacing: self.leadingItemSpacing,
                 items: self.leadingItems,
-                sizeCache: &self._leadingItemsCache
+                cache: &self._leadingItemsCache
             )
-            let trailingSize = QStackLayoutHelper.layout(
+            let trailingSize = QListLayout.Helper.layout(
                 bounds: headerBounds,
                 direction: .horizontal,
                 origin: .backward,
                 inset: QInset(),
                 spacing: self.trailingItemSpacing,
                 items: self.trailingItems,
-                sizeCache: &self._trailingItemsCache
+                cache: &self._trailingItemsCache
             )
             if let titleItem = self.titleItem {
                 let leadingOffset = self.leadingItems.count > 0 ? self.titleSpacing : 0
@@ -292,14 +292,14 @@ private extension QStackBarView {
                 width: available.width - (self.inset.left + self.inset.right),
                 height: available.height - (self.inset.top + footerHeight + self.inset.bottom)
             )
-            let leadingSize = QStackLayoutHelper.size(
+            let leadingSize = QListLayout.Helper.size(
                 available: itemsAvailable,
                 direction: .horizontal,
                 inset: QInset(),
                 spacing: self.leadingItemSpacing,
                 items: self.leadingItems
             )
-            let trailingSize = QStackLayoutHelper.size(
+            let trailingSize = QListLayout.Helper.size(
                 available: itemsAvailable,
                 direction: .horizontal,
                 inset: QInset(),
