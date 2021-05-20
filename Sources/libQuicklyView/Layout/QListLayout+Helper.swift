@@ -15,11 +15,11 @@ public extension QListLayout {
             origin: Origin,
             alignment: Alignment = .fill,
             inset: QInset,
-            spacing: QFloat,
-            minSpacing: QFloat? = nil,
-            maxSpacing: QFloat? = nil,
-            minSize: QFloat? = nil,
-            maxSize: QFloat? = nil,
+            spacing: Float,
+            minSpacing: Float? = nil,
+            maxSpacing: Float? = nil,
+            minSize: Float? = nil,
+            maxSize: Float? = nil,
             operations: [Operation] = [],
             items: [QLayoutItem],
             cache: inout [QSize?]
@@ -36,7 +36,7 @@ public extension QListLayout {
                 )
                 var pass = Pass(
                     inset: inset.horizontal,
-                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    spacings: items.count > 1 ? spacing * Float(items.count - 1) : 0,
                     items: size.full.width
                 )
                 var spacing = spacing
@@ -89,7 +89,7 @@ public extension QListLayout {
                 )
                 var pass = Pass(
                     inset: inset.vertical,
-                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    spacings: items.count > 1 ? spacing * Float(items.count - 1) : 0,
                     items: size.full.height
                 )
                 var spacing = spacing
@@ -139,11 +139,11 @@ public extension QListLayout {
             direction: Direction,
             alignment: Alignment = .fill,
             inset: QInset,
-            spacing: QFloat,
-            minSpacing: QFloat? = nil,
-            maxSpacing: QFloat? = nil,
-            minSize: QFloat? = nil,
-            maxSize: QFloat? = nil,
+            spacing: Float,
+            minSpacing: Float? = nil,
+            maxSpacing: Float? = nil,
+            minSize: Float? = nil,
+            maxSize: Float? = nil,
             items: [QLayoutItem],
             operations: [Operation] = []
         ) -> QSize {
@@ -160,7 +160,7 @@ public extension QListLayout {
                 )
                 var pass = Pass(
                     inset: inset.horizontal,
-                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    spacings: items.count > 1 ? spacing * Float(items.count - 1) : 0,
                     items: size.full.width
                 )
                 if items.count > 1 {
@@ -181,7 +181,7 @@ public extension QListLayout {
                     minSize: minSize,
                     maxSize: maxSize
                 )
-                let height: QFloat
+                let height: Float
                 switch alignment {
                 case .leading, .center, .trailing: height = size.max.height + inset.vertical
                 case .fill: height = available.height
@@ -199,7 +199,7 @@ public extension QListLayout {
                 )
                 var pass = Pass(
                     inset: inset.vertical,
-                    spacings: items.count > 1 ? spacing * QFloat(items.count - 1) : 0,
+                    spacings: items.count > 1 ? spacing * Float(items.count - 1) : 0,
                     items: size.full.height
                 )
                 if items.count > 1 {
@@ -220,7 +220,7 @@ public extension QListLayout {
                     minSize: minSize,
                     maxSize: maxSize
                 )
-                let width: QFloat
+                let width: Float
                 switch alignment {
                 case .leading, .center, .trailing: width = size.max.width + inset.horizontal
                 case .fill: width = available.width
@@ -255,16 +255,16 @@ public extension QListLayout.Helper {
     class Operation {
         
         public var type: OperationType
-        public var indecies: Set< Int >
-        public var progress: QFloat
+        public var indices: Set< Int >
+        public var progress: Float
         
         public init(
             type: OperationType,
-            indecies: Set< Int >,
-            progress: QFloat
+            indices: Set< Int >,
+            progress: Float
         ) {
             self.type = type
-            self.indecies = indecies
+            self.indices = indices
             self.progress = progress
         }
 
@@ -275,7 +275,7 @@ public extension QListLayout.Helper {
 extension QListLayout.Helper.Operation : Equatable {
     
     public static func == (lhs: QListLayout.Helper.Operation, rhs: QListLayout.Helper.Operation) -> Bool {
-        return lhs.type == rhs.type && lhs.indecies == rhs.indecies
+        return lhs.type == rhs.type && lhs.indices == rhs.indices
     }
     
 }
@@ -292,14 +292,14 @@ private extension QListLayout.Helper {
     
     struct Pass {
         
-        var full: QFloat
-        var spacings: QFloat
-        var items: QFloat
+        var full: Float
+        var spacings: Float
+        var items: Float
         
         init(
-            full: QFloat,
-            spacings: QFloat,
-            items: QFloat
+            full: Float,
+            spacings: Float,
+            items: Float
         ) {
             self.full = full
             self.spacings = spacings
@@ -307,9 +307,9 @@ private extension QListLayout.Helper {
         }
 
         init(
-            inset: QFloat,
-            spacings: QFloat,
-            items: QFloat
+            inset: Float,
+            spacings: Float,
+            items: Float
         ) {
             self.full = (items + spacings) + inset
             self.spacings = spacings
@@ -323,7 +323,7 @@ private extension QListLayout.Helper {
 private extension QListLayout.Helper.Operation {
     
     @inline(__always)
-    func _process(itemSize: QSize, keyPath: WritableKeyPath< QSize, QFloat >) -> QSize {
+    func _process(itemSize: QSize, keyPath: WritableKeyPath< QSize, Float >) -> QSize {
         var result = itemSize
         switch self.type {
         case .insert: result[keyPath: keyPath] = result[keyPath: keyPath] * self.progress
@@ -342,7 +342,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -350,7 +350,7 @@ private extension QListLayout.Helper {
             x: bounds.origin.x + inset.left,
             y: bounds.origin.y + inset.top
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topLeft: origin, size: size)
@@ -368,7 +368,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -376,7 +376,7 @@ private extension QListLayout.Helper {
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + (bounds.size.height / 2)) + inset.top
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(left: origin, size: size)
@@ -394,7 +394,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -402,7 +402,7 @@ private extension QListLayout.Helper {
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomLeft: origin, size: size)
@@ -420,7 +420,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -429,7 +429,7 @@ private extension QListLayout.Helper {
             y: bounds.origin.y + inset.top
         )
         let height = bounds.size.height - inset.vertical
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y, width: size.width, height: height)
@@ -451,7 +451,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -477,7 +477,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -503,7 +503,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -511,7 +511,7 @@ private extension QListLayout.Helper {
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: (bounds.origin.y + bounds.size.height) + inset.bottom
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomRight: origin, size: size)
@@ -529,7 +529,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -538,7 +538,7 @@ private extension QListLayout.Helper {
             y: bounds.origin.y + inset.top
         )
         let height = bounds.size.height - inset.vertical
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x - size.width, y: origin.y, width: size.width, height: height)
@@ -560,7 +560,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -568,7 +568,7 @@ private extension QListLayout.Helper {
             x: bounds.origin.x + inset.left,
             y: bounds.origin.y + inset.top
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topLeft: origin, size: size)
@@ -586,7 +586,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -594,7 +594,7 @@ private extension QListLayout.Helper {
             x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
             y: bounds.origin.y + inset.top
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(top: origin, size: size)
@@ -612,7 +612,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -620,7 +620,7 @@ private extension QListLayout.Helper {
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: bounds.origin.y + inset.top
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(topRight: origin, size: size)
@@ -638,7 +638,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -647,7 +647,7 @@ private extension QListLayout.Helper {
             y: bounds.origin.y + inset.top
         )
         let width = bounds.size.width - inset.horizontal
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y, width: width, height: size.height)
@@ -669,7 +669,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -677,7 +677,7 @@ private extension QListLayout.Helper {
             x: bounds.origin.x + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomLeft: origin, size: size)
@@ -695,7 +695,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -703,7 +703,7 @@ private extension QListLayout.Helper {
             x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottom: origin, size: size)
@@ -721,7 +721,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -729,7 +729,7 @@ private extension QListLayout.Helper {
             x: (bounds.origin.x + bounds.size.width) - inset.right,
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(bottomRight: origin, size: size)
@@ -747,7 +747,7 @@ private extension QListLayout.Helper {
         pass: Pass,
         bounds: QRect,
         inset: QInset,
-        spacing: QFloat,
+        spacing: Float,
         items: [QLayoutItem],
         sizes: [QSize?]
     ) -> QSize {
@@ -756,7 +756,7 @@ private extension QListLayout.Helper {
             y: (bounds.origin.y + bounds.size.height) - inset.bottom
         )
         let width = bounds.size.width - inset.horizontal
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y - size.height, width: width, height: size.height)
@@ -775,28 +775,28 @@ private extension QListLayout.Helper {
     @inline(__always)
     static func _layoutPassSpacing(
         pass: Pass,
-        available: QFloat,
-        inset: QFloat,
-        spacing: inout QFloat,
+        available: Float,
+        inset: Float,
+        spacing: inout Float,
         itemsCount: Int,
-        minSpacing: QFloat?,
-        maxSpacing: QFloat?
+        minSpacing: Float?,
+        maxSpacing: Float?
     ) -> Pass {
-        let newFull: QFloat
-        let newSpacings: QFloat
+        let newFull: Float
+        let newSpacings: Float
         if let maxSpacing = maxSpacing, pass.full < available {
-            newSpacings = maxSpacing * QFloat(itemsCount - 1)
+            newSpacings = maxSpacing * Float(itemsCount - 1)
             newFull = (pass.items + pass.spacings) + inset
             if newFull > available {
-                spacing = (newFull - pass.full) / QFloat(itemsCount - 1)
+                spacing = (newFull - pass.full) / Float(itemsCount - 1)
             } else {
                 spacing = maxSpacing
             }
         } else if let minSpacing = minSpacing, pass.full > available {
-            newSpacings = minSpacing * QFloat(itemsCount - 1)
+            newSpacings = minSpacing * Float(itemsCount - 1)
             newFull = (pass.items + pass.spacings) + inset
             if newFull < available {
-                spacing = (newFull - pass.full) / QFloat(itemsCount - 1)
+                spacing = (newFull - pass.full) / Float(itemsCount - 1)
             } else {
                 spacing = minSpacing
             }
@@ -814,19 +814,19 @@ private extension QListLayout.Helper {
     @inline(__always)
     static func _boundsPassSpacing(
         pass: Pass,
-        available: QFloat,
-        inset: QFloat,
+        available: Float,
+        inset: Float,
         itemsCount: Int,
-        minSpacing: QFloat?,
-        maxSpacing: QFloat?
+        minSpacing: Float?,
+        maxSpacing: Float?
     ) -> Pass {
-        let newFull: QFloat
-        let newSpacings: QFloat
+        let newFull: Float
+        let newSpacings: Float
         if let maxSpacing = maxSpacing, pass.full < available {
-            newSpacings = maxSpacing * QFloat(itemsCount - 1)
+            newSpacings = maxSpacing * Float(itemsCount - 1)
             newFull = min(available, (pass.items + newSpacings) + inset)
         } else if let minSpacing = minSpacing, pass.full > available {
-            newSpacings = minSpacing * QFloat(itemsCount - 1)
+            newSpacings = minSpacing * Float(itemsCount - 1)
             newFull = max(available, (pass.items + newSpacings) + inset)
         } else {
             newFull = pass.full
@@ -846,20 +846,20 @@ private extension QListLayout.Helper {
     @inline(__always)
     static func _layoutPassSize(
         pass: Pass,
-        available: QFloat,
-        inset: QFloat,
-        spacing: QFloat,
+        available: Float,
+        inset: Float,
+        spacing: Float,
         itemsCount: Int,
-        minSize: QFloat?,
-        maxSize: QFloat?,
+        minSize: Float?,
+        maxSize: Float?,
         sizes: inout [QSize],
-        keyPath: WritableKeyPath< QSize, QFloat >
+        keyPath: WritableKeyPath< QSize, Float >
     ) -> Pass {
-        var newFull: QFloat
-        var newItems: QFloat
+        var newFull: Float
+        var newItems: Float
         if let maxSize = maxSize, pass.full < available {
-            let itemSize = min((available - inset - pass.spacings) / QFloat(itemsCount), maxSize)
-            newItems = itemSize * QFloat(itemsCount)
+            let itemSize = min((available - inset - pass.spacings) / Float(itemsCount), maxSize)
+            newItems = itemSize * Float(itemsCount)
             newFull = (newItems + pass.spacings) + inset
             for (index, value) in sizes.enumerated() {
                 var size = value
@@ -867,8 +867,8 @@ private extension QListLayout.Helper {
                 sizes[index] = size
             }
         } else if let minSize = minSize, pass.full > available {
-            let itemSize = max((available - inset - pass.spacings) / QFloat(itemsCount), minSize)
-            newItems = itemSize * QFloat(itemsCount)
+            let itemSize = max((available - inset - pass.spacings) / Float(itemsCount), minSize)
+            newItems = itemSize * Float(itemsCount)
             newFull = (newItems + pass.spacings) + inset
             for (index, value) in sizes.enumerated() {
                 var size = value
@@ -889,21 +889,21 @@ private extension QListLayout.Helper {
     @inline(__always)
     static func _boundsPassSize(
         pass: Pass,
-        available: QFloat,
-        inset: QFloat,
+        available: Float,
+        inset: Float,
         itemsCount: Int,
-        minSize: QFloat?,
-        maxSize: QFloat?
+        minSize: Float?,
+        maxSize: Float?
     ) -> Pass {
-        var newFull: QFloat
-        var newItems: QFloat
+        var newFull: Float
+        var newItems: Float
         if let maxSize = maxSize, pass.full < available {
-            let itemSize = min((available - inset - pass.spacings) / QFloat(itemsCount), maxSize)
-            newItems = itemSize * QFloat(itemsCount)
+            let itemSize = min((available - inset - pass.spacings) / Float(itemsCount), maxSize)
+            newItems = itemSize * Float(itemsCount)
             newFull = (newItems + pass.spacings) + inset
         } else if let minSize = minSize, pass.full > available {
-            let itemSize = max((available - inset - pass.spacings) / QFloat(itemsCount), minSize)
-            newItems = itemSize * QFloat(itemsCount)
+            let itemSize = max((available - inset - pass.spacings) / Float(itemsCount), minSize)
+            newItems = itemSize * Float(itemsCount)
             newFull = (newItems + pass.spacings) + inset
         } else {
             newFull = pass.full
@@ -926,12 +926,12 @@ private extension QListLayout.Helper {
         items: [QLayoutItem],
         operations: [Operation],
         cache: inout [QSize?],
-        keyPath: WritableKeyPath< QSize, QFloat >
+        keyPath: WritableKeyPath< QSize, Float >
     ) -> SizePass {
         var fillSize = QSize()
         var maxSize = QSize()
         var sizes = Array< QSize >()
-        for index in 0..<items.count {
+        for index in 0 ..< items.count {
             var itemSize: QSize
             if let cacheSize = cache[index] {
                 itemSize = cacheSize
@@ -939,7 +939,7 @@ private extension QListLayout.Helper {
                 itemSize = items[index].size(available)
                 cache[index] = itemSize
             }
-            if let operation = operations.first(where: { $0.indecies.contains(index) }) {
+            if let operation = operations.first(where: { $0.indices.contains(index) }) {
                 itemSize = operation._process(itemSize: itemSize, keyPath: keyPath)
             }
             fillSize.width += itemSize.width

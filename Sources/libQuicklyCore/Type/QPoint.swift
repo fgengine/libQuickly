@@ -6,13 +6,13 @@ import CoreGraphics
 
 public struct QPoint : Hashable {
     
-    public var x: QFloat
-    public var y: QFloat
+    public var x: Float
+    public var y: Float
     
     @inlinable
     public init(
-        x: QFloat = 0,
-        y: QFloat = 0
+        x: Float = 0,
+        y: Float = 0
     ) {
         self.x = x
         self.y = y
@@ -29,15 +29,15 @@ public extension QPoint {
         )
     }
 
-    func distance(to: QPoint) -> QFloat {
+    func distance(to: QPoint) -> Float {
         return sqrt(pow(to.x - self.x, 2) + pow(to.y - self.y, 2))
     }
 
-    func length() -> QFloat {
+    func length() -> Float {
         return sqrt(self.x * self.x + self.y * self.y)
     }
 
-    func lerp(_ to: QPoint, progress: QFloat) -> QPoint {
+    func lerp(_ to: QPoint, progress: Float) -> QPoint {
         return QPoint(
             x: self.x.lerp(to.x, progress: progress),
             y: self.y.lerp(to.y, progress: progress)
@@ -81,7 +81,7 @@ public extension QPoint {
     }
     
     @inlinable
-    static func * (lhs: QPoint, rhs: QFloat) -> QPoint {
+    static func * (lhs: QPoint, rhs: Float) -> QPoint {
         return QPoint(
             x: lhs.x * rhs,
             y: lhs.y * rhs
@@ -97,7 +97,7 @@ public extension QPoint {
     }
     
     @inlinable
-    static func / (lhs: QPoint, rhs: QFloat) -> QPoint {
+    static func / (lhs: QPoint, rhs: Float) -> QPoint {
         return QPoint(
             x: lhs.x / rhs,
             y: lhs.y / rhs

@@ -15,7 +15,7 @@ protocol InputDateViewDelegate : AnyObject {
 
 public class QInputDateView : IQInputDateView {
     
-    public private(set) unowned var parentLayout: IQLayout?
+    public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
     public private(set) var name: String
     public var native: QNativeView {
@@ -24,10 +24,6 @@ public class QInputDateView : IQInputDateView {
     public var isLoaded: Bool {
         return self._reuse.isLoaded
     }
-    public var isAppeared: Bool {
-        guard self.isLoaded == true else { return false }
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         guard self.isLoaded == true else { return QRect() }
         return QRect(self._view.bounds)
@@ -35,13 +31,13 @@ public class QInputDateView : IQInputDateView {
     public private(set) var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var mode: QInputDateViewMode {
@@ -162,7 +158,7 @@ public class QInputDateView : IQInputDateView {
             self._view.update(shadow: self.shadow)
         }
     }
-    public private(set) var alpha: QFloat {
+    public private(set) var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -203,7 +199,7 @@ public class QInputDateView : IQInputDateView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         self.name = name ?? String(describing: Self.self)
         self.width = width
@@ -235,7 +231,7 @@ public class QInputDateView : IQInputDateView {
     }
     
     public func appear(to layout: IQLayout) {
-        self.parentLayout = layout
+        self.layout = layout
         self.toolbar?.appear(to: self)
         self._onAppear?()
     }
@@ -243,7 +239,7 @@ public class QInputDateView : IQInputDateView {
     public func disappear() {
         self.toolbar?.disappear()
         self._reuse.unload(owner: self)
-        self.parentLayout = nil
+        self.layout = nil
         self._onDisappear?()
     }
     
@@ -378,7 +374,7 @@ public class QInputDateView : IQInputDateView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self.alpha = value
         return self
     }

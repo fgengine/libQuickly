@@ -2,6 +2,8 @@
 //  libQuicklyView
 //
 
+import libQuicklyCore
+
 #if os(OSX)
 
 import AppKit

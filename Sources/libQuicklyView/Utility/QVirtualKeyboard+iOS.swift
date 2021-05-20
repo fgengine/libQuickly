@@ -53,7 +53,7 @@ public extension QVirtualKeyboard {
 
         public let beginFrame: QRect
         public let endFrame: QRect
-        public let duration: QFloat
+        public let duration: TimeInterval
 
         init?(_ userInfo: [ AnyHashable: Any ]) {
             guard let beginFrameValue = userInfo[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else { return nil }
@@ -61,7 +61,7 @@ public extension QVirtualKeyboard {
             guard let durationValue = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber else { return nil }
             self.beginFrame = QRect(beginFrameValue.cgRectValue)
             self.endFrame = QRect(endFrameValue.cgRectValue)
-            self.duration = QFloat(TimeInterval(durationValue.doubleValue))
+            self.duration = TimeInterval(durationValue.doubleValue)
         }
 
     }

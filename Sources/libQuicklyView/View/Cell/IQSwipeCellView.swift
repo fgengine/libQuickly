@@ -9,13 +9,13 @@ public protocol IQSwipeCellView : IQCellView {
     
     var isShowedLeadingView: Bool { get }
     var leadingView: IQView? { get }
-    var leadingSize: QFloat { get }
-    var leadingLimit: QFloat { get }
+    var leadingSize: Float { get }
+    var leadingLimit: Float { get }
     var isShowedTrailingView: Bool { get }
     var trailingView: IQView? { get }
-    var trailingSize: QFloat { get }
-    var trailingLimit: QFloat { get }
-    var animationVelocity: QFloat { get }
+    var trailingSize: Float { get }
+    var trailingLimit: Float { get }
+    var animationVelocity: Float { get }
     
     func showLeadingView(animated: Bool, completion: (() -> Void)?)
     func hideLeadingView(animated: Bool, completion: (() -> Void)?)
@@ -27,22 +27,22 @@ public protocol IQSwipeCellView : IQCellView {
     func leadingView(_ value: IQView?) -> Self
     
     @discardableResult
-    func leadingSize(_ value: QFloat) -> Self
+    func leadingSize(_ value: Float) -> Self
     
     @discardableResult
-    func leadingLimit(_ value: QFloat) -> Self
+    func leadingLimit(_ value: Float) -> Self
     
     @discardableResult
     func trailingView(_ value: IQView?) -> Self
     
     @discardableResult
-    func trailingSize(_ value: QFloat) -> Self
+    func trailingSize(_ value: Float) -> Self
     
     @discardableResult
-    func trailingLimit(_ value: QFloat) -> Self
+    func trailingLimit(_ value: Float) -> Self
     
     @discardableResult
-    func animationVelocity(_ value: QFloat) -> Self
+    func animationVelocity(_ value: Float) -> Self
     
     @discardableResult
     func onShowLeading(_ value: (() -> Void)?) -> Self

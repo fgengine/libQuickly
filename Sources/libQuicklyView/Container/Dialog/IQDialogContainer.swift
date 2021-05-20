@@ -11,9 +11,9 @@ public protocol IQDialogContainer : IQContainer, IQContainerParentable {
     var containers: [IQDialogContentContainer] { get }
     var previousContainer: IQDialogContentContainer? { get }
     var currentContainer: IQDialogContentContainer? { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     #if os(iOS)
-    var interactiveLimit: QFloat { set get }
+    var interactiveLimit: Float { set get }
     #endif
     
     func present(container: IQDialogContentContainer, animated: Bool, completion: (() -> Void)?)
@@ -36,8 +36,8 @@ public extension IQDialogContainer {
 }
 
 public enum QDialogContentContainerSize : Equatable {
-    case fill(before: QFloat, after: QFloat)
-    case fixed(value: QFloat)
+    case fill(before: Float, after: Float)
+    case fixed(value: Float)
     case fit
 }
 

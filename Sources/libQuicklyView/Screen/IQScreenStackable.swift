@@ -10,19 +10,19 @@ public protocol IQScreenStackable : AnyObject {
     associatedtype StackBar : IQStackBarView
     
     var stackBarView: StackBar { get }
-    var stackBarSize: QFloat { get }
-    var stackBarVisibility: QFloat { get }
+    var stackBarSize: Float { get }
+    var stackBarVisibility: Float { get }
     var stackBarHidden: Bool { get }
     
 }
 
 public extension IQScreenStackable {
     
-    var stackBarSize: QFloat {
+    var stackBarSize: Float {
         return 50
     }
     
-    var stackBarVisibility: QFloat {
+    var stackBarVisibility: Float {
         return 1
     }
     

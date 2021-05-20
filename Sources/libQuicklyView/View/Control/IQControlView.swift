@@ -9,13 +9,13 @@ public protocol IQControlView : IQView, IQViewHighlightable, IQViewColorable, IQ
     
     associatedtype Layout : IQLayout
     
-    var layout: Layout { get }
+    var contentLayout: Layout { get }
     var contentSize: QSize { get }
     var shouldHighlighting: Bool { get }
     var shouldPressed: Bool { get }
     
     @discardableResult
-    func layout(_ value: Layout) -> Self
+    func contentLayout(_ value: Layout) -> Self
     
     @discardableResult
     func shouldHighlighting(_ value: Bool) -> Self

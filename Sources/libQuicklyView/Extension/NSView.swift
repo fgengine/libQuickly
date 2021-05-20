@@ -8,10 +8,6 @@ import AppKit
 
 extension NSView {
     
-    var isAppeared: Bool {
-        return self.superview != nil
-    }
-    
     func set(border: QViewBorder) {
         switch border {
         case .none:

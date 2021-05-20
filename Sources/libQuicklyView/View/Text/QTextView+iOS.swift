@@ -11,6 +11,8 @@ extension QTextView {
     
     final class TextView : UILabel {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         override var frame: CGRect {
             didSet(oldValue) {
                 guard let view = self._view, self.frame != oldValue else { return }
@@ -23,7 +25,7 @@ extension QTextView {
             return view.debugDescription
         }
         
-        private unowned var _view: QTextView?
+        private unowned var _view: View?
         
         override init(frame: CGRect) {
             super.init(frame: frame)

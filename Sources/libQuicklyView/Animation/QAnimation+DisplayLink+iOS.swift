@@ -60,7 +60,7 @@ private extension QAnimation.DisplayLink {
         let delta = now - self._prevTime
         #endif
         self._prevTime = now
-        self.delegate?.update(QFloat(delta))
+        self.delegate?.update(TimeInterval(delta))
     }
     
 }

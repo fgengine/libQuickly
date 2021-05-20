@@ -8,30 +8,22 @@ import libQuicklyCore
 public class QContentValueComposition< ContentView: IQView, ValueView: IQView > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
-    public unowned var parentView: IQView?
+    public unowned var view: IQView?
     public var contentInset: QInset {
-        didSet(oldValue) {
-            guard self.contentInset != oldValue else { return }
-            self.setNeedUpdate()
-        }
+        didSet { self.setNeedUpdate() }
     }
     public var contentView: ContentView {
-        didSet(oldValue) {
-            guard self.contentView !== oldValue else { return }
+        didSet {
             self.contentItem = QLayoutItem(view: self.contentView)
             self.setNeedUpdate()
         }
     }
     public private(set) var contentItem: QLayoutItem
     public var valueInset: QInset {
-        didSet(oldValue) {
-            guard self.valueInset != oldValue else { return }
-            self.setNeedUpdate()
-        }
+        didSet { self.setNeedUpdate() }
     }
     public var valueView: ValueView {
-        didSet(oldValue) {
-            guard self.valueView !== oldValue else { return }
+        didSet {
             self.valueItem = QLayoutItem(view: self.valueView)
             self.setNeedUpdate()
         }
@@ -50,6 +42,9 @@ public class QContentValueComposition< ContentView: IQView, ValueView: IQView > 
         self.valueInset = valueInset
         self.valueView = valueView
         self.valueItem = QLayoutItem(view: valueView)
+    }
+    
+    public func invalidate(item: QLayoutItem) {
     }
     
     public func invalidate() {

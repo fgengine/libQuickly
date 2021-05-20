@@ -11,10 +11,10 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
-        x: QFloat = 0,
-        y: QFloat = 0,
-        width: QFloat = 0,
-        height: QFloat = 0
+        x: Float = 0,
+        y: Float = 0,
+        width: Float = 0,
+        height: Float = 0
     ) {
         self.origin = QPoint(x: x, y: y)
         self.size = QSize(width: width, height: height)
@@ -130,22 +130,22 @@ public struct QRect : Hashable {
 public extension QRect {
     
     @inlinable
-    var x: QFloat {
+    var x: Float {
         return self.origin.x
     }
     
     @inlinable
-    var y: QFloat {
+    var y: Float {
         return self.origin.y
     }
     
     @inlinable
-    var width: QFloat {
+    var width: Float {
         return self.size.width
     }
 
     @inlinable
-    var height: QFloat {
+    var height: Float {
         return self.size.height
     }
 
@@ -254,7 +254,7 @@ public extension QRect {
     }
 
     @inlinable
-    func offset(x: QFloat, y: QFloat) -> QRect {
+    func offset(x: Float, y: Float) -> QRect {
         return QRect(
             topLeft: self.origin - QPoint(x: x, y: y),
             size: self.size
@@ -284,7 +284,7 @@ public extension QRect {
     }
 
     @inlinable
-    func lerp(_ to: QRect, progress: QFloat) -> QRect {
+    func lerp(_ to: QRect, progress: Float) -> QRect {
         return QRect(
             x: self.origin.x.lerp(to.origin.x, progress: progress),
             y: self.origin.y.lerp(to.origin.y, progress: progress),
@@ -313,7 +313,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(left: QFloat) -> (left: QRect, right: QRect) {
+    func split(left: Float) -> (left: QRect, right: QRect) {
         return (
             left: QRect(
                 x: self.origin.x,
@@ -331,7 +331,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(right: QFloat) -> (left: QRect, right: QRect) {
+    func split(right: Float) -> (left: QRect, right: QRect) {
         return (
             left: QRect(
                 x: self.origin.x,
@@ -349,7 +349,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(left: QFloat, right: QFloat) -> (left: QRect, middle: QRect, right: QRect) {
+    func split(left: Float, right: Float) -> (left: QRect, middle: QRect, right: QRect) {
         return (
             left: QRect(
                 x: self.origin.x,
@@ -373,7 +373,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(top: QFloat) -> (top: QRect, bottom: QRect) {
+    func split(top: Float) -> (top: QRect, bottom: QRect) {
         return (
             top: QRect(
                 x: self.origin.x,
@@ -391,7 +391,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(bottom: QFloat) -> (top: QRect, bottom: QRect) {
+    func split(bottom: Float) -> (top: QRect, bottom: QRect) {
         return (
             top: QRect(
                 x: self.origin.x,
@@ -409,7 +409,7 @@ public extension QRect {
     }
     
     @inlinable
-    func split(top: QFloat, bottom: QFloat) -> (top: QRect, middle: QRect, bottom: QRect) {
+    func split(top: Float, bottom: Float) -> (top: QRect, middle: QRect, bottom: QRect) {
         return (
             top: QRect(
                 x: self.origin.x,
@@ -438,12 +438,12 @@ public extension QRect {
         if rows > 0 && columns > 0 {
             var origin = self.origin
             let itemSize = QSize(
-                width: rows > 1 ? self.size.width / QFloat(rows - 1) : self.size.width,
-                height: columns > 1 ? self.size.height / QFloat(columns - 1) : self.size.height
+                width: rows > 1 ? self.size.width / Float(rows - 1) : self.size.width,
+                height: columns > 1 ? self.size.height / Float(columns - 1) : self.size.height
             )
-            for _ in 0..<rows {
+            for _ in 0 ..< rows {
                 origin.x = self.origin.x
-                for _ in 0..<columns {
+                for _ in 0 ..< columns {
                     result.append(QRect(topLeft: origin, size: itemSize))
                     origin.x += spacing.x
                 }

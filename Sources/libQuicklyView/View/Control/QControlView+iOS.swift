@@ -62,7 +62,7 @@ final class NativeControlView : UIControl {
         
         self.clipsToBounds = true
         
-        self._layoutManager = QLayoutManager(contentView: self)
+        self._layoutManager = QLayoutManager(contentView: self, delegate: self)
     }
     
     required init?(coder: NSCoder) {
@@ -85,14 +85,15 @@ final class NativeControlView : UIControl {
         let frame = QRect(self.frame)
         self._layoutManager.layout(bounds: QRect(self.bounds))
         if self._layoutManager.size != frame.size {
-            self._layoutManager.setNeedUpdate(true)
+            self._layoutManager.layout?.setNeedForceUpdate()
         }
         self._layoutManager.visible(bounds: QRect(self.bounds))
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         if self.customDelegate.shouldHighlighting(view: self) == true || self.customDelegate.shouldPressing(view: self) == true {
-            return super.hitTest(point, with: event)
+            let hitView = super.hitTest(point, with: event)
+            return hitView
         }
         if let hitView = super.hitTest(point, with: event) {
             if hitView != self {
@@ -141,7 +142,7 @@ extension NativeControlView {
     
     func update< View : IQControlView & NativeControlViewDelegate >(view: View) {
         self._view = view
-        self.update(layout: view.layout)
+        self.update(contentLayout: view.contentLayout)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
@@ -151,21 +152,13 @@ extension NativeControlView {
         self.customDelegate = view
     }
     
-    func update(layout: IQLayout) {
-        if let layout = self._layoutManager.layout {
-            layout.delegate = nil
-        }
-        if self.isAppeared == true {
-            self._layoutManager.clear()
-        }
-        self._layoutManager.layout = layout
-        layout.delegate = self
-        if self.isAppeared == true {
-            self.setNeedsLayout()
-        }
+    func update(contentLayout: IQLayout) {
+        self._layoutManager.layout = contentLayout
+        self.setNeedsLayout()
     }
     
     func cleanup() {
+        self._layoutManager.layout = nil
         self.customDelegate = nil
         self._view = nil
     }
@@ -174,12 +167,15 @@ extension NativeControlView {
 
 extension NativeControlView : IQLayoutDelegate {
     
-    func setNeedUpdate(_ parentLayout: IQLayout) {
+    func setNeedUpdate(_ layout: IQLayout, force: Bool) {
+        if force == true {
+            layout.view?.layout?.setNeedForceUpdate()
+        }
         self.setNeedsLayout()
     }
     
-    func updateIfNeeded(_ parentLayout: IQLayout) {
-        self._layoutManager.layout?.parentView?.parentLayout?.updateIfNeeded()
+    func updateIfNeeded(_ layout: IQLayout) {
+        layout.view?.layout?.updateIfNeeded()
         self.layoutIfNeeded()
     }
     

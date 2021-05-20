@@ -12,7 +12,7 @@ public protocol IQHamburgerContainer : IQContainer, IQContainerParentable {
     var leadingContainer: IQHamburgerMenuContainer? { set get }
     var isShowedTrailingContainer: Bool { get }
     var trailingContainer: IQHamburgerMenuContainer? { set get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     
     func showLeadingContainer(animated: Bool, completion: (() -> Void)?)
     func hideLeadingContainer(animated: Bool, completion: (() -> Void)?)
@@ -95,7 +95,7 @@ public extension IQHamburgerContentContainer {
 
 public protocol IQHamburgerMenuContainer : IQHamburgerContentContainer {
     
-    var hamburgerSize: QFloat { get }
-    var hamburgerLimit: QFloat { get }
+    var hamburgerSize: Float { get }
+    var hamburgerLimit: Float { get }
     
 }

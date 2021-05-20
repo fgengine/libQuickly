@@ -11,6 +11,8 @@ extension QInputDateView {
     
     final class InputDateView : UITextField {
         
+        typealias View = IQInputDateView
+        
         unowned var customDelegate: InputDateViewDelegate?
         override var frame: CGRect {
             didSet(oldValue) {
@@ -20,7 +22,7 @@ extension QInputDateView {
             }
         }
         
-        private unowned var _view: QInputDateView?
+        private unowned var _view: View?
         private var _picker: UIDatePicker!
         
         override init(frame: CGRect) {

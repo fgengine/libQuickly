@@ -68,9 +68,9 @@ public class QPushContainer : IQPushContainer {
     public var currentContainer: IQPushContentContainer? {
         return self._current?.container
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     #if os(iOS)
-    public var interactiveLimit: QFloat
+    public var interactiveLimit: Float
     #endif
     
     private var _layout: Layout
@@ -106,11 +106,11 @@ public class QPushContainer : IQPushContainer {
         self._view = QCustomView(
             name: "QPushContainer-RootView",
             gestures: [ self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            contentLayout: self._layout
         )
         #endif
         self._items = []
@@ -271,7 +271,7 @@ private extension QPushContainer {
         push.container.prepareShow(interactive: false)
         if animated == true {
             QAnimation.default.run(
-                duration: push.size.height / self.animationVelocity,
+                duration: TimeInterval(push.size.height / self.animationVelocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
@@ -322,7 +322,7 @@ private extension QPushContainer {
         push.container.prepareHide(interactive: false)
         if animated == true {
             QAnimation.default.run(
-                duration: push.size.height / self.animationVelocity,
+                duration: TimeInterval(push.size.height / self.animationVelocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
@@ -383,8 +383,8 @@ private extension QPushContainer {
         if deltaLocation < -self.interactiveLimit {
             let height = self._layout.height(item: current)
             QAnimation.default.run(
-                duration: height / self.animationVelocity,
-                elapsed: -deltaLocation / self.animationVelocity,
+                duration: TimeInterval(height / self.animationVelocity),
+                elapsed: TimeInterval(-deltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .dismiss(push: current, progress: progress)
@@ -399,7 +399,7 @@ private extension QPushContainer {
             let height = self._layout.height(item: current)
             let baseProgress = deltaLocation / pow(height, 1.5)
             QAnimation.default.run(
-                duration: (height * baseProgress) / self.animationVelocity,
+                duration: TimeInterval((height * baseProgress) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .present(push: current, progress: 1 + (baseProgress - (baseProgress * progress)))
@@ -486,15 +486,15 @@ private extension QPushContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var additionalInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var containerInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -510,6 +510,9 @@ private extension QPushContainer {
             self.containerInset = containerInset
             self.contentItem = contentItem
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -575,7 +578,7 @@ private extension QPushContainer {
             }
         }
         
-        func height(item: QPushContainer.Item) -> QFloat {
+        func height(item: QPushContainer.Item) -> Float {
             return item.size.height + self.additionalInset.top + self.containerInset.top
         }
         
@@ -588,8 +591,8 @@ private extension QPushContainer.Layout {
     enum State {
         case empty
         case idle(push: QPushContainer.Item)
-        case present(push: QPushContainer.Item, progress: QFloat)
-        case dismiss(push: QPushContainer.Item, progress: QFloat)
+        case present(push: QPushContainer.Item, progress: Float)
+        case dismiss(push: QPushContainer.Item, progress: Float)
     }
     
 }

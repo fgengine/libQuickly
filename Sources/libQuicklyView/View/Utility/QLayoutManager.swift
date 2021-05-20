@@ -13,13 +13,23 @@ import AppKit
 struct QLayoutManager {
     
     unowned let contentView: QNativeView
-    var layout: IQLayout?
+    unowned let delegate: IQLayoutDelegate
+    var layout: IQLayout? {
+        willSet(newValue) {
+            self.layout?.delegate = nil
+            self.clear()
+        }
+        didSet(oldValue) {
+            self.layout?.delegate = self.delegate
+        }
+    }
     var size: QSize
     var items: [QLayoutItem]
 
     @inline(__always)
-    init(contentView: QNativeView) {
+    init(contentView: QNativeView, delegate: IQLayoutDelegate) {
         self.contentView = contentView
+        self.delegate = delegate
         self.size = QSize()
         self.items = []
     }
@@ -36,20 +46,23 @@ struct QLayoutManager {
     @inline(__always)
     mutating func visible(bounds: QRect) {
         if let layout = self.layout {
-            let visible = layout.items(bounds: bounds)
-            let unvisible = self.items.filter({ item in
-                return visible.contains(where: { return item === $0 }) == false
+            let items = layout.items(bounds: bounds)
+            let disappearing = self.items.filter({ item in
+                return items.contains(where: { return item === $0 }) == false
             })
-            for item in unvisible {
-                self._disappear(view: item.view)
-            }
-            if self.size.width > 0 || self.size.height > 0 {
-                for item in visible {
-                    item.view.native.frame = item.frame.cgRect
-                    self._appear(view: item.view, layout: layout)
+            if disappearing.count > 0 {
+                for item in disappearing {
+                    self._disappear(view: item.view)
                 }
             }
-            self.items = visible
+            for (index, item) in items.enumerated() {
+                item.view.native.frame = item.frame.cgRect
+                if self.items.contains(where: { return item === $0 }) == false {
+                    self.contentView.insertSubview(item.view.native, at: index)
+                    item.view.appear(to: layout)
+                }
+            }
+            self.items = items
         } else {
             self.clear()
         }
@@ -63,34 +76,15 @@ struct QLayoutManager {
         self.items.removeAll()
     }
     
-    @inline(__always)
-    func setNeedUpdate(_ isResized: Bool = false) {
-        self.layout?.setNeedUpdate(isResized)
-    }
-    
-    @inline(__always)
-    func updateIfNeeded() {
-        self.layout?.updateIfNeeded()
-    }
-    
 }
 
 private extension QLayoutManager {
     
     @inline(__always)
-    func _appear(view: IQView, layout: IQLayout) {
-        self.contentView.addSubview(view.native)
-        if view.isAppeared == false {
-            view.appear(to: layout)
-        }
-    }
-    
-    @inline(__always)
     func _disappear(view: IQView) {
-        view.native.removeFromSuperview()
-        if view.isAppeared == true {
-            view.disappear()
-        }
+        let native = view.native
+        view.disappear()
+        native.removeFromSuperview()
     }
     
 }

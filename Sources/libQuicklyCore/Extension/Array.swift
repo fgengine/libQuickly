@@ -31,7 +31,7 @@ public extension Array {
         }
         if separator != nil {
             if self.count > 1 {
-                for item in self[0..<self.count - 1] {
+                for item in self[0 ..< self.count - 1] {
                     result.append(item)
                     if let item = try separator?() {
                         result.append(item)
@@ -66,7 +66,7 @@ public extension Array {
         }
         if separator != nil {
             if self.count > 1 {
-                for item in self[0..<self.count - 1] {
+                for item in self[0 ..< self.count - 1] {
                     result.append(item)
                     if let items = try separator?() {
                         result.append(contentsOf: items)

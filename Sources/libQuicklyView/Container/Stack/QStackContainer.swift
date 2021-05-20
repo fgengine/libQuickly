@@ -48,9 +48,9 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     public var currentContainer: IQStackContentContainer {
         return self._currentItem.container
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     #if os(iOS)
-    public var interactiveLimit: QFloat
+    public var interactiveLimit: Float
     #endif
     
     private var _rootItem: Item
@@ -76,7 +76,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         self.screen = screen
         #if os(iOS)
         self.animationVelocity = UIScreen.main.animationVelocity
-        self.interactiveLimit = QFloat(UIScreen.main.bounds.width * 0.45)
+        self.interactiveLimit = Float(UIScreen.main.bounds.width * 0.45)
         #endif
         self._rootItem = Item(
             container: rootContainer,
@@ -90,7 +90,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         self._view = QCustomView(
             name: "QStackContainer-RootView",
             gestures: [ self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
@@ -110,7 +110,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             item = self._items.first(where: { $0.container === container })
         }
         if let item = item {
-            let stackItemSize: QFloat
+            let stackItemSize: Float
             if item.container.stackBarHidden == false {
                 stackItemSize = item.container.stackBarSize
             } else {
@@ -388,7 +388,7 @@ private extension QStackContainer {
             self.item = QLayoutItem(
                 view: QCustomView(
                     name: "QStackContainer-ContentView",
-                    layout: self._layout
+                    contentLayout: self._layout
                 )
             )
         }
@@ -413,28 +413,28 @@ private extension QStackContainer.Item {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
-        var barInset: QFloat {
-            didSet { self.setNeedUpdate() }
+        unowned var view: IQView?
+        var barInset: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barVisibility: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barVisibility: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var barHidden: Bool {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var barItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem
 
         init(
-            barInset: QFloat,
-            barSize: QFloat,
-            barVisibility: QFloat,
+            barInset: Float,
+            barSize: Float,
+            barVisibility: Float,
             barHidden: Bool,
             barItem: QLayoutItem,
             contentItem: QLayoutItem
@@ -445,6 +445,9 @@ private extension QStackContainer.Item {
             self.barHidden = barHidden
             self.barItem = barItem
             self.contentItem = contentItem
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -486,18 +489,21 @@ private extension QStackContainer {
         enum State {
             case empty
             case idle(current: QLayoutItem)
-            case push(current: QLayoutItem, forward: QLayoutItem, progress: QFloat)
-            case pop(backward: QLayoutItem, current: QLayoutItem, progress: QFloat)
+            case push(current: QLayoutItem, forward: QLayoutItem, progress: Float)
+            case pop(backward: QLayoutItem, current: QLayoutItem, progress: Float)
         }
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var state: State {
             didSet { self.setNeedUpdate() }
         }
 
         init(state: State = .empty) {
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -578,7 +584,7 @@ private extension QStackContainer {
                     forward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: self._view.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -681,7 +687,7 @@ private extension QStackContainer {
                     backward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: self._view.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -803,8 +809,8 @@ private extension QStackContainer {
         let layoutSize = self._view.contentSize
         if deltaLocation.x >= self.interactiveLimit && canceled == false {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: deltaLocation.x / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval(deltaLocation.x / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .pop(backward: backward.item, current: current.item, progress: progress)
@@ -817,8 +823,8 @@ private extension QStackContainer {
             )
         } else {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: (layoutSize.width - deltaLocation.x) / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval((layoutSize.width - deltaLocation.x) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .pop(backward: backward.item, current: current.item, progress: 1 - progress)

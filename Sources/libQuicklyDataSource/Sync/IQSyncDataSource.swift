@@ -12,12 +12,17 @@ public protocol IQSyncDataSource : IQDataSource {
     var result: Result? { get }
     var isSyncing: Bool { get }
     var isNeedSync: Bool { get }
+    var syncAt: Date? { get }
     
-    func setNeedSync()
+    func setNeedSync(reset: Bool)
     func syncIfNeeded()
     
 }
 
 public extension IQSyncDataSource {
+    
+    func setNeedSync(reset: Bool = false) {
+        self.setNeedSync(reset: reset)
+    }
     
 }

@@ -12,7 +12,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             return x * x * x * x * x
         }
 
@@ -23,7 +23,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             let f = (x - 1)
             return f * f * f * f * f + 1
         }
@@ -35,7 +35,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             if x < 1/2 {
                 return 16 * x * x * x * x * x
             } else {

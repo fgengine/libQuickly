@@ -15,7 +15,7 @@ public extension QAnimation.Ease {
             self._easeOut = BounceOut()
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             return 1 - self._easeOut.perform(1 - x)
         }
 
@@ -26,7 +26,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             if x < 4 / 11 {
                 return (121 * x * x) / 16
             } else if x < 8 / 11 {
@@ -55,7 +55,7 @@ public extension QAnimation.Ease {
             self._easeOut = BounceOut()
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             if x < 1 / 2 {
                 return 1 / 2 * self._easeIn.perform(x * 2)
             } else {

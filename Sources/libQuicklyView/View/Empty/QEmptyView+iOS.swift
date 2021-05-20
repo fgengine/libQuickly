@@ -11,6 +11,8 @@ extension QEmptyView {
     
     final class EmptyView : UIView {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         override var frame: CGRect {
             didSet(oldValue) {
                 guard let view = self._view, self.frame != oldValue else { return }
@@ -23,7 +25,7 @@ extension QEmptyView {
             return view.debugDescription
         }
         
-        private unowned var _view: QEmptyView?
+        private unowned var _view: View?
         
         override init(frame: CGRect) {
             super.init(frame: frame)

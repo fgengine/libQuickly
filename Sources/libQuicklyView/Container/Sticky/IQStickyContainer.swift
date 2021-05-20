@@ -29,13 +29,13 @@ public extension IQStickyContentContainer {
 
 public protocol IQStickyAccessoryContainer : IQStickyContentContainer {
     
-    var stickySize: QFloat { get }
+    var stickySize: Float { get }
     
 }
 
 public extension IQStickyAccessoryContainer {
     
-    var stickySize: QFloat? {
+    var stickySize: Float? {
         return 96
     }
     

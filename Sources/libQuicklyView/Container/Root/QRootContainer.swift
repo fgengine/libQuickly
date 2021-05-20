@@ -71,7 +71,7 @@ public class QRootContainer : IQRootContainer {
         )
         self._view = QCustomView(
             name: "QRootContainer-RootView",
-            layout: self._layout
+            contentLayout: self._layout
         )
         self._init()
     }
@@ -144,13 +144,16 @@ private extension QRootContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var item: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         
         init(item: QLayoutItem) {
             self.item = item
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {

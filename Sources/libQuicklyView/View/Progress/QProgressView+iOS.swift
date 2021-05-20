@@ -73,7 +73,7 @@ extension QProgressView.ProgressView {
         self._progress.trackTintColor = trackColor.native
     }
     
-    func update(progress: QFloat) {
+    func update(progress: Float) {
         self._progress.progress = progress
     }
     

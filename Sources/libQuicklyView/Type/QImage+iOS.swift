@@ -2,6 +2,8 @@
 //  libQuicklyView
 //
 
+import libQuicklyCore
+
 #if os(iOS)
 
 import UIKit
@@ -38,8 +40,8 @@ public struct QImage {
         self.size = QSize(native.size)
     }
     
-    public init?(size: QSize, scale: QFloat? = nil, color: QColor) {
-        let realScale = scale ?? QFloat(UIScreen.main.scale)
+    public init?(size: QSize, scale: Float? = nil, color: QColor) {
+        let realScale = scale ?? Float(UIScreen.main.scale)
         UIGraphicsBeginImageContextWithOptions(size.cgSize, false, CGFloat(realScale))
         defer {
             UIGraphicsEndImageContext()
@@ -53,7 +55,7 @@ public struct QImage {
             return nil
         }
         self.native = UIImage(cgImage: image)
-        self.size = QSize(width: QFloat(image.width), height: QFloat(image.height))
+        self.size = QSize(width: Float(image.width), height: Float(image.height))
     }
     
 }

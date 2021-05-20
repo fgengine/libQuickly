@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public class QTextView : IQTextView {
     
-    public private(set) unowned var parentLayout: IQLayout?
+    public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
     public private(set) var name: String
     public var native: QNativeView {
@@ -16,10 +16,6 @@ public class QTextView : IQTextView {
     public var isLoaded: Bool {
         return self._reuse.isLoaded
     }
-    public var isAppeared: Bool {
-        guard self.isLoaded == true else { return false }
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         guard self.isLoaded == true else { return QRect() }
         return QRect(self._view.bounds)
@@ -27,27 +23,27 @@ public class QTextView : IQTextView {
     public private(set) var width: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var height: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var text: String {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(text: self.text)
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var textFont: QFont {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(textFont: self.textFont)
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var textColor: QColor {
@@ -60,21 +56,21 @@ public class QTextView : IQTextView {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alignment: self.alignment)
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var lineBreak: QTextLineBreak {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(lineBreak: self.lineBreak)
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var numberOfLines: UInt {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(numberOfLines: self.numberOfLines)
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var color: QColor? {
@@ -103,7 +99,7 @@ public class QTextView : IQTextView {
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: QFloat {
+    public private(set) var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -132,7 +128,7 @@ public class QTextView : IQTextView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         self.name = name ?? String(describing: Self.self)
         self.width = width
@@ -169,13 +165,13 @@ public class QTextView : IQTextView {
     }
     
     public func appear(to layout: IQLayout) {
-        self.parentLayout = layout
+        self.layout = layout
         self._onAppear?()
     }
     
     public func disappear() {
         self._reuse.unload(owner: self)
-        self.parentLayout = nil
+        self.layout = nil
         self._onDisappear?()
     }
     
@@ -252,7 +248,7 @@ public class QTextView : IQTextView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self.alpha = value
         return self
     }

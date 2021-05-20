@@ -6,13 +6,13 @@ import Foundation
 
 public struct QSize : Hashable {
     
-    public var width: QFloat
-    public var height: QFloat
+    public var width: Float
+    public var height: Float
     
     @inlinable
     public init(
-        width: QFloat = 0,
-        height: QFloat = 0
+        width: Float = 0,
+        height: Float = 0
     ) {
         self.width = width
         self.height = height
@@ -25,7 +25,8 @@ public extension QSize {
     var isInfinite: Bool {
         return self.width.isInfinite == true && self.height.isInfinite == true
     }
-    var aspectRatio: QFloat {
+    
+    var aspectRatio: Float {
         return self.width / self.height
     }
     
@@ -50,7 +51,7 @@ public extension QSize {
     }
     
     @inlinable
-    func lerp(_ to: QSize, progress: QFloat) -> QSize {
+    func lerp(_ to: QSize, progress: Float) -> QSize {
         return QSize(
             width: self.width.lerp(to.width, progress: progress),
             height: self.height.lerp(to.height, progress: progress)
@@ -144,7 +145,7 @@ public extension QSize {
     }
     
     @inlinable
-    static func * (lhs: QSize, rhs: QFloat) -> QSize {
+    static func * (lhs: QSize, rhs: Float) -> QSize {
         return QSize(
             width: lhs.width * rhs,
             height: lhs.height * rhs
@@ -160,7 +161,7 @@ public extension QSize {
     }
     
     @inlinable
-    static func / (lhs: QSize, rhs: QFloat) -> QSize {
+    static func / (lhs: QSize, rhs: Float) -> QSize {
         return QSize(
             width: lhs.width / rhs,
             height: lhs.height / rhs

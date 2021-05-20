@@ -16,7 +16,7 @@ public class QStackBarView : QBarView, IQStackBarView {
             self._contentLayout.leadingItems = self.leadingViews.compactMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var leadingViewSpacing: QFloat {
+    public private(set) var leadingViewSpacing: Float {
         set(value) { self._contentLayout.leadingItemSpacing = value }
         get { return self._contentLayout.leadingItemSpacing }
     }
@@ -26,7 +26,7 @@ public class QStackBarView : QBarView, IQStackBarView {
             self._contentLayout.titleItem = self.titleView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var titleSpacing: QFloat {
+    public private(set) var titleSpacing: Float {
         set(value) { self._contentLayout.titleSpacing = value }
         get { return self._contentLayout.titleSpacing }
     }
@@ -36,7 +36,7 @@ public class QStackBarView : QBarView, IQStackBarView {
             self._contentLayout.detailItem = self.detailView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var detailSpacing: QFloat {
+    public private(set) var detailSpacing: Float {
         set(value) { self._contentLayout.detailSpacing = value }
         get { return self._contentLayout.detailSpacing }
     }
@@ -45,7 +45,7 @@ public class QStackBarView : QBarView, IQStackBarView {
             self._contentLayout.trailingItems = self.trailingViews.compactMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var trailingViewSpacing: QFloat {
+    public private(set) var trailingViewSpacing: Float {
         set(value) { self._contentLayout.trailingItemSpacing = value }
         get { return self._contentLayout.trailingItemSpacing }
     }
@@ -57,18 +57,18 @@ public class QStackBarView : QBarView, IQStackBarView {
         name: String? = nil,
         inset: QInset,
         leadingViews: [IQView] = [],
-        leadingViewSpacing: QFloat = 4,
+        leadingViewSpacing: Float = 4,
         titleView: IQView? = nil,
-        titleSpacing: QFloat = 4,
+        titleSpacing: Float = 4,
         detailView: IQView? = nil,
-        detailSpacing: QFloat = 8,
+        detailSpacing: Float = 8,
         trailingViews: [IQView] = [],
-        trailingViewSpacing: QFloat = 4,
+        trailingViewSpacing: Float = 4,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.leadingViews = leadingViews
@@ -88,7 +88,7 @@ public class QStackBarView : QBarView, IQStackBarView {
         )
         self._contentView = QCustomView(
             name: "\(name)-BarView",
-            layout: self._contentLayout
+            contentLayout: self._contentLayout
         )
         super.init(
             name: name,
@@ -114,7 +114,7 @@ public class QStackBarView : QBarView, IQStackBarView {
     }
     
     @discardableResult
-    public func leadingViewSpacing(_ value: QFloat) -> Self {
+    public func leadingViewSpacing(_ value: Float) -> Self {
         self.leadingViewSpacing = value
         return self
     }
@@ -126,7 +126,7 @@ public class QStackBarView : QBarView, IQStackBarView {
     }
     
     @discardableResult
-    public func titleSpacing(_ value: QFloat) -> Self {
+    public func titleSpacing(_ value: Float) -> Self {
         self.titleSpacing = value
         return self
     }
@@ -138,7 +138,7 @@ public class QStackBarView : QBarView, IQStackBarView {
     }
     
     @discardableResult
-    public func detailSpacing(_ value: QFloat) -> Self {
+    public func detailSpacing(_ value: Float) -> Self {
         self.detailSpacing = value
         return self
     }
@@ -150,7 +150,7 @@ public class QStackBarView : QBarView, IQStackBarView {
     }
     
     @discardableResult
-    public func trailingViewSpacing(_ value: QFloat) -> Self {
+    public func trailingViewSpacing(_ value: Float) -> Self {
         self.trailingViewSpacing = value
         return self
     }
@@ -162,39 +162,33 @@ private extension QStackBarView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var inset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var leadingItems: [QLayoutItem] {
-            didSet {
-                self.invalidate()
-                self.setNeedUpdate()
-            }
+            didSet { self.setNeedForceUpdate() }
         }
-        var leadingItemSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var leadingItemSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var titleItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var titleSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var titleSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var detailItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var detailSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var detailSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var trailingItems: [QLayoutItem] {
-            didSet {
-                self.invalidate()
-                self.setNeedUpdate()
-            }
+            didSet { self.setNeedForceUpdate() }
         }
-        var trailingItemSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var trailingItemSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         
         private var _leadingItemsCache: [QSize?]
@@ -203,13 +197,13 @@ private extension QStackBarView {
         init(
             inset: QInset,
             leadingItems: [QLayoutItem],
-            leadingItemSpacing: QFloat,
+            leadingItemSpacing: Float,
             titleItem: QLayoutItem?,
-            titleSpacing: QFloat,
+            titleSpacing: Float,
             detailItem: QLayoutItem?,
-            detailSpacing: QFloat,
+            detailSpacing: Float,
             trailingItems: [QLayoutItem],
-            trailingItemSpacing: QFloat
+            trailingItemSpacing: Float
         ) {
             self.inset = inset
             self.leadingItems = leadingItems
@@ -224,6 +218,15 @@ private extension QStackBarView {
             self._trailingItemsCache = Array< QSize? >(repeating: nil, count: trailingItems.count)
         }
         
+        func invalidate(item: QLayoutItem) {
+            if let index = self.leadingItems.firstIndex(where: { $0 === item }) {
+                self._leadingItemsCache.remove(at: index)
+            }
+            if let index = self.trailingItems.firstIndex(where: { $0 === item }) {
+                self._trailingItemsCache.remove(at: index)
+            }
+        }
+        
         func invalidate() {
             self._leadingItemsCache = Array< QSize? >(repeating: nil, count: self.leadingItems.count)
             self._trailingItemsCache = Array< QSize? >(repeating: nil, count: self.trailingItems.count)
@@ -231,7 +234,7 @@ private extension QStackBarView {
         
         func layout(bounds: QRect) -> QSize {
             let safeBounds = bounds.apply(inset: self.inset)
-            let footerHeight: QFloat
+            let footerHeight: Float
             if let detailItem = self.detailItem {
                 let detailSize = detailItem.size(safeBounds.size)
                 detailItem.frame = QRect(
@@ -281,8 +284,8 @@ private extension QStackBarView {
         
         func size(_ available: QSize) -> QSize {
             let detailSize = self.detailItem?.size(available.apply(inset: self.inset))
-            let headerHeight: QFloat
-            let footerHeight: QFloat
+            let headerHeight: Float
+            let footerHeight: Float
             if let detailSize = detailSize {
                 footerHeight = detailSize.height + self.detailSpacing
             } else {

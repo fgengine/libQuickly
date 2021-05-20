@@ -97,7 +97,7 @@ public class QStickyContainer : IQStickyContainer {
         )
         self._rootView = QCustomView(
             name: "QStickyContainer-RootView",
-            layout: self._rootLayout
+            contentLayout: self._rootLayout
         )
         self._contentContainer = contentContainer
         self._accessoryContainer = accessoryContainer
@@ -175,25 +175,28 @@ private extension QStickyContainer {
     class RootLayout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var accessoryItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var accessorySize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var accessorySize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         
         init(
             contentItem: QLayoutItem,
             accessoryItem: QLayoutItem,
-            accessorySize: QFloat
+            accessorySize: Float
         ) {
             self.contentItem = contentItem
             self.accessoryItem = accessoryItem
             self.accessorySize = accessorySize
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {

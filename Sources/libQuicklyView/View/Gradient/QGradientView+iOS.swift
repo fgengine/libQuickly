@@ -11,6 +11,8 @@ extension QGradientView {
     
     final class GradientView : UIView {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         override class var layerClass: AnyClass {
             return CAGradientLayer.self
         }
@@ -26,7 +28,7 @@ extension QGradientView {
             return view.debugDescription
         }
         
-        private unowned var _view: QGradientView?
+        private unowned var _view: View?
         private var _layer: CAGradientLayer {
             return super.layer as! CAGradientLayer
         }

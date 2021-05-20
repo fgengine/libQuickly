@@ -20,10 +20,10 @@ public extension QInset {
     
     @inlinable
     init(_ nsEdgeInsets: NSEdgeInsets) {
-        self.top = QFloat(nsEdgeInsets.top)
-        self.left = QFloat(nsEdgeInsets.left)
-        self.right = QFloat(nsEdgeInsets.right)
-        self.bottom = QFloat(nsEdgeInsets.bottom)
+        self.top = Float(nsEdgeInsets.top)
+        self.left = Float(nsEdgeInsets.left)
+        self.right = Float(nsEdgeInsets.right)
+        self.bottom = Float(nsEdgeInsets.bottom)
     }
     
 }

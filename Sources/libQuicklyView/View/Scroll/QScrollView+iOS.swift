@@ -11,6 +11,8 @@ extension QScrollView {
     
     final class ScrollView : UIScrollView {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         unowned var customDelegate: ScrollViewDelegate?
         var needLayoutContent: Bool {
             didSet(oldValue) {
@@ -43,7 +45,7 @@ extension QScrollView {
             return view.debugDescription
         }
         
-        private unowned var _view: QScrollView?
+        private unowned var _view: View?
         private var _contentView: UIView!
         private var _layoutManager: QLayoutManager!
         
@@ -61,7 +63,7 @@ extension QScrollView {
             self._contentView = UIView(frame: .zero)
             self.addSubview(self._contentView)
             
-            self._layoutManager = QLayoutManager(contentView: self._contentView)
+            self._layoutManager = QLayoutManager(contentView: self._contentView, delegate: self)
         }
         
         required init?(coder: NSCoder) {
@@ -90,8 +92,8 @@ extension QScrollView {
                         bounds: QRect(
                             x: 0,
                             y: 0,
-                            width: QFloat(frame.width - (inset.left + inset.right)),
-                            height: QFloat(frame.height - (inset.top + inset.bottom))
+                            width: Float(frame.width - (inset.left + inset.right)),
+                            height: Float(frame.height - (inset.top + inset.bottom))
                         )
                     )
                 } else {
@@ -99,8 +101,8 @@ extension QScrollView {
                         bounds: QRect(
                             x: 0,
                             y: 0,
-                            width: QFloat(frame.width),
-                            height: QFloat(frame.height)
+                            width: Float(frame.width),
+                            height: Float(frame.height)
                         )
                     )
                 }
@@ -134,18 +136,9 @@ extension QScrollView.ScrollView {
     }
     
     func update(contentLayout: IQLayout) {
-        if let contentLayout = self._layoutManager.layout {
-            contentLayout.delegate = nil
-        }
-        if self.isAppeared == true {
-            self._layoutManager.clear()
-        }
         self._layoutManager.layout = contentLayout
-        contentLayout.delegate = self
-        if self.isAppeared == true {
-            self.needLayoutContent = true
-            self.setNeedsLayout()
-        }
+        self.needLayoutContent = true
+        self.setNeedsLayout()
     }
     
     func update(direction: QScrollViewDirection) {
@@ -162,6 +155,7 @@ extension QScrollView.ScrollView {
     
     func update(contentInset: QInset) {
         self.contentInset = contentInset.uiEdgeInsets
+        self.scrollIndicatorInsets = contentInset.uiEdgeInsets
     }
     
     func update(contentOffset: QPoint, normalized: Bool) {
@@ -178,6 +172,7 @@ extension QScrollView.ScrollView {
     }
     
     func cleanup() {
+        self._layoutManager.layout = nil
         self.customDelegate = nil
         self._view = nil
     }
@@ -187,13 +182,13 @@ extension QScrollView.ScrollView {
         let contentSize = QSize(self.contentSize)
         let visibleSize = QSize(self.bounds.size)
         let itemFrame = item.frame
-        let x: QFloat
+        let x: Float
         switch horizontal {
         case .leading: x = itemFrame.origin.x
         case .center: x = (itemFrame.origin.x + (itemFrame.size.width / 2)) - (visibleSize.width / 2)
         case .trailing: x = (itemFrame.origin.x + itemFrame.size.width) - visibleSize.width
         }
-        let y: QFloat
+        let y: Float
         switch vertical {
         case .leading: y = itemFrame.origin.y
         case .center: y = (itemFrame.origin.y + (itemFrame.size.height / 2)) - (visibleSize.height / 2)
@@ -235,12 +230,12 @@ extension QScrollView.ScrollView : UIScrollViewDelegate {
 
 extension QScrollView.ScrollView : IQLayoutDelegate {
     
-    func setNeedUpdate(_ parentLayout: IQLayout) {
+    func setNeedUpdate(_ layout: IQLayout, force: Bool) {
         self.needLayoutContent = true
         self.setNeedsLayout()
     }
     
-    func updateIfNeeded(_ parentLayout: IQLayout) {
+    func updateIfNeeded(_ layout: IQLayout) {
         self.layoutIfNeeded()
     }
     

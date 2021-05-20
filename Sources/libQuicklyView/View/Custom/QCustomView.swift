@@ -14,7 +14,7 @@ protocol NativeCustomViewDelegate : AnyObject {
 
 public class QCustomView< Layout : IQLayout > : IQCustomView {
     
-    public private(set) unowned var parentLayout: IQLayout?
+    public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
     public private(set) var name: String
     public var native: QNativeView {
@@ -22,10 +22,6 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     }
     public var isLoaded: Bool {
         return self._reuse.isLoaded
-    }
-    public var isAppeared: Bool {
-        guard self.isLoaded == true else { return false }
-        return self._view.isAppeared
     }
     public var bounds: QRect {
         guard self.isLoaded == true else { return QRect() }
@@ -40,14 +36,15 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         }
         get { return self._gestures }
     }
-    public private(set) var layout: Layout {
+    public private(set) var contentLayout: Layout {
         willSet {
-            self.layout.parentView = nil
+            self.contentLayout.view = nil
         }
         didSet(oldValue) {
-            self.layout.parentView = self
+            self.contentLayout.view = self
             guard self.isLoaded == true else { return }
-            self._view.update(layout: self.layout)
+            self._view.update(contentLayout: self.contentLayout)
+            self.contentLayout.setNeedForceUpdate()
         }
     }
     public var contentSize: QSize {
@@ -98,7 +95,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: QFloat {
+    public private(set) var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -119,18 +116,18 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     public init(
         name: String? = nil,
         gestures: [IQGesture] = [],
-        layout: Layout,
+        contentLayout: Layout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         self.name = name ?? String(describing: Self.self)
         self._gestures = gestures
-        self.layout = layout
+        self.contentLayout = contentLayout
         self.shouldHighlighting = shouldHighlighting
         self._isHighlighted = shouldHighlighting == true && isHighlighted == true
         self.color = color
@@ -139,21 +136,21 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         self.shadow = shadow
         self.alpha = alpha
         self._reuse = QReuseItem()
-        self.layout.parentView = self
+        self.contentLayout.view = self
     }
     
     public func size(_ available: QSize) -> QSize {
-        return self.layout.size(available)
+        return self.contentLayout.size(available)
     }
     
     public func appear(to layout: IQLayout) {
-        self.parentLayout = layout
+        self.layout = layout
         self._onAppear?()
     }
     
     public func disappear() {
         self._reuse.unload(owner: self)
-        self.parentLayout = nil
+        self.layout = nil
         self._onDisappear?()
     }
     
@@ -190,8 +187,8 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     }
     
     @discardableResult
-    public func layout(_ value: Layout) -> Self {
-        self.layout = value
+    public func contentLayout(_ value: Layout) -> Self {
+        self.contentLayout = value
         return self
     }
     
@@ -232,7 +229,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self.alpha = value
         return self
     }

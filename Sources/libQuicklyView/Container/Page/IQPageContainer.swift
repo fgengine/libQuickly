@@ -8,16 +8,16 @@ import libQuicklyCore
 public protocol IQPageContainer : IQContainer, IQContainerParentable {
     
     var barView: IQPageBarView { get }
-    var barSize: QFloat { get }
-    var barVisibility: QFloat { get }
+    var barSize: Float { get }
+    var barVisibility: Float { get }
     var barHidden: Bool { get }
     var containers: [IQPageContentContainer] { get }
     var backwardContainer: IQPageContentContainer? { get }
     var currentContainer: IQPageContentContainer? { get }
     var forwardContainer: IQPageContentContainer? { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     #if os(iOS)
-    var interactiveLimit: QFloat { set get }
+    var interactiveLimit: Float { set get }
     #endif
     
     func updateBar(animated: Bool, completion: (() -> Void)?)

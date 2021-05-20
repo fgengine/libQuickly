@@ -109,11 +109,11 @@ extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStac
         return self.screen.stackBarView
     }
     
-    public var stackBarSize: QFloat {
+    public var stackBarSize: Float {
         return self.screen.stackBarSize
     }
     
-    public var stackBarVisibility: QFloat {
+    public var stackBarVisibility: Float {
         return self.screen.stackBarVisibility
     }
     
@@ -144,11 +144,11 @@ extension QScreenContainer : IQHamburgerContentContainer {
 
 extension QScreenContainer : IQHamburgerMenuContainer where Screen : IQScreenHamburgerable {
     
-    public var hamburgerSize: QFloat {
+    public var hamburgerSize: Float {
         return self.screen.hamburgerSize
     }
     
-    public var hamburgerLimit: QFloat {
+    public var hamburgerLimit: Float {
         return self.screen.hamburgerLimit
     }
     
@@ -175,7 +175,7 @@ extension QScreenContainer : IQDialogContentContainer where Screen : IQScreenDia
 
 extension QScreenContainer : IQPushContentContainer where Screen : IQScreenPushable {
     
-    public var pushDuration: QFloat? {
+    public var pushDuration: TimeInterval? {
         return self.screen.pushDuration
     }
     

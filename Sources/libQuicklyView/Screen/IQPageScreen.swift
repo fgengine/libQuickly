@@ -10,8 +10,8 @@ public protocol IQPageScreen : IQScreen {
     associatedtype PageBar : IQPageBarView
     
     var pageBarView: PageBar { get }
-    var pageBarSize: QFloat { get }
-    var pageBarVisibility: QFloat { get }
+    var pageBarSize: Float { get }
+    var pageBarVisibility: Float { get }
     var pageBarHidden: Bool { get }
     
 }
@@ -23,11 +23,11 @@ public extension IQPageScreen {
         return self.container as? IQPageContainer
     }
     
-    var pageBarSize: QFloat {
+    var pageBarSize: Float {
         return 50
     }
     
-    var pageBarVisibility: QFloat {
+    var pageBarVisibility: Float {
         return 1
     }
     

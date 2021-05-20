@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public enum QViewBorder {
     case none
-    case manual(width: QFloat, color: QColor)
+    case manual(width: Float, color: QColor)
 }
 
 public protocol IQViewBorderable : AnyObject {

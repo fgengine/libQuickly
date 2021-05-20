@@ -18,8 +18,8 @@ public extension QSize {
     
     @inlinable
     init(_ cgSize: CGSize) {
-        self.width = QFloat(cgSize.width)
-        self.height = QFloat(cgSize.height)
+        self.width = Float(cgSize.width)
+        self.height = Float(cgSize.height)
     }
     
 }

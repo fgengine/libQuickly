@@ -7,9 +7,9 @@ import libQuicklyCore
 
 public protocol IQPinchGesture : IQGesture {
     
-    func velocity() -> QFloat
+    func velocity() -> Float
     
-    func scale() -> QFloat
+    func scale() -> Float
     
     @discardableResult
     func onBegin(_ value: (() -> Void)?) -> Self

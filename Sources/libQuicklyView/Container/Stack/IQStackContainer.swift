@@ -10,9 +10,9 @@ public protocol IQStackContainer : IQContainer, IQContainerParentable {
     var rootContainer: IQStackContentContainer { get }
     var containers: [IQStackContentContainer] { get }
     var currentContainer: IQStackContentContainer { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     #if os(iOS)
-    var interactiveLimit: QFloat { set get }
+    var interactiveLimit: Float { set get }
     #endif
     
     func update(container: IQStackContentContainer, animated: Bool, completion: (() -> Void)?)
@@ -82,8 +82,8 @@ public protocol IQStackContentContainer : IQContainer, IQContainerParentable {
     var stackContainer: IQStackContainer? { get }
     
     var stackBarView: IQStackBarView { get }
-    var stackBarSize: QFloat { get }
-    var stackBarVisibility: QFloat { get }
+    var stackBarSize: Float { get }
+    var stackBarVisibility: Float { get }
     var stackBarHidden: Bool { get }
     
 }

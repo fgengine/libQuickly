@@ -11,6 +11,8 @@ extension QInputListView {
     
     final class InputListView : UITextField {
         
+        typealias View = IQInputListView
+        
         unowned var customDelegate: InputListViewDelegate?
         override var frame: CGRect {
             didSet(oldValue) {
@@ -20,7 +22,7 @@ extension QInputListView {
             }
         }
         
-        private unowned var _view: QInputListView?
+        private unowned var _view: View?
         private var _picker: UIPickerView!
         
         override init(frame: CGRect) {

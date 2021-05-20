@@ -10,7 +10,6 @@ public protocol IQBaseView : AnyObject {
     var name: String { get }
     var native: QNativeView { get }
     var isLoaded: Bool { get }
-    var isAppeared: Bool { get }
     var bounds: QRect { get }
     
     func size(_ available: QSize) -> QSize

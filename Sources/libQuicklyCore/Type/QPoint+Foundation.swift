@@ -18,8 +18,8 @@ public extension QPoint {
     
     @inlinable
     init(_ cgPoint: CGPoint) {
-        self.x = QFloat(cgPoint.x)
-        self.y = QFloat(cgPoint.y)
+        self.x = Float(cgPoint.x)
+        self.y = Float(cgPoint.y)
     }
     
 }

@@ -8,14 +8,14 @@ import libQuicklyCore
 public protocol IQGroupContainer : IQContainer, IQContainerParentable {
     
     var barView: IQGroupBarView { get }
-    var barSize: QFloat { get }
-    var barVisibility: QFloat { get }
+    var barSize: Float { get }
+    var barVisibility: Float { get }
     var barHidden: Bool { get }
     var containers: [IQGroupContentContainer] { get }
     var backwardContainer: IQGroupContentContainer? { get }
     var currentContainer: IQGroupContentContainer? { get }
     var forwardContainer: IQGroupContentContainer? { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     
     func updateBar(animated: Bool, completion: (() -> Void)?)
     

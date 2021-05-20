@@ -49,11 +49,11 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         }
         get { return self._barView }
     }
-    public private(set) var barSize: QFloat {
+    public private(set) var barSize: Float {
         set(value) { self._rootLayout.barSize = value }
         get { return self._rootLayout.barSize }
     }
-    public private(set) var barVisibility: QFloat {
+    public private(set) var barVisibility: Float {
         set(value) { self._rootLayout.barVisibility = value }
         get { return self._rootLayout.barVisibility }
     }
@@ -77,7 +77,7 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         guard let index = self._items.firstIndex(where: { $0 === current }) else { return nil }
         return index < self._items.count - 1 ? self._items[index + 1].container : nil
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     
     private var _barView: IQGroupBarView
     private var _rootLayout: RootLayout
@@ -105,7 +105,7 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         )
         self._rootView = QCustomView(
             name: "QGroupContainer-RootView",
-            layout: self._rootLayout
+            contentLayout: self._rootLayout
         )
         self._items = containers.compactMap({ Item(container: $0) })
         if let current = current {
@@ -280,11 +280,11 @@ extension QGroupContainer : IQStackContentContainer where Screen : IQScreenStack
         return self.screen.stackBarView
     }
     
-    public var stackBarSize: QFloat {
+    public var stackBarSize: Float {
         return self.screen.stackBarSize
     }
     
-    public var stackBarVisibility: QFloat {
+    public var stackBarVisibility: Float {
         return self.screen.stackBarVisibility
     }
     
@@ -347,26 +347,26 @@ private extension QGroupContainer {
         enum State {
             case empty
             case idle(current: QLayoutItem)
-            case forward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
-            case backward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
+            case forward(current: QLayoutItem, next: QLayoutItem, progress: Float)
+            case backward(current: QLayoutItem, next: QLayoutItem, progress: Float)
         }
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var barItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var barInset: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barInset: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barVisibility: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barVisibility: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var barHidden: Bool {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -374,9 +374,9 @@ private extension QGroupContainer {
 
         init(
             barItem: QLayoutItem,
-            barInset: QFloat,
-            barSize: QFloat,
-            barVisibility: QFloat,
+            barInset: Float,
+            barSize: Float,
+            barVisibility: Float,
             barHidden: Bool,
             state: State = .empty
         ) {
@@ -386,6 +386,9 @@ private extension QGroupContainer {
             self.barVisibility = barVisibility
             self.barHidden = barHidden
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -471,7 +474,7 @@ private extension QGroupContainer {
                     forward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: self._rootView.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._rootView.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -581,7 +584,7 @@ private extension QGroupContainer {
                     backward.container.prepareShow(interactive: false)
                 }
                 QAnimation.default.run(
-                    duration: self._rootView.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._rootView.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }

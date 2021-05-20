@@ -9,10 +9,6 @@ import libQuicklyCore
 
 extension UIView {
     
-    var isAppeared: Bool {
-        return self.superview != nil
-    }
-    
     func update(color: QColor?) {
         self.backgroundColor = color?.native
     }
@@ -71,7 +67,7 @@ extension UIView {
         }
     }
     
-    func update(alpha: QFloat) {
+    func update(alpha: Float) {
         self.alpha = CGFloat(alpha)
     }
     

@@ -55,4 +55,15 @@ public final class QReuseCache {
         return item
     }
     
+    public func reset(count: UInt? = nil) {
+        if let count = count {
+            for item in self._items {
+                guard item.value.count > count else { continue }
+                self._items[item.key] = Array(item.value.prefix(Int(count)))
+            }
+        } else {
+            self._items = [:]
+        }
+    }
+    
 }

@@ -1,10 +1,10 @@
 //
-//  libQuicklyCore
+//  libQuicklyView
 //
 
-#if os(iOS)
+#if os(OSX)
 
-import UIKit
+import AppKit
 
 public extension QColor {
     
@@ -14,8 +14,8 @@ public extension QColor {
     }
     
     @inlinable
-    var native: UIColor {
-        return UIColor(
+    var native: NSColor {
+        return NSColor(
             red: CGFloat(self.r),
             green: CGFloat(self.g),
             blue: CGFloat(self.b),
@@ -24,21 +24,21 @@ public extension QColor {
     }
     
     @inlinable
-    init(_ native: UIColor) {
+    init(_ native: NSColor) {
         var r: CGFloat = 0
         var g: CGFloat = 0
         var b: CGFloat = 0
         var a: CGFloat = 0
         native.getRed(&r, green: &g, blue: &b, alpha: &a)
-        self.r = QFloat(r)
-        self.g = QFloat(g)
-        self.b = QFloat(b)
-        self.a = QFloat(a)
+        self.r = Float(r)
+        self.g = Float(g)
+        self.b = Float(b)
+        self.a = Float(a)
     }
     
     @inlinable
     init(_ cgColor: CGColor) {
-        self.init(UIColor(cgColor: cgColor))
+        self.init(NSColor(cgColor: cgColor) ?? NSColor.black)
     }
     
 }

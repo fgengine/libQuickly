@@ -18,7 +18,7 @@ public protocol IQInputToolbarItem {
 public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     
     var items: [IQInputToolbarItem] { get }
-    var size: QFloat { get }
+    var size: Float { get }
     var isTranslucent: Bool { get }
     var tintColor: QColor? { get }
     var contentTintColor: QColor { get }
@@ -27,7 +27,7 @@ public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     func items(_ value: [IQInputToolbarItem]) -> Self
     
     @discardableResult
-    func size(_ value: QFloat) -> Self
+    func size(_ value: Float) -> Self
     
     @discardableResult
     func translucent(_ value: Bool) -> Self

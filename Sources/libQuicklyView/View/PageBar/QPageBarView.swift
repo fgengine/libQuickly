@@ -18,7 +18,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         set(value) { self._contentLayout.itemInset = value }
         get { return self._contentLayout.itemInset }
     }
-    public private(set) var itemSpacing: QFloat {
+    public private(set) var itemSpacing: Float {
         set(value) { self._contentLayout.itemSpacing = value }
         get { return self._contentLayout.itemSpacing }
     }
@@ -66,12 +66,12 @@ public class QPageBarView : QBarView, IQPageBarView {
         name: String? = nil,
         indicatorView: IQView,
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
-        itemSpacing: QFloat = 4,
+        itemSpacing: Float = 4,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.indicatorView = indicatorView
@@ -86,7 +86,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         self._contentView = QScrollView(
             name: "\(name)-BarView",
             direction: .horizontal,
-            layout: self._contentLayout
+            contentLayout: self._contentLayout
         )
         super.init(
             name: name,
@@ -112,7 +112,7 @@ public class QPageBarView : QBarView, IQPageBarView {
     }
     
     @discardableResult
-    public func itemSpacing(_ value: QFloat) -> Self {
+    public func itemSpacing(_ value: Float) -> Self {
         self.itemSpacing = value
         return self
     }
@@ -134,7 +134,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         self._transitionSelectedView = self._selectedItemView
     }
     
-    public func transition(to view: IQBarItemView, progress: QFloat) {
+    public func transition(to view: IQBarItemView, progress: Float) {
         if let currentContentOffset = self._transitionContentOffset {
             if let targetContentOffset = self._contentView.contentOffset(with: view, horizontal: .center, vertical: .center) {
                 self._contentView.contentOffset(currentContentOffset.lerp(targetContentOffset, progress: progress), normalized: true)
@@ -173,11 +173,11 @@ private extension QPageBarView {
         enum IndicatorState {
             case empty
             case alias(current: QLayoutItem)
-            case transition(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
+            case transition(current: QLayoutItem, next: QLayoutItem, progress: Float)
         }
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var indicatorItem: QLayoutItem {
             didSet { self.setNeedUpdate() }
         }
@@ -185,16 +185,13 @@ private extension QPageBarView {
             didSet { self.setNeedUpdate() }
         }
         var itemInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var itemSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var itemSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var items: [QLayoutItem] {
-            didSet {
-                self.invalidate()
-                self.setNeedUpdate()
-            }
+            didSet { self.setNeedForceUpdate() }
         }
         
         private var _cache: [QSize?]
@@ -203,7 +200,7 @@ private extension QPageBarView {
             indicatorItem: QLayoutItem,
             indicatorState: IndicatorState,
             itemInset: QInset,
-            itemSpacing: QFloat,
+            itemSpacing: Float,
             items: [QLayoutItem]
         ) {
             self.indicatorItem = indicatorItem
@@ -212,6 +209,12 @@ private extension QPageBarView {
             self.itemSpacing = itemSpacing
             self.items = items
             self._cache = Array< QSize? >(repeating: nil, count: items.count)
+        }
+        
+        func invalidate(item: QLayoutItem) {
+            if let index = self.items.firstIndex(where: { $0 === item }) {
+                self._cache.remove(at: index)
+            }
         }
         
         func invalidate() {

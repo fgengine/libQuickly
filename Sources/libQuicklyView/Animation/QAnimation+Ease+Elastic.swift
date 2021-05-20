@@ -12,7 +12,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             return sin(13 * .pi / 2 * x) * pow(2, 10 * (x - 1))
         }
 
@@ -23,7 +23,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             let f = sin(-13 * .pi / 2 * (x + 1))
             let g = pow(2, -10 * x)
             return f * g + 1
@@ -36,7 +36,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             if x < 1 / 2 {
                 let f = sin(13 * .pi / 2 * (2 * x))
                 return 1 / 2 * f * pow(2, 10 * (2 * x) - 1)

@@ -10,8 +10,8 @@ import libQuicklyCore
 
 public class QCellView< ContentView : IQView > : IQCellView {
     
-    public var parentLayout: IQLayout? {
-        get { return self._view.parentLayout }
+    public var layout: IQLayout? {
+        get { return self._view.layout }
     }
     public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
@@ -25,9 +25,6 @@ public class QCellView< ContentView : IQView > : IQCellView {
     }
     public var isLoaded: Bool {
         return self._view.isLoaded
-    }
-    public var isAppeared: Bool {
-        return self._view.isAppeared
     }
     public var bounds: QRect {
         return self._view.bounds
@@ -57,7 +54,7 @@ public class QCellView< ContentView : IQView > : IQCellView {
     public var shadow: QViewShadow? {
         get { return self._view.shadow }
     }
-    public var alpha: QFloat {
+    public var alpha: Float {
         get { return self._view.alpha }
     }
     
@@ -76,7 +73,7 @@ public class QCellView< ContentView : IQView > : IQCellView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.shouldPressed = shouldPressed
@@ -89,7 +86,7 @@ public class QCellView< ContentView : IQView > : IQCellView {
         self._view = QCustomView(
             name: name,
             gestures: [ self._pressedGesture ],
-            layout: self._layout,
+            contentLayout: self._layout,
             shouldHighlighting: true,
             color: color,
             border: border,
@@ -177,7 +174,7 @@ public class QCellView< ContentView : IQView > : IQCellView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
         return self
     }
@@ -213,7 +210,7 @@ private extension QCellView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var contentItem: QLayoutItem {
             didSet { self.setNeedUpdate() }
         }
@@ -222,6 +219,9 @@ private extension QCellView {
             contentItem: QLayoutItem
         ) {
             self.contentItem = contentItem
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {

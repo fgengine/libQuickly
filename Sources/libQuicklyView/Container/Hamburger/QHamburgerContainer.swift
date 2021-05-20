@@ -137,7 +137,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
         }
         get { return self._trailingContainer }
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     
     private var _layout: Layout
     private var _view: QCustomView< Layout >
@@ -176,11 +176,11 @@ public class QHamburgerContainer : IQHamburgerContainer {
         self._view = QCustomView(
             name: "QHamburgerContainer-RootView",
             gestures: [ self._pressedGesture, self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            contentLayout: self._layout
         )
         #endif
         self._contentContainer = contentContainer
@@ -304,33 +304,33 @@ private extension QHamburgerContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var state: State {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var leadingItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var leadingSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var leadingSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var trailingItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var trailingSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var trailingSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         
         init(
             state: State,
             contentItem: QLayoutItem,
             leadingItem: QLayoutItem?,
-            leadingSize: QFloat,
+            leadingSize: Float,
             trailingItem: QLayoutItem?,
-            trailingSize: QFloat
+            trailingSize: Float
         ) {
             self.state = state
             self.contentItem = contentItem
@@ -338,6 +338,9 @@ private extension QHamburgerContainer {
             self.leadingSize = leadingSize
             self.trailingItem = trailingItem
             self.trailingSize = trailingSize
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -428,8 +431,8 @@ private extension QHamburgerContainer.Layout {
     
     enum State {
         case idle
-        case leading(progress: QFloat)
-        case trailing(progress: QFloat)
+        case leading(progress: Float)
+        case trailing(progress: Float)
     }
     
 }
@@ -478,7 +481,7 @@ private extension QHamburgerContainer {
             leadingContainer.prepareShow(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.leadingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -517,7 +520,7 @@ private extension QHamburgerContainer {
             leadingContainer.prepareHide(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.leadingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -552,7 +555,7 @@ private extension QHamburgerContainer {
             trailingContainer.prepareShow(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.trailingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -591,7 +594,7 @@ private extension QHamburgerContainer {
             trailingContainer.prepareHide(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.trailingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -697,8 +700,8 @@ private extension QHamburgerContainer {
                 let delta = min(deltaLocation.x, self._layout.leadingSize)
                 if delta >= leadingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self._layout.leadingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: progress)
@@ -713,8 +716,8 @@ private extension QHamburgerContainer {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self._layout.leadingSize / self.animationVelocity,
-                        elapsed: (self._layout.leadingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._layout.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: 1 - progress)
@@ -732,8 +735,8 @@ private extension QHamburgerContainer {
                 let delta = min(-deltaLocation.x, self._layout.trailingSize)
                 if delta >= trailingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self._layout.trailingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: progress)
@@ -748,8 +751,8 @@ private extension QHamburgerContainer {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self._layout.trailingSize / self.animationVelocity,
-                        elapsed: (self._layout.trailingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._layout.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: 1 - progress)
@@ -772,8 +775,8 @@ private extension QHamburgerContainer {
                 let delta = min(-deltaLocation.x, self._layout.leadingSize)
                 if delta >= leadingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self._layout.leadingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: 1 - progress)
@@ -788,8 +791,8 @@ private extension QHamburgerContainer {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self._layout.leadingSize / self.animationVelocity,
-                        elapsed: (self._layout.leadingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._layout.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: progress)
@@ -812,8 +815,8 @@ private extension QHamburgerContainer {
                 let delta = min(deltaLocation.x, self._layout.trailingSize)
                 if delta >= trailingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self._layout.trailingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: 1 - progress)
@@ -828,8 +831,8 @@ private extension QHamburgerContainer {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self._layout.trailingSize / self.animationVelocity,
-                        elapsed: (self._layout.trailingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._layout.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: progress)

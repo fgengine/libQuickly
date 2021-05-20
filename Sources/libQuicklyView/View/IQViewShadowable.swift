@@ -8,15 +8,15 @@ import libQuicklyCore
 public struct QViewShadow {
 
     public let color: QColor
-    public let opacity: QFloat
-    public let radius: QFloat
+    public let opacity: Float
+    public let radius: Float
     public let offset: QPoint
     
     @inlinable
     public init(
         color: QColor,
-        opacity: QFloat,
-        radius: QFloat,
+        opacity: Float,
+        radius: Float,
         offset: QPoint
     ) {
         self.color = color

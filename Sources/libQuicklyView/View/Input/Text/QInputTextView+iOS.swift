@@ -11,6 +11,8 @@ extension QInputTextView {
     
     final class InputTextView : UIView {
         
+        typealias View = IQInputTextView
+        
         unowned var customDelegate: InputTextViewDelegate?
         override var frame: CGRect {
             didSet(oldValue) {
@@ -20,7 +22,7 @@ extension QInputTextView {
             }
         }
         
-        private unowned var _view: QInputTextView?
+        private unowned var _view: View?
         private var _placeholder: UILabel!
         private var _input: UITextView!
         

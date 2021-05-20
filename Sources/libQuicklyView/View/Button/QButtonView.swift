@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public class QButtonView : IQButtonView {
     
-    public var parentLayout: IQLayout? {
-        get { return self._view.parentLayout }
+    public var layout: IQLayout? {
+        get { return self._view.layout }
     }
     public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
@@ -23,56 +23,37 @@ public class QButtonView : IQButtonView {
     public var isLoaded: Bool {
         return self._view.isLoaded
     }
-    public var isAppeared: Bool {
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         return self._view.bounds
     }
     public private(set) var inset: QInset {
-        set(value) {
-            self._layout.inset = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self.setNeedForceUpdate() }
         get { return self._layout.inset }
     }
     public private(set) var backgroundView: IQView
     public private(set) var spinnerPosition: QButtonViewSpinnerPosition {
-        set(value) {
-            self._layout.spinnerPosition = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self._layout.spinnerPosition = value }
         get { return self._layout.spinnerPosition }
     }
     public private(set) var spinnerAnimating: Bool {
         set(value) {
             self._layout.spinnerAnimating = value
             self.spinnerView?.animating(value)
-            self._layout.setNeedUpdate()
         }
         get { return self._layout.spinnerAnimating }
     }
     public private(set) var spinnerView: IQSpinnerView?
     public private(set) var imagePosition: QButtonViewImagePosition {
-        set(value) {
-            self._layout.imagePosition = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self._layout.imagePosition = value }
         get { return self._layout.imagePosition }
     }
     public private(set) var imageInset: QInset {
-        set(value) {
-            self._layout.imageInset = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self._layout.imageInset = value }
         get { return self._layout.imageInset }
     }
     public private(set) var imageView: IQView?
     public private(set) var textInset: QInset {
-        set(value) {
-            self._layout.textInset = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self._layout.textInset = value }
         get { return self._layout.textInset }
     }
     public private(set) var textView: IQView?
@@ -106,7 +87,7 @@ public class QButtonView : IQButtonView {
     public var shadow: QViewShadow? {
         get { return self._view.shadow }
     }
-    public var alpha: QFloat {
+    public var alpha: Float {
         get { return self._view.alpha }
     }
     
@@ -135,7 +116,7 @@ public class QButtonView : IQButtonView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.backgroundView = backgroundView
@@ -156,7 +137,7 @@ public class QButtonView : IQButtonView {
         )
         self._view = QControlView(
             name: name,
-            layout: self._layout,
+            contentLayout: self._layout,
             shouldHighlighting: true,
             shouldPressed: true,
             color: color,
@@ -258,7 +239,7 @@ public class QButtonView : IQButtonView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
         return self
     }
@@ -294,17 +275,37 @@ extension QButtonView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
-        var inset: QInset
-        var spinnerPosition: QButtonViewSpinnerPosition
-        var spinnerItem: QLayoutItem?
-        var spinnerAnimating: Bool
-        var backgroundItem: QLayoutItem
-        var imagePosition: QButtonViewImagePosition
-        var imageInset: QInset
-        var imageItem: QLayoutItem?
-        var textInset: QInset
-        var textItem: QLayoutItem?
+        unowned var view: IQView?
+        var inset: QInset {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var spinnerPosition: QButtonViewSpinnerPosition {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var spinnerItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var spinnerAnimating: Bool {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var backgroundItem: QLayoutItem {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var imagePosition: QButtonViewImagePosition {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var imageInset: QInset {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var imageItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var textInset: QInset {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var textItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate() }
+        }
 
         init(
             inset: QInset,
@@ -328,6 +329,9 @@ extension QButtonView {
             self.imageItem = imageItem
             self.textInset = textInset
             self.textItem = textItem
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {

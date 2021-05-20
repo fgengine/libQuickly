@@ -130,8 +130,8 @@ private extension QWindow.RootViewController {
             return QInset(self.view.safeAreaInsets)
         } else {
             return QInset(
-                top: QFloat(self.topLayoutGuide.length),
-                bottom: QFloat(self.bottomLayoutGuide.length)
+                top: Float(self.topLayoutGuide.length),
+                bottom: Float(self.bottomLayoutGuide.length)
             )
         }
     }

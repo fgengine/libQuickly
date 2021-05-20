@@ -71,10 +71,6 @@ open class QInputToolbarView : IQInputToolbarView {
     public var isLoaded: Bool {
         return self._reuse.isLoaded
     }
-    public var isAppeared: Bool {
-        guard self.isLoaded == true else { return false }
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         guard self.isLoaded == true else { return QRect() }
         return QRect(self._view.bounds)
@@ -85,7 +81,7 @@ open class QInputToolbarView : IQInputToolbarView {
             self._view.update(items: self.items)
         }
     }
-    public private(set) var size: QFloat {
+    public private(set) var size: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(size: self.size)
@@ -127,7 +123,7 @@ open class QInputToolbarView : IQInputToolbarView {
     public init(
         name: String? = nil,
         items: [IQInputToolbarItem],
-        size: QFloat = 55,
+        size: Float = 55,
         isTranslucent: Bool = false,
         tintColor: QColor? = nil,
         contentTintColor: QColor = QColor(rgb: 0xffffff),
@@ -165,7 +161,7 @@ open class QInputToolbarView : IQInputToolbarView {
     }
     
     @discardableResult
-    public func size(_ value: QFloat) -> Self {
+    public func size(_ value: Float) -> Self {
         self.size = value
         return self
     }

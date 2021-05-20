@@ -16,7 +16,7 @@ public protocol IQPageBarView : IQBarView {
     var delegate: IQPageBarViewDelegate? { set get }
     var indicatorView: IQView { get }
     var itemInset: QInset { get }
-    var itemSpacing: QFloat { get }
+    var itemSpacing: Float { get }
     var itemViews: [IQBarItemView] { get }
     var selectedItemView: IQBarItemView? { get }
     
@@ -27,7 +27,7 @@ public protocol IQPageBarView : IQBarView {
     func itemInset(_ value: QInset) -> Self
     
     @discardableResult
-    func itemSpacing(_ value: QFloat) -> Self
+    func itemSpacing(_ value: Float) -> Self
     
     @discardableResult
     func itemViews(_ value: [IQBarItemView]) -> Self
@@ -37,7 +37,7 @@ public protocol IQPageBarView : IQBarView {
     
     func beginTransition()
     
-    func transition(to view: IQBarItemView, progress: QFloat)
+    func transition(to view: IQBarItemView, progress: Float)
     
     func finishTransition(to view: IQBarItemView)
     

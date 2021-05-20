@@ -29,14 +29,14 @@ public enum QScrollViewScrollAlignment {
 
 public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var isScrolling: Bool { get }
-    var isDecelerating: Bool { get }
     var direction: QScrollViewDirection { get }
     var indicatorDirection: QScrollViewDirection { get }
     var contentInset: QInset { get }
     var contentOffset: QPoint { get }
     var contentSize: QSize { get }
     var contentLayout: IQLayout { get }
+    var isScrolling: Bool { get }
+    var isDecelerating: Bool { get }
 
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint?
     
@@ -98,7 +98,7 @@ public extension IQScrollView {
         if animated == true && deltaContentOffset > 0 {
             let velocity = max(self.bounds.width, self.bounds.height)
             QAnimation.default.run(
-                duration: deltaContentOffset / velocity,
+                duration: TimeInterval(deltaContentOffset / velocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [unowned self] progress in
                     let contentOffset = beginContentOffset.lerp(endContentOffset, progress: progress)

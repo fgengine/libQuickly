@@ -11,7 +11,7 @@ public protocol IQProgressView : IQView, IQViewColorable, IQViewBorderable, IQVi
     var height: QDimensionBehaviour { get }
     var progressColor: QColor { get }
     var trackColor: QColor { get }
-    var progress: QFloat { get }
+    var progress: Float { get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour) -> Self
@@ -26,6 +26,6 @@ public protocol IQProgressView : IQView, IQViewColorable, IQViewBorderable, IQVi
     func trackColor(_ value: QColor) -> Self
     
     @discardableResult
-    func progress(_ value: QFloat) -> Self
+    func progress(_ value: Float) -> Self
     
 }

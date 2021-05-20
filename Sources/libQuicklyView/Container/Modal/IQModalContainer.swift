@@ -11,9 +11,9 @@ public protocol IQModalContainer : IQContainer, IQContainerParentable {
     var containers: [IQModalContentContainer] { get }
     var previousContainer: IQModalContentContainer? { get }
     var currentContainer: IQModalContentContainer? { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     #if os(iOS)
-    var interactiveLimit: QFloat { set get }
+    var interactiveLimit: Float { set get }
     #endif
     
     func present(container: IQModalContentContainer, animated: Bool, completion: (() -> Void)?)

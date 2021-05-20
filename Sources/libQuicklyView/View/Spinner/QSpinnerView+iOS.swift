@@ -11,12 +11,14 @@ extension QSpinnerView {
     
     final class SpinnerView : UIActivityIndicatorView {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         override var debugDescription: String {
             guard let view = self._view else { return super.debugDescription }
             return view.debugDescription
         }
         
-        private unowned var _view: QSpinnerView?
+        private unowned var _view: View?
         
         override init(style: Style) {
             if #available(iOS 13.0, *) {

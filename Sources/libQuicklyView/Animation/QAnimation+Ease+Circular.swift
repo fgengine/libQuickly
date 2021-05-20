@@ -12,7 +12,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             return 1 - sqrt(1 - (x * x))
         }
 
@@ -23,7 +23,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             return sqrt((2 - x) * x)
         }
 
@@ -34,7 +34,7 @@ public extension QAnimation.Ease {
         public init() {
         }
 
-        public func perform(_ x: QFloat) -> QFloat {
+        public func perform(_ x: Float) -> Float {
             if x < 1 / 2 {
                 let h = 1 - sqrt(1 - 4 * (x * x))
                 return 1 / 2 * h

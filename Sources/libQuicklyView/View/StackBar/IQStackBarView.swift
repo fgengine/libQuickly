@@ -9,13 +9,13 @@ public protocol IQStackBarView : IQBarView {
     
     var inset: QInset { get }
     var leadingViews: [IQView] { get }
-    var leadingViewSpacing: QFloat { get }
+    var leadingViewSpacing: Float { get }
     var titleView: IQView? { get }
-    var titleSpacing: QFloat { get }
+    var titleSpacing: Float { get }
     var detailView: IQView? { get }
-    var detailSpacing: QFloat { get }
+    var detailSpacing: Float { get }
     var trailingViews: [IQView] { get }
-    var trailingViewSpacing: QFloat { get }
+    var trailingViewSpacing: Float { get }
     
     @discardableResult
     func inset(_ value: QInset) -> Self
@@ -24,24 +24,24 @@ public protocol IQStackBarView : IQBarView {
     func leadingViews(_ value: [IQView]) -> Self
     
     @discardableResult
-    func leadingViewSpacing(_ value: QFloat) -> Self
+    func leadingViewSpacing(_ value: Float) -> Self
     
     @discardableResult
     func titleView(_ value: IQView?) -> Self
     
     @discardableResult
-    func titleSpacing(_ value: QFloat) -> Self
+    func titleSpacing(_ value: Float) -> Self
     
     @discardableResult
     func detailView(_ value: IQView?) -> Self
     
     @discardableResult
-    func detailSpacing(_ value: QFloat) -> Self
+    func detailSpacing(_ value: Float) -> Self
     
     @discardableResult
     func trailingViews(_ value: [IQView]) -> Self
     
     @discardableResult
-    func trailingViewSpacing(_ value: QFloat) -> Self
+    func trailingViewSpacing(_ value: Float) -> Self
 
 }

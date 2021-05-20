@@ -143,7 +143,7 @@ private extension QApiRequest {
                 if urlPart.hasPrefix("/") == true {
                     let startIndex = urlPart.index(urlPart.startIndex, offsetBy: 1)
                     let endIndex = urlPart.endIndex
-                    urlPart = String(urlPart[startIndex..<endIndex])
+                    urlPart = String(urlPart[startIndex ..< endIndex])
                 }
                 if string.hasSuffix("/") == true {
                     string.append(urlPart)

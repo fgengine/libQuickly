@@ -12,9 +12,9 @@ public protocol IQPushContainer : IQContainer, IQContainerParentable {
     var containers: [IQPushContentContainer] { get }
     var previousContainer: IQPushContentContainer? { get }
     var currentContainer: IQPushContentContainer? { get }
-    var animationVelocity: QFloat { set get }
+    var animationVelocity: Float { set get }
     #if os(iOS)
-    var interactiveLimit: QFloat { set get }
+    var interactiveLimit: Float { set get }
     #endif
     
     func present(container: IQPushContentContainer, animated: Bool, completion: (() -> Void)?)
@@ -40,7 +40,7 @@ public protocol IQPushContentContainer : IQContainer, IQContainerParentable {
     
     var pushContainer: IQPushContainer? { get }
     
-    var pushDuration: QFloat? { get }
+    var pushDuration: TimeInterval? { get }
     
 }
 

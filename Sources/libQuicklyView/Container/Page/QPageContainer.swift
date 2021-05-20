@@ -49,11 +49,11 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         }
         get { return self._barView }
     }
-    public private(set) var barSize: QFloat {
+    public private(set) var barSize: Float {
         set(value) { self._layout.barSize = value }
         get { return self._layout.barSize }
     }
-    public private(set) var barVisibility: QFloat {
+    public private(set) var barVisibility: Float {
         set(value) { self._layout.barVisibility = value }
         get { return self._layout.barVisibility }
     }
@@ -77,9 +77,9 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         guard let index = self._items.firstIndex(where: { $0 === current }) else { return nil }
         return index < self._items.count - 1 ? self._items[index + 1].container : nil
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     #if os(iOS)
-    public var interactiveLimit: QFloat
+    public var interactiveLimit: Float
     #endif
     
     private var _barView: IQPageBarView
@@ -101,7 +101,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         self.screen = screen
         #if os(iOS)
         self.animationVelocity = UIScreen.main.animationVelocity
-        self.interactiveLimit = QFloat(UIScreen.main.bounds.width * 0.33)
+        self.interactiveLimit = Float(UIScreen.main.bounds.width * 0.33)
         #endif
         self._barView = screen.pageBarView
         self._layout = Layout(
@@ -116,11 +116,11 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         self._view = QCustomView(
             name: "QPageContainer-RootView",
             gestures: [ self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            contentLayout: self._layout
         )
         #endif
         self._items = []
@@ -280,11 +280,11 @@ extension QPageContainer : IQStackContentContainer where Screen : IQScreenStacka
         return self.screen.stackBarView
     }
     
-    public var stackBarSize: QFloat {
+    public var stackBarSize: Float {
         return self.screen.stackBarSize
     }
     
-    public var stackBarVisibility: QFloat {
+    public var stackBarVisibility: Float {
         return self.screen.stackBarVisibility
     }
     
@@ -362,7 +362,7 @@ private extension QPageContainer {
                 }
                 self._barView.beginTransition()
                 QAnimation.default.run(
-                    duration: self._view.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -474,7 +474,7 @@ private extension QPageContainer {
                 }
                 self._barView.beginTransition()
                 QAnimation.default.run(
-                    duration: self._view.contentSize.width / self.animationVelocity,
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -638,8 +638,8 @@ private extension QPageContainer {
         let layoutSize = self._view.contentSize
         if let forward = self._interactiveForward, deltaLocation <= -self.interactiveLimit && canceled == false {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: absDeltaLocation / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval(absDeltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: forward.barView, progress: progress)
@@ -653,8 +653,8 @@ private extension QPageContainer {
             )
         } else if let backward = self._interactiveBackward, deltaLocation >= self.interactiveLimit && canceled == false {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: absDeltaLocation / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval(absDeltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: backward.barView, progress: progress)
@@ -668,8 +668,8 @@ private extension QPageContainer {
             )
         } else if let forward = self._interactiveForward, deltaLocation < 0 {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: (layoutSize.width - absDeltaLocation) / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval((layoutSize.width - absDeltaLocation) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: forward.barView, progress: 1 - progress)
@@ -683,8 +683,8 @@ private extension QPageContainer {
             )
         } else if let backward = self._interactiveBackward, deltaLocation > 0 {
             QAnimation.default.run(
-                duration: layoutSize.width / self.animationVelocity,
-                elapsed: (layoutSize.width - absDeltaLocation) / self.animationVelocity,
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval((layoutSize.width - absDeltaLocation) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: backward.barView, progress: 1 - progress)
@@ -790,21 +790,21 @@ private extension QPageContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var barItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var barInset: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barInset: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
-        var barVisibility: QFloat {
-            didSet { self.setNeedUpdate() }
+        var barVisibility: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var barHidden: Bool {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -812,9 +812,9 @@ private extension QPageContainer {
 
         init(
             barItem: QLayoutItem,
-            barInset: QFloat,
-            barSize: QFloat,
-            barVisibility: QFloat,
+            barInset: Float,
+            barSize: Float,
+            barVisibility: Float,
             barHidden: Bool,
             state: State = .empty
         ) {
@@ -824,6 +824,9 @@ private extension QPageContainer {
             self.barVisibility = barVisibility
             self.barHidden = barHidden
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -886,8 +889,8 @@ private extension QPageContainer.Layout {
     enum State {
         case empty
         case idle(current: QLayoutItem)
-        case forward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
-        case backward(current: QLayoutItem, next: QLayoutItem, progress: QFloat)
+        case forward(current: QLayoutItem, next: QLayoutItem, progress: Float)
+        case backward(current: QLayoutItem, next: QLayoutItem, progress: Float)
     }
     
 }

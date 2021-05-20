@@ -10,8 +10,8 @@ import libQuicklyCore
 
 public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     
-    public var parentLayout: IQLayout? {
-        get { return self._view.parentLayout }
+    public var layout: IQLayout? {
+        get { return self._view.layout }
     }
     public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
@@ -25,9 +25,6 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     }
     public var isLoaded: Bool {
         return self._view.isLoaded
-    }
-    public var isAppeared: Bool {
-        return self._view.isAppeared
     }
     public var bounds: QRect {
         return self._view.bounds
@@ -61,11 +58,11 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
             }
         }
     }
-    public private(set) var leadingSize: QFloat {
+    public private(set) var leadingSize: Float {
         set(value) { self._layout.leadingSize = value }
         get { return self._layout.leadingSize }
     }
-    public private(set) var leadingLimit: QFloat
+    public private(set) var leadingLimit: Float
     public var isShowedTrailingView: Bool {
         switch self._layout.state {
         case .trailing: return true
@@ -82,12 +79,12 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
             }
         }
     }
-    public private(set) var trailingSize: QFloat {
+    public private(set) var trailingSize: Float {
         set(value) { self._layout.trailingSize = value }
         get { return self._layout.trailingSize }
     }
-    public var trailingLimit: QFloat
-    public var animationVelocity: QFloat
+    public var trailingLimit: Float
+    public var animationVelocity: Float
     public var color: QColor? {
         get { return self._view.color }
     }
@@ -100,7 +97,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     public var shadow: QViewShadow? {
         get { return self._view.shadow }
     }
-    public var alpha: QFloat {
+    public var alpha: Float {
         get { return self._view.alpha }
     }
     
@@ -123,16 +120,16 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         shouldPressed: Bool = true,
         contentView: ContentView,
         leadingView: IQView? = nil,
-        leadingLimit: QFloat = 0,
-        leadingSize: QFloat = 0,
+        leadingLimit: Float = 0,
+        leadingSize: Float = 0,
         trailingView: IQView? = nil,
-        trailingLimit: QFloat = 0,
-        trailingSize: QFloat = 0,
+        trailingLimit: Float = 0,
+        trailingSize: Float = 0,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.shouldPressed = shouldPressed
@@ -142,7 +139,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         self.trailingView = trailingView
         self.trailingLimit = trailingLimit > 0 ? trailingLimit : trailingSize / 2
         #if os(iOS)
-        self.animationVelocity = QFloat(UIScreen.main.bounds.width * 2)
+        self.animationVelocity = Float(UIScreen.main.bounds.width * 2)
         #endif
         self._layout = Layout(
             state: .idle,
@@ -158,7 +155,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         self._view = QCustomView(
             name: name,
             gestures: [ self._pressedGesture, self._interactiveGesture ],
-            layout: self._layout,
+            contentLayout: self._layout,
             shouldHighlighting: true,
             color: color,
             border: border,
@@ -169,7 +166,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         #else
         self._view = QCustomView(
             name: name,
-            layout: self._layout,
+            contentLayout: self._layout,
             shouldHighlighting: true,
             color: color,
             border: border,
@@ -198,7 +195,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         case .idle:
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.leadingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -233,7 +230,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         case .leading:
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.leadingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -264,7 +261,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         case .idle:
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.trailingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -299,7 +296,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         case .trailing:
             if animated == true {
                 QAnimation.default.run(
-                    duration: self._layout.trailingSize / self.animationVelocity,
+                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -360,13 +357,13 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     }
     
     @discardableResult
-    public func leadingSize(_ value: QFloat) -> Self {
+    public func leadingSize(_ value: Float) -> Self {
         self.leadingSize = value
         return self
     }
     
     @discardableResult
-    public func leadingLimit(_ value: QFloat) -> Self {
+    public func leadingLimit(_ value: Float) -> Self {
         self.leadingLimit = value
         return self
     }
@@ -378,19 +375,19 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     }
     
     @discardableResult
-    public func trailingSize(_ value: QFloat) -> Self {
+    public func trailingSize(_ value: Float) -> Self {
         self.trailingSize = value
         return self
     }
     
     @discardableResult
-    public func trailingLimit(_ value: QFloat) -> Self {
+    public func trailingLimit(_ value: Float) -> Self {
         self.trailingLimit = value
         return self
     }
     
     @discardableResult
-    public func animationVelocity(_ value: QFloat) -> Self {
+    public func animationVelocity(_ value: Float) -> Self {
         self.animationVelocity = value
         return self
     }
@@ -420,7 +417,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
         return self
     }
@@ -480,33 +477,33 @@ private extension QSwipeCellView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var state: State {
             didSet { self.setNeedUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var leadingItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var leadingSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var leadingSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var trailingItem: QLayoutItem? {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var trailingSize: QFloat {
-            didSet { self.setNeedUpdate() }
+        var trailingSize: Float {
+            didSet { self.setNeedForceUpdate() }
         }
 
         init(
             state: State,
             contentItem: QLayoutItem,
             leadingItem: QLayoutItem?,
-            leadingSize: QFloat,
+            leadingSize: Float,
             trailingItem: QLayoutItem?,
-            trailingSize: QFloat
+            trailingSize: Float
         ) {
             self.state = state
             self.contentItem = contentItem
@@ -514,6 +511,9 @@ private extension QSwipeCellView {
             self.leadingSize = leadingSize
             self.trailingItem = trailingItem
             self.trailingSize = trailingSize
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -616,8 +616,8 @@ private extension QSwipeCellView.Layout {
     
     enum State {
         case idle
-        case leading(progress: QFloat)
-        case trailing(progress: QFloat)
+        case leading(progress: Float)
+        case trailing(progress: Float)
     }
     
 }
@@ -711,8 +711,8 @@ private extension QSwipeCellView {
                 let delta = min(deltaLocation.x, self.leadingSize)
                 if delta >= self.leadingLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self.leadingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: progress)
@@ -727,8 +727,8 @@ private extension QSwipeCellView {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self.leadingSize / self.animationVelocity,
-                        elapsed: (self.leadingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: 1 - progress)
@@ -745,8 +745,8 @@ private extension QSwipeCellView {
                 let delta = min(-deltaLocation.x, self.trailingSize)
                 if delta >= self.trailingLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self.trailingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: progress)
@@ -761,8 +761,8 @@ private extension QSwipeCellView {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self.trailingSize / self.animationVelocity,
-                        elapsed: (self.trailingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: 1 - progress)
@@ -784,8 +784,8 @@ private extension QSwipeCellView {
                 let delta = min(-deltaLocation.x, self.leadingSize)
                 if delta >= self.leadingLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self.leadingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: 1 - progress)
@@ -800,8 +800,8 @@ private extension QSwipeCellView {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self.leadingSize / self.animationVelocity,
-                        elapsed: (self.leadingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .leading(progress: progress)
@@ -823,8 +823,8 @@ private extension QSwipeCellView {
                 let delta = min(deltaLocation.x, self.trailingSize)
                 if delta >= self.trailingLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: self.trailingSize / self.animationVelocity,
-                        elapsed: delta / self.animationVelocity,
+                        duration: TimeInterval(self.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: 1 - progress)
@@ -839,8 +839,8 @@ private extension QSwipeCellView {
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: self.trailingSize / self.animationVelocity,
-                        elapsed: (self.trailingSize - delta) / self.animationVelocity,
+                        duration: TimeInterval(self.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
                             self._layout.state = .trailing(progress: progress)

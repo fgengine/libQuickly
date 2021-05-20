@@ -2,26 +2,27 @@
 //  libQuicklyView
 //
 
-#if os(iOS)
+#if os(OSX)
 
-import UIKit
+import AppKit
+import libQuicklyCore
 
 public struct QFont {
 
-    public var native: UIFont
+    public var native: NSFont
     
     @inlinable
     public init(
         weight: QFontWeight,
-        size: QFloat
+        size: Float
     ) {
-        self.native = UIFont.systemFont(ofSize: CGFloat(size), weight: weight.uiFontWeight)
+        self.native = NSFont.systemFont(ofSize: CGFloat(size), weight: weight.nsFontWeight)
         
     }
     
     @inlinable
     public init(
-        _ native: UIFont
+        _ native: NSFont
     ) {
         self.native = native
     }
@@ -30,7 +31,7 @@ public struct QFont {
 
 public extension QFontWeight {
     
-    var uiFontWeight: UIFont.Weight {
+    var nsFontWeight: NSFont.Weight {
         switch self {
         case .ultraLight: return .ultraLight
         case .thin: return .thin
@@ -44,8 +45,8 @@ public extension QFontWeight {
         }
     }
     
-    init(_ uiFontWeight: UIFont.Weight) {
-        switch uiFontWeight {
+    init(_ nsFontWeight: NSFont.Weight) {
+        switch nsFontWeight {
         case .ultraLight: self = .ultraLight
         case .thin: self = .thin
         case .light: self = .light

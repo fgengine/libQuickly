@@ -45,12 +45,12 @@ public final class QPinchGesture : NSObject, IQPinchGesture {
         self.native.require(toFail: gesture)
     }
     
-    public func velocity() -> QFloat {
-        return QFloat(self._native.velocity)
+    public func velocity() -> Float {
+        return Float(self._native.velocity)
     }
     
-    public func scale() -> QFloat {
-        return QFloat(self._native.scale)
+    public func scale() -> Float {
+        return Float(self._native.scale)
     }
     
     public func location(in view: IQView) -> QPoint {

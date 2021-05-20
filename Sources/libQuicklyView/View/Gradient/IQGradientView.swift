@@ -35,12 +35,12 @@ public enum QGradientViewMode {
 public struct QGradientViewPoint {
     
     public let color: QColor
-    public let location: QFloat
+    public let location: Float
     
     @inlinable
     public init(
         color: QColor,
-        location: QFloat
+        location: Float
     ) {
         self.color = color
         self.location = location

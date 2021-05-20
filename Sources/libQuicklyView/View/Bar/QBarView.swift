@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public class QBarView : IQBarView {
     
-    public var parentLayout: IQLayout? {
-        get { return self._view.parentLayout }
+    public var layout: IQLayout? {
+        get { return self._view.layout }
     }
     public unowned var item: QLayoutItem? {
         set(value) { self._view.item = value }
@@ -23,24 +23,17 @@ public class QBarView : IQBarView {
     public var isLoaded: Bool {
         return self._view.isLoaded
     }
-    public var isAppeared: Bool {
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         return self._view.bounds
     }
     public private(set) var safeArea: QInset {
-        set(value) {
-            self._layout.safeArea = value
-            self._layout.setNeedUpdate()
-        }
+        set(value) { self._layout.safeArea = value }
         get { return self._layout.safeArea }
     }
     public private(set) var contentView: IQView? {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
             self._layout.contentItem = contentView.flatMap({ QLayoutItem(view: $0) })
-            self._layout.setNeedUpdate()
         }
     }
     public var color: QColor? {
@@ -55,7 +48,7 @@ public class QBarView : IQBarView {
     public var shadow: QViewShadow? {
         get { return self._view.shadow }
     }
-    public var alpha: QFloat {
+    public var alpha: Float {
         get { return self._view.alpha }
     }
     
@@ -69,7 +62,7 @@ public class QBarView : IQBarView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self.contentView = contentView
@@ -79,7 +72,7 @@ public class QBarView : IQBarView {
         )
         self._view = QCustomView(
             name: name,
-            layout: self._layout,
+            contentLayout: self._layout,
             color: color,
             border: border,
             cornerRadius: cornerRadius,
@@ -137,7 +130,7 @@ public class QBarView : IQBarView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
         return self
     }
@@ -161,12 +154,12 @@ extension QBarView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
-        var safeArea: QInset
-        var contentItem: QLayoutItem?
-        var items: [QLayoutItem] {
-            guard let contentItem = self.contentItem else { return [] }
-            return [ contentItem ]
+        unowned var view: IQView?
+        var safeArea: QInset {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var contentItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate() }
         }
         
         init(
@@ -175,6 +168,9 @@ extension QBarView {
         ) {
             self.safeArea = safeArea
             self.contentItem = contentItem
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {

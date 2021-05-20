@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public enum QViewCornerRadius {
     case none
-    case manual(radius: QFloat)
+    case manual(radius: Float)
     case auto
 }
 

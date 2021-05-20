@@ -7,13 +7,13 @@ import libQuicklyCore
 
 public protocol IQScreenPushable : AnyObject {
     
-    var pushDuration: QFloat? { get }
+    var pushDuration: TimeInterval? { get }
     
 }
 
 public extension IQScreenPushable {
     
-    var pushDuration: QFloat? {
+    var pushDuration: TimeInterval? {
         return 3
     }
     

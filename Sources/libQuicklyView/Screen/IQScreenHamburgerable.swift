@@ -7,18 +7,18 @@ import libQuicklyCore
 
 public protocol IQScreenHamburgerable : AnyObject {
     
-    var hamburgerSize: QFloat { get }
-    var hamburgerLimit: QFloat { get }
+    var hamburgerSize: Float { get }
+    var hamburgerLimit: Float { get }
     
 }
 
 public extension IQScreenHamburgerable {
     
-    var hamburgerSize: QFloat {
+    var hamburgerSize: Float {
         return 240
     }
     
-    var hamburgerLimit: QFloat {
+    var hamburgerLimit: Float {
         return 120
     }
     

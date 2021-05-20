@@ -128,7 +128,7 @@ public class QDatabase {
         }()
         public private(set) lazy var columnNames: [String] = {
             var result: [String] = []
-            for index in 0..<self.numberOfColumns {
+            for index in 0 ..< self.numberOfColumns {
                 if let name = sqlite3_column_name(self._statement, Int32(index)) {
                     if let nsString = NSString(utf8String: name) {
                         result.append(nsString as String)

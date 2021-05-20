@@ -11,6 +11,8 @@ extension QInputStringView {
     
     final class InputStringView : UITextField {
         
+        typealias View = IQInputStringView
+        
         unowned var customDelegate: InputStringViewDelegate?
         override var frame: CGRect {
             didSet(oldValue) {
@@ -20,7 +22,7 @@ extension QInputStringView {
             }
         }
         
-        private unowned var _view: QInputStringView?
+        private unowned var _view: View?
         
         override init(frame: CGRect) {
             super.init(frame: frame)

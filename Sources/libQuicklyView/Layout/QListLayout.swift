@@ -8,7 +8,7 @@ import libQuicklyCore
 public final class QListLayout : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
-    public unowned var parentView: IQView?
+    public unowned var view: IQView?
     public var direction: Direction {
         didSet(oldValue) {
             guard self.direction != oldValue else { return }
@@ -22,7 +22,7 @@ public final class QListLayout : IQLayout {
             self.setNeedUpdate()
         }
     }
-    public var spacing: QFloat {
+    public var spacing: Float {
         didSet(oldValue) {
             guard self.spacing != oldValue else { return }
             self.setNeedUpdate()
@@ -54,7 +54,7 @@ public final class QListLayout : IQLayout {
     public init(
         direction: Direction,
         inset: QInset = QInset(),
-        spacing: QFloat = 0,
+        spacing: Float = 0,
         items: [QLayoutItem] = []
     ) {
         self.direction = direction
@@ -70,7 +70,7 @@ public final class QListLayout : IQLayout {
     public convenience init(
         direction: Direction,
         inset: QInset = QInset(),
-        spacing: QFloat = 0,
+        spacing: Float = 0,
         views: [IQView]
     ) {
         self.init(
@@ -82,7 +82,7 @@ public final class QListLayout : IQLayout {
     }
     
     public func animate(
-        duration: QFloat,
+        duration: TimeInterval,
         ease: IQAnimationEase = QAnimation.Ease.Linear(),
         perform: @escaping (_ layout: QListLayout) -> Void,
         completion: (() -> Void)? = nil
@@ -95,12 +95,13 @@ public final class QListLayout : IQLayout {
     }
     
     public func insert(index: Int, items: [QLayoutItem]) {
-        self._items.insert(contentsOf: items, at: index)
-        self._cache.insert(contentsOf: Array< QSize? >(repeating: nil, count: items.count), at: index)
+        let safeIndex = max(0, min(index, items.count - 1))
+        self._items.insert(contentsOf: items, at: safeIndex)
+        self._cache.insert(contentsOf: Array< QSize? >(repeating: nil, count: items.count), at: safeIndex)
         if self._animations.isEmpty == false {
             self._operations.append(Helper.Operation(
                 type: .insert,
-                indecies: Set< Int >(range: index ..< index + items.count),
+                indices: Set< Int >(range: safeIndex ..< safeIndex + items.count),
                 progress: 0
             ))
         }
@@ -116,13 +117,43 @@ public final class QListLayout : IQLayout {
     public func delete(range: Range< Int >) {
         if self._animations.isEmpty == false {
             self._operations.append(Helper.Operation(
-                type: .insert,
-                indecies: Set< Int >(range: range),
+                type: .delete,
+                indices: Set< Int >(range: range),
                 progress: 0
             ))
         } else {
             self._items.removeSubrange(range)
             self._cache.removeSubrange(range)
+        }
+    }
+    
+    public func delete(items: [QLayoutItem]) {
+        let indices = items.compactMap({ item in self.items.firstIndex(where: { $0 === item }) })
+        if indices.count > 0 {
+            if self._animations.isEmpty == false {
+                self._operations.append(Helper.Operation(
+                    type: .delete,
+                    indices: Set< Int >(indices),
+                    progress: 0
+                ))
+            } else {
+                for index in indices {
+                    self._items.remove(at: index)
+                    self._cache.remove(at: index)
+                }
+            }
+        }
+    }
+    
+    public func delete(views: [IQView]) {
+        self.delete(
+            items: views.compactMap({ return QLayoutItem(view: $0) })
+        )
+    }
+    
+    public func invalidate(item: QLayoutItem) {
+        if let index = self._items.firstIndex(where: { $0 === item }) {
+            self._cache.remove(at: index)
         }
     }
     
@@ -175,13 +206,13 @@ private extension QListLayout {
     
     class Animation {
         
-        let duration: QFloat
+        let duration: TimeInterval
         let ease: IQAnimationEase
         let perform: (_ layout: QListLayout) -> Void
         let completion: (() -> Void)?
         
         public init(
-            duration: QFloat,
+            duration: TimeInterval,
             ease: IQAnimationEase,
             perform: @escaping (_ layout: QListLayout) -> Void,
             completion: (() -> Void)?
@@ -208,14 +239,14 @@ private extension QListLayout {
                 for operation in self._operations {
                     operation.progress = progress
                 }
-                self.setNeedUpdate(true)
+                self.setNeedForceUpdate()
                 self.updateIfNeeded()
             },
             completion: { [unowned self] in
                 for operation in self._operations {
                     switch operation.type {
                     case .delete:
-                        for index in operation.indecies.reversed() {
+                        for index in operation.indices.reversed() {
                             self._items.remove(at: index)
                             self._cache.remove(at: index)
                         }
@@ -223,7 +254,7 @@ private extension QListLayout {
                         break
                     }
                 }
-                self.setNeedUpdate(true)
+                self.setNeedForceUpdate()
                 self.updateIfNeeded()
                 self._operations.removeAll()
                 if let index = self._animations.firstIndex(where: { $0 === animation }) {

@@ -68,9 +68,9 @@ public class QModalContainer : IQModalContainer {
     public var currentContainer: IQModalContentContainer? {
         return self._current?.container
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     #if os(iOS)
-    public var interactiveLimit: QFloat
+    public var interactiveLimit: Float
     #endif
     
     private var _layout: Layout
@@ -103,11 +103,11 @@ public class QModalContainer : IQModalContainer {
         self._view = QCustomView(
             name: "QModalContainer-RootView",
             gestures: [ self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            contentLayout: self._layout
         )
         #endif
         self._items = []
@@ -245,7 +245,7 @@ private extension QModalContainer {
         modal.container.prepareShow(interactive: false)
         if animated == true {
             QAnimation.default.run(
-                duration: self._view.bounds.size.height / self.animationVelocity,
+                duration: TimeInterval(self._view.bounds.size.height / self.animationVelocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
@@ -281,7 +281,7 @@ private extension QModalContainer {
         modal.container.prepareHide(interactive: false)
         if animated == true {
             QAnimation.default.run(
-                duration: self._view.bounds.size.height / self.animationVelocity,
+                duration: TimeInterval(self._view.bounds.size.height / self.animationVelocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
@@ -332,8 +332,8 @@ private extension QModalContainer {
         if deltaLocation < -self.interactiveLimit {
             let height = self._view.bounds.size.height
             QAnimation.default.run(
-                duration: height / self.animationVelocity,
-                elapsed: -deltaLocation / self.animationVelocity,
+                duration: TimeInterval(height / self.animationVelocity),
+                elapsed: TimeInterval(-deltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .dismiss(modal: current, progress: progress)
@@ -348,7 +348,7 @@ private extension QModalContainer {
             let height = self._view.bounds.size.height
             let baseProgress = deltaLocation / pow(height, 1.5)
             QAnimation.default.run(
-                duration: (height * baseProgress) / self.animationVelocity,
+                duration: TimeInterval((height * baseProgress) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .present(modal: current, progress: 1 + (baseProgress - (baseProgress * progress)))
@@ -421,12 +421,12 @@ private extension QModalContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var containerInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -440,6 +440,9 @@ private extension QModalContainer {
             self.containerInset = containerInset
             self.contentItem = contentItem
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
         }
         
         func invalidate() {
@@ -486,8 +489,8 @@ private extension QModalContainer.Layout {
     enum State {
         case empty
         case idle(modal: QModalContainer.Item)
-        case present(modal: QModalContainer.Item, progress: QFloat)
-        case dismiss(modal: QModalContainer.Item, progress: QFloat)
+        case present(modal: QModalContainer.Item, progress: Float)
+        case dismiss(modal: QModalContainer.Item, progress: Float)
     }
     
 }

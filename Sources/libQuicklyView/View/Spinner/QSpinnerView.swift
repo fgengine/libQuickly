@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public class QSpinnerView : IQSpinnerView {
     
-    public private(set) unowned var parentLayout: IQLayout?
+    public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
     public private(set) var name: String
     public var native: QNativeView {
@@ -16,10 +16,6 @@ public class QSpinnerView : IQSpinnerView {
     public var isLoaded: Bool {
         return self._reuse.isLoaded
     }
-    public var isAppeared: Bool {
-        guard self.isLoaded == true else { return false }
-        return self._view.isAppeared
-    }
     public var bounds: QRect {
         guard self.isLoaded == true else { return QRect() }
         return QRect(self._view.bounds)
@@ -27,7 +23,7 @@ public class QSpinnerView : IQSpinnerView {
     public private(set) var size: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.parentLayout?.setNeedUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public private(set) var activityColor: QColor {
@@ -68,7 +64,7 @@ public class QSpinnerView : IQSpinnerView {
             self._view.update(shadow: self.shadow)
         }
     }
-    public private(set) var alpha: QFloat {
+    public private(set) var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -93,7 +89,7 @@ public class QSpinnerView : IQSpinnerView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         self.name = name ?? String(describing: Self.self)
         self.size = size
@@ -115,13 +111,13 @@ public class QSpinnerView : IQSpinnerView {
     }
     
     public func appear(to layout: IQLayout) {
-        self.parentLayout = layout
+        self.layout = layout
         self._onAppear?()
     }
     
     public func disappear() {
         self._reuse.unload(owner: self)
-        self.parentLayout = nil
+        self.layout = nil
         self._onDisappear?()
     }
     
@@ -168,7 +164,7 @@ public class QSpinnerView : IQSpinnerView {
     }
     
     @discardableResult
-    public func alpha(_ value: QFloat) -> Self {
+    public func alpha(_ value: Float) -> Self {
         self.alpha = value
         return self
     }

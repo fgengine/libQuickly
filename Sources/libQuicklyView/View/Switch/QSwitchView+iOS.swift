@@ -11,13 +11,15 @@ extension QSwitchView {
     
     final class SwitchView : UIView {
         
+        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+        
         unowned var customDelegate: SwitchViewDelegate?
         override var debugDescription: String {
             guard let view = self._view else { return super.debugDescription }
             return view.debugDescription
         }
         
-        private unowned var _view: QSwitchView?
+        private unowned var _view: View?
         private var _switch: UISwitch!
         
         override init(frame: CGRect) {

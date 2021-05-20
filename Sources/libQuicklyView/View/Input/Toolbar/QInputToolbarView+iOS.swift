@@ -51,7 +51,7 @@ extension QInputToolbarView.InputToolbarView {
         self.items = barItems
     }
     
-    func update(size: QFloat) {
+    func update(size: Float) {
         self.frame = CGRect(
             origin: frame.origin,
             size: CGSize(

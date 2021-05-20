@@ -12,7 +12,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
         set(value) { self._contentLayout.itemInset = value }
         get { return self._contentLayout.itemInset }
     }
-    public private(set) var itemSpacing: QFloat {
+    public private(set) var itemSpacing: Float {
         set(value) { self._contentLayout.itemSpacing = value }
         get { return self._contentLayout.itemSpacing }
     }
@@ -47,12 +47,12 @@ public class QGroupBarView : QBarView, IQGroupBarView {
     public init(
         name: String? = nil,
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
-        itemSpacing: QFloat = 4,
+        itemSpacing: Float = 4,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: QFloat = 1
+        alpha: Float = 1
     ) {
         let name = name ?? String(describing: Self.self)
         self._itemViews = []
@@ -63,7 +63,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
         )
         self._contentView = QCustomView(
             name: "\(name)-BarView",
-            layout: self._contentLayout
+            contentLayout: self._contentLayout
         )
         super.init(
             name: name,
@@ -83,7 +83,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
     }
     
     @discardableResult
-    public func itemSpacing(_ value: QFloat) -> Self {
+    public func itemSpacing(_ value: Float) -> Self {
         self.itemSpacing = value
         return self
     }
@@ -115,31 +115,34 @@ private extension QGroupBarView {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var itemInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
-        var itemSpacing: QFloat {
-            didSet { self.setNeedUpdate() }
+        var itemSpacing: Float {
+            didSet { self.setNeedForceUpdate() }
         }
         var items: [QLayoutItem] {
-            didSet {
-                self.invalidate()
-                self.setNeedUpdate()
-            }
+            didSet { self.setNeedForceUpdate() }
         }
         
         private var _cache: [QSize?]
 
         init(
             itemInset: QInset,
-            itemSpacing: QFloat,
+            itemSpacing: Float,
             items: [QLayoutItem]
         ) {
             self.itemInset = itemInset
             self.itemSpacing = itemSpacing
             self.items = items
             self._cache = Array< QSize? >(repeating: nil, count: items.count)
+        }
+        
+        func invalidate(item: QLayoutItem) {
+            if let index = self.items.firstIndex(where: { $0 === item }) {
+                self._cache.remove(at: index)
+            }
         }
         
         func invalidate() {
@@ -153,7 +156,7 @@ private extension QGroupBarView {
                 origin: .forward,
                 inset: self.itemInset,
                 spacing: self.itemSpacing,
-                minSize: bounds.size.width / QFloat(self.items.count),
+                minSize: bounds.size.width / Float(self.items.count),
                 maxSize: bounds.size.width,
                 items: self.items,
                 cache: &self._cache
@@ -166,7 +169,7 @@ private extension QGroupBarView {
                 direction: .horizontal,
                 inset: self.itemInset,
                 spacing: self.itemSpacing,
-                minSize: available.width / QFloat(self.items.count),
+                minSize: available.width / Float(self.items.count),
                 maxSize: available.width,
                 items: self.items
             )

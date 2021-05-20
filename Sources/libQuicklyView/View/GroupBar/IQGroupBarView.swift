@@ -15,7 +15,7 @@ public protocol IQGroupBarView : IQBarView {
     
     var delegate: IQGroupBarViewDelegate? { set get }
     var itemInset: QInset { get }
-    var itemSpacing: QFloat { get }
+    var itemSpacing: Float { get }
     var itemViews: [IQBarItemView] { get }
     var selectedItemView: IQBarItemView? { get }
     
@@ -23,7 +23,7 @@ public protocol IQGroupBarView : IQBarView {
     func itemInset(_ value: QInset) -> Self
     
     @discardableResult
-    func itemSpacing(_ value: QFloat) -> Self
+    func itemSpacing(_ value: Float) -> Self
     
     @discardableResult
     func itemViews(_ value: [IQBarItemView]) -> Self

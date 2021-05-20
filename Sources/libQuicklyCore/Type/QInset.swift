@@ -6,17 +6,17 @@ import Foundation
 
 public struct QInset : Hashable {
     
-    public var top: QFloat
-    public var left: QFloat
-    public var right: QFloat
-    public var bottom: QFloat
+    public var top: Float
+    public var left: Float
+    public var right: Float
+    public var bottom: Float
     
     @inlinable
     public init(
-        top: QFloat = 0,
-        left: QFloat = 0,
-        right: QFloat = 0,
-        bottom: QFloat = 0
+        top: Float = 0,
+        left: Float = 0,
+        right: Float = 0,
+        bottom: Float = 0
     ) {
         self.top = top
         self.left = left
@@ -26,8 +26,8 @@ public struct QInset : Hashable {
     
     @inlinable
     public init(
-        horizontal: QFloat = 0,
-        vertical: QFloat = 0
+        horizontal: Float = 0,
+        vertical: Float = 0
     ) {
         self.top = vertical
         self.left = horizontal
@@ -40,12 +40,12 @@ public struct QInset : Hashable {
 public extension QInset {
     
     @inlinable
-    var horizontal: QFloat {
+    var horizontal: Float {
         return self.left + self.right
     }
     
     @inlinable
-    var vertical: QFloat {
+    var vertical: Float {
         return self.top + self.bottom
     }
     

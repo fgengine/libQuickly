@@ -68,9 +68,9 @@ public class QDialogContainer : IQDialogContainer {
     public var currentContainer: IQDialogContentContainer? {
         return self._current?.container
     }
-    public var animationVelocity: QFloat
+    public var animationVelocity: Float
     #if os(iOS)
-    public var interactiveLimit: QFloat
+    public var interactiveLimit: Float
     #endif
     
     private var _layout: Layout
@@ -105,11 +105,11 @@ public class QDialogContainer : IQDialogContainer {
         self._view = QCustomView(
             name: "QDialogContainer-RootView",
             gestures: [ self._interactiveGesture ],
-            layout: self._layout
+            contentLayout: self._layout
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            contentLayout: self._layout
         )
         #endif
         self._items = []
@@ -251,7 +251,7 @@ private extension QDialogContainer {
             if animated == true {
                 let size = self._layout._size(dialog: dialog, size: dialogSize)
                 QAnimation.default.run(
-                    duration: size / self.animationVelocity,
+                    duration: TimeInterval(size / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -302,7 +302,7 @@ private extension QDialogContainer {
             if animated == true {
                 let size = self._layout._size(dialog: dialog, size: dialogSize)
                 QAnimation.default.run(
-                    duration: size / self.animationVelocity,
+                    duration: TimeInterval(size / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
@@ -372,7 +372,7 @@ private extension QDialogContainer {
         if offset > self.interactiveLimit {
             let viewAlphable = self._layout.dialogItem?.container.view as? IQViewAlphable
             QAnimation.default.run(
-                duration: size / self.animationVelocity,
+                duration: TimeInterval(size / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     if let view = viewAlphable {
@@ -391,7 +391,7 @@ private extension QDialogContainer {
             )
         } else {
             QAnimation.default.run(
-                duration: (size * abs(baseProgress)) / self.animationVelocity,
+                duration: TimeInterval((size * abs(baseProgress)) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._layout.state = .dismiss(progress: baseProgress * (1 - progress))
@@ -473,18 +473,18 @@ private extension QDialogContainer {
     class Layout : IQLayout {
         
         unowned var delegate: IQLayoutDelegate?
-        unowned var parentView: IQView?
+        unowned var view: IQView?
         var containerInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
         }
         var dialogItem: Item? {
-            didSet { self.setNeedUpdate(true) }
+            didSet { self.setNeedForceUpdate() }
         }
         var dialogSize: QSize? {
             self.updateIfNeeded()
@@ -502,6 +502,12 @@ private extension QDialogContainer {
             self.containerInset = containerInset
             self.contentItem = contentItem
             self.state = state
+        }
+        
+        func invalidate(item: QLayoutItem) {
+            if self.dialogItem === item {
+                self._dialogSize = nil
+            }
         }
         
         func invalidate() {
@@ -562,13 +568,13 @@ private extension QDialogContainer.Layout {
     
     enum State {
         case idle
-        case present(progress: QFloat)
-        case dismiss(progress: QFloat)
+        case present(progress: Float)
+        case dismiss(progress: Float)
     }
     
     @inline(__always)
     func _size(bounds: QRect, dialog: QDialogContainer.Item) -> QSize {
-        let width, height: QFloat
+        let width, height: Float
         if dialog.container.dialogWidth == .fit && dialog.container.dialogHeight == .fit {
             let size = dialog.item.size(bounds.size)
             width = size.width
@@ -650,7 +656,7 @@ private extension QDialogContainer.Layout {
     }
     
     @inline(__always)
-    func _offset(dialog: QDialogContainer.Item, size: QSize, delta: QPoint) -> QFloat {
+    func _offset(dialog: QDialogContainer.Item, size: QSize, delta: QPoint) -> Float {
         switch dialog.container.dialogAlignment {
         case .topLeft: return -delta.x
         case .top: return -delta.y
@@ -665,7 +671,7 @@ private extension QDialogContainer.Layout {
     }
     
     @inline(__always)
-    func _size(dialog: QDialogContainer.Item, size: QSize) -> QFloat {
+    func _size(dialog: QDialogContainer.Item, size: QSize) -> Float {
         switch dialog.container.dialogAlignment {
         case .topLeft: return size.width
         case .top: return size.height
@@ -680,7 +686,7 @@ private extension QDialogContainer.Layout {
     }
     
     @inline(__always)
-    func _progress(dialog: QDialogContainer.Item, size: QSize, delta: QPoint) -> QFloat {
+    func _progress(dialog: QDialogContainer.Item, size: QSize, delta: QPoint) -> Float {
         let dialogOffset = self._offset(dialog: dialog, size: size, delta: delta)
         let dialogSize = self._size(dialog: dialog, size: size)
         if dialogOffset < 0 {
