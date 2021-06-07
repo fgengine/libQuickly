@@ -13,11 +13,6 @@ extension QSpinnerView {
         
         typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
         
-        override var debugDescription: String {
-            guard let view = self._view else { return super.debugDescription }
-            return view.debugDescription
-        }
-        
         private unowned var _view: View?
         
         override init(style: Style) {

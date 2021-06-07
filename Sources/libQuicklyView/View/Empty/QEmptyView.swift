@@ -9,7 +9,6 @@ public class QEmptyView : IQEmptyView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -74,7 +73,6 @@ public class QEmptyView : IQEmptyView {
     private var _onDisappear: (() -> Void)?
     
     public init(
-        name: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         color: QColor? = QColor(rgba: 0x00000000),
@@ -83,7 +81,6 @@ public class QEmptyView : IQEmptyView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.color = color

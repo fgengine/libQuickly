@@ -96,7 +96,6 @@ public class QStickyContainer : IQStickyContainer {
             accessorySize: accessoryContainer.stickySize
         )
         self._rootView = QCustomView(
-            name: "QStickyContainer-RootView",
             contentLayout: self._rootLayout
         )
         self._contentContainer = contentContainer

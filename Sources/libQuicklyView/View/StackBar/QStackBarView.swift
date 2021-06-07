@@ -54,7 +54,6 @@ public class QStackBarView : QBarView, IQStackBarView {
     private var _contentView: QCustomView< Layout >
     
     public init(
-        name: String? = nil,
         inset: QInset,
         leadingViews: [IQView] = [],
         leadingViewSpacing: Float = 4,
@@ -70,7 +69,6 @@ public class QStackBarView : QBarView, IQStackBarView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.leadingViews = leadingViews
         self.titleView = titleView
         self.detailView = detailView
@@ -87,11 +85,9 @@ public class QStackBarView : QBarView, IQStackBarView {
             trailingItemSpacing: trailingViewSpacing
         )
         self._contentView = QCustomView(
-            name: "\(name)-BarView",
             contentLayout: self._contentLayout
         )
         super.init(
-            name: name,
             contentView: self._contentView,
             color: color,
             border: border,

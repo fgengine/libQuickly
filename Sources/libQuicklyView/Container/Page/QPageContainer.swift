@@ -112,9 +112,8 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
             barHidden: screen.pageBarHidden
         )
         #if os(iOS)
-        self._interactiveGesture = QPanGesture(name: "QPageContainer-PanGesture")
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: "QPageContainer-RootView",
             gestures: [ self._interactiveGesture ],
             contentLayout: self._layout
         )
@@ -285,7 +284,7 @@ extension QPageContainer : IQStackContentContainer where Screen : IQScreenStacka
     }
     
     public var stackBarVisibility: Float {
-        return self.screen.stackBarVisibility
+        return max(0, min(self.screen.stackBarVisibility, 1))
     }
     
     public var stackBarHidden: Bool {

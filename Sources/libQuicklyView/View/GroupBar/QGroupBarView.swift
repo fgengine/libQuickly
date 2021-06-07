@@ -45,7 +45,6 @@ public class QGroupBarView : QBarView, IQGroupBarView {
     private var _selectedItemView: IQBarItemView?
     
     public init(
-        name: String? = nil,
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
         itemSpacing: Float = 4,
         color: QColor? = QColor(rgba: 0x00000000),
@@ -54,7 +53,6 @@ public class QGroupBarView : QBarView, IQGroupBarView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self._itemViews = []
         self._contentLayout = Layout(
             itemInset: itemInset,
@@ -62,11 +60,9 @@ public class QGroupBarView : QBarView, IQGroupBarView {
             items: []
         )
         self._contentView = QCustomView(
-            name: "\(name)-BarView",
             contentLayout: self._contentLayout
         )
         super.init(
-            name: name,
             contentView: self._contentView,
             color: color,
             border: border,

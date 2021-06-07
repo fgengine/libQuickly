@@ -99,9 +99,8 @@ public class QModalContainer : IQModalContainer {
             state: .empty
         )
         #if os(iOS)
-        self._interactiveGesture = QPanGesture(name: "QModalContainer-PanGesture")
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: "QModalContainer-RootView",
             gestures: [ self._interactiveGesture ],
             contentLayout: self._layout
         )

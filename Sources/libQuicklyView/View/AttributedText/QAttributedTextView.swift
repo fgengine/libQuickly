@@ -9,7 +9,6 @@ public class QAttributedTextView : IQAttributedTextView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -102,7 +101,6 @@ public class QAttributedTextView : IQAttributedTextView {
     private var _onDisappear: (() -> Void)?
     
     public init(
-        name: String? = nil,
         width: QDimensionBehaviour? = nil,
         height: QDimensionBehaviour? = nil,
         text: NSAttributedString,
@@ -115,7 +113,6 @@ public class QAttributedTextView : IQAttributedTextView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.text = text

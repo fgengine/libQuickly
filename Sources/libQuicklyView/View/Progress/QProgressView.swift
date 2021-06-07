@@ -9,7 +9,6 @@ public class QProgressView : IQProgressView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -90,7 +89,6 @@ public class QProgressView : IQProgressView {
     private var _onDisappear: (() -> Void)?
     
     public init(
-        name: String? = nil,
         width: QDimensionBehaviour = .fill,
         height: QDimensionBehaviour,
         progressColor: QColor,
@@ -102,7 +100,6 @@ public class QProgressView : IQProgressView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.progressColor = progressColor

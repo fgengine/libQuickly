@@ -22,27 +22,31 @@ extension QScrollView {
             }
         }
         override var frame: CGRect {
-            didSet(oldValue) {
-                guard let view = self._view, self.frame != oldValue else { return }
-                self.update(cornerRadius: view.cornerRadius)
-                self.updateShadowPath()
-                if self.frame.size != oldValue.size {
-                    self.needLayoutContent = true
-                    self.setNeedsLayout()
+            set(value) {
+                if super.frame != value {
+                    let oldValue = value
+                    super.frame = value
+                    if let view = self._view {
+                        self.update(cornerRadius: view.cornerRadius)
+                        self.updateShadowPath()
+                    }
+                    if oldValue.size != value.size {
+                        self.needLayoutContent = true
+                        self.setNeedsLayout()
+                    }
                 }
             }
+            get { return super.frame }
         }
         override var contentSize: CGSize {
             set(value) {
-                self._contentView.frame = CGRect(origin: CGPoint.zero, size: value)
-                super.contentSize = value
-                self.setNeedsLayout()
+                if super.contentSize != value {
+                    self._contentView.frame = CGRect(origin: CGPoint.zero, size: value)
+                    super.contentSize = value
+                    self.setNeedsLayout()
+                }
             }
             get { return super.contentSize }
-        }
-        override var debugDescription: String {
-            guard let view = self._view else { return super.debugDescription }
-            return view.debugDescription
         }
         
         private unowned var _view: View?
@@ -107,7 +111,7 @@ extension QScrollView {
                     )
                 }
                 self.contentSize = self._layoutManager.size.cgSize
-                self.customDelegate?.update(contentSize: self._layoutManager.size)
+                self.customDelegate?._update(contentSize: self._layoutManager.size)
                 self.needLayoutContent = false
             }
             self._layoutManager.visible(bounds: QRect(self.bounds))
@@ -159,16 +163,18 @@ extension QScrollView.ScrollView {
     }
     
     func update(contentOffset: QPoint, normalized: Bool) {
+        let validContentOffset: CGPoint
         if normalized == true {
             let contentSize = self.contentSize
             let visibleSize = self.bounds.size
-            self.contentOffset = CGPoint(
+            validContentOffset = CGPoint(
                 x: max(0, min(CGFloat(contentOffset.x), contentSize.width - visibleSize.width)),
                 y: max(0, min(CGFloat(contentOffset.y), contentSize.height - visibleSize.height))
             )
         } else {
-            self.contentOffset = contentOffset.cgPoint
+            validContentOffset = contentOffset.cgPoint
         }
+        self.setContentOffset(validContentOffset, animated: false)
     }
     
     func cleanup() {
@@ -205,25 +211,27 @@ extension QScrollView.ScrollView {
 extension QScrollView.ScrollView : UIScrollViewDelegate {
     
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        self.customDelegate?.beginScrolling()
+        self.customDelegate?._beginScrolling()
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if self.needLayoutContent == false {
-            self.customDelegate?.scrolling(contentOffset: QPoint(scrollView.contentOffset))
-        }
+        self.customDelegate?._scrolling(contentOffset: QPoint(scrollView.contentOffset))
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        self.customDelegate?.endScrolling(decelerate: decelerate)
+        self.customDelegate?._endScrolling(decelerate: decelerate)
     }
     
     func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
-        self.customDelegate?.beginDecelerating()
+        self.customDelegate?._beginDecelerating()
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        self.customDelegate?.endDecelerating()
+        self.customDelegate?._endDecelerating()
+    }
+    
+    func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
+        self.customDelegate?._scrollToTop()
     }
     
 }

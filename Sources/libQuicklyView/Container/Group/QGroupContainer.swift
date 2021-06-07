@@ -104,7 +104,6 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
             barHidden: screen.groupBarHidden
         )
         self._rootView = QCustomView(
-            name: "QGroupContainer-RootView",
             contentLayout: self._rootLayout
         )
         self._items = containers.compactMap({ Item(container: $0) })
@@ -285,7 +284,7 @@ extension QGroupContainer : IQStackContentContainer where Screen : IQScreenStack
     }
     
     public var stackBarVisibility: Float {
-        return self.screen.stackBarVisibility
+        return max(0, min(self.screen.stackBarVisibility, 1))
     }
     
     public var stackBarHidden: Bool {

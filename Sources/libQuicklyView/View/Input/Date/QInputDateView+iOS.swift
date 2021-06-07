@@ -15,11 +15,16 @@ extension QInputDateView {
         
         unowned var customDelegate: InputDateViewDelegate?
         override var frame: CGRect {
-            didSet(oldValue) {
-                guard let view = self._view, self.frame != oldValue else { return }
-                self.update(cornerRadius: view.cornerRadius)
-                self.updateShadowPath()
+            set(value) {
+                if super.frame != value {
+                    super.frame = value
+                    if let view = self._view {
+                        self.update(cornerRadius: view.cornerRadius)
+                        self.updateShadowPath()
+                    }
+                }
             }
+            get { return super.frame }
         }
         
         private unowned var _view: View?

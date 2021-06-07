@@ -17,9 +17,6 @@ public class QCellView< ContentView : IQView > : IQCellView {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
-    public var name: String {
-        return self._view.name
-    }
     public var native: QNativeView {
         return self._view.native
     }
@@ -66,7 +63,6 @@ public class QCellView< ContentView : IQView > : IQCellView {
     private var _onPressed: (() -> Void)?
     
     public init(
-        name: String? = nil,
         shouldPressed: Bool = true,
         contentView: ContentView,
         color: QColor? = QColor(rgba: 0x00000000),
@@ -75,16 +71,14 @@ public class QCellView< ContentView : IQView > : IQCellView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.shouldPressed = shouldPressed
         self.contentView = contentView
         self._layout = Layout(
             contentItem: QLayoutItem(view: contentView)
         )
         #if os(iOS)
-        self._pressedGesture = QTapGesture(name: "\(name)-TapGesture")
+        self._pressedGesture = QTapGesture()
         self._view = QCustomView(
-            name: name,
             gestures: [ self._pressedGesture ],
             contentLayout: self._layout,
             shouldHighlighting: true,
@@ -96,7 +90,6 @@ public class QCellView< ContentView : IQView > : IQCellView {
         )
         #else
         self._view = QCustomView(
-            name: name,
             layout: self._layout,
             shouldHighlighting: true,
             color: color,

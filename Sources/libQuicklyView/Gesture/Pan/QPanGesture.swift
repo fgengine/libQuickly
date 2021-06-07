@@ -9,16 +9,12 @@ import libQuicklyCore
 
 public final class QPanGesture : NSObject, IQPanGesture {
     
-    public private(set) var name: String
     public var native: QNativeGesture {
         return self._native
     }
     public private(set) var isEnabled: Bool {
         set(value) { self._native.isEnabled = value }
         get { return self._native.isEnabled }
-    }
-    public override var debugDescription: String {
-        return "<\(self.name)>"
     }
     
     private var _native: UIPanGestureRecognizer
@@ -31,10 +27,8 @@ public final class QPanGesture : NSObject, IQPanGesture {
     private var _onCancel: (() -> Void)?
     private var _onEnd: (() -> Void)?
     
-    public init(
-        name: String
+    public override init(
     ) {
-        self.name = name
         let native = UIPanGestureRecognizer()
         self._native = native
         super.init()
@@ -43,10 +37,8 @@ public final class QPanGesture : NSObject, IQPanGesture {
     }
     
     public init(
-        name: String,
         screenEdge: ScreenEdge
     ) {
-        self.name = name
         let native = UIScreenEdgePanGestureRecognizer()
         switch screenEdge {
         case .top: native.edges = [ .top ]

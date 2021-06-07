@@ -9,7 +9,6 @@ import libQuicklyCore
 
 public final class QTapGesture : NSObject, IQTapGesture {
     
-    public private(set) var name: String
     public var native: QNativeGesture {
         return self._native
     }
@@ -25,9 +24,6 @@ public final class QTapGesture : NSObject, IQTapGesture {
         set(value) { self._native.numberOfTouchesRequired = Int(value) }
         get { return UInt(self._native.numberOfTouchesRequired) }
     }
-    public override var debugDescription: String {
-        return "<\(self.name)>"
-    }
     
     private var _native: UITapGestureRecognizer
     private var _onShouldBegin: (() -> Bool)?
@@ -37,11 +33,9 @@ public final class QTapGesture : NSObject, IQTapGesture {
     private var _onTriggered: (() -> Void)?
     
     public init(
-        name: String,
         numberOfTapsRequired: UInt = 1,
         numberOfTouchesRequired: UInt = 1
     ) {
-        self.name = name
         self._native = UITapGestureRecognizer()
         self._native.numberOfTapsRequired = Int(numberOfTapsRequired)
         self._native.numberOfTouchesRequired = Int(numberOfTouchesRequired)

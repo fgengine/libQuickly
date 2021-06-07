@@ -7,7 +7,6 @@ import libQuicklyCore
 
 public protocol IQGesture : AnyObject {
     
-    var name: String { get }
     var native: QNativeGesture { get }
     var isEnabled: Bool { get }
     

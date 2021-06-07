@@ -4,6 +4,7 @@
 
 import Foundation
 import libQuicklyCore
+import libQuicklyObserver
 
 public struct QScrollViewDirection : OptionSet {
     
@@ -27,6 +28,18 @@ public enum QScrollViewScrollAlignment {
     case trailing
 }
 
+public protocol IQScrollViewObserver : AnyObject {
+    
+    func beginScrolling(scrollView: IQScrollView)
+    func scrolling(scrollView: IQScrollView)
+    func endScrolling(scrollView: IQScrollView, decelerate: Bool)
+    func beginDecelerating(scrollView: IQScrollView)
+    func endDecelerating(scrollView: IQScrollView)
+    
+    func scrollToTop(scrollView: IQScrollView)
+    
+}
+
 public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var direction: QScrollViewDirection { get }
@@ -37,6 +50,12 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     var contentLayout: IQLayout { get }
     var isScrolling: Bool { get }
     var isDecelerating: Bool { get }
+    
+    func add(observer: IQScrollViewObserver)
+    
+    func remove(observer: IQScrollViewObserver)
+    
+    func scrollToTop(animated: Bool, completion: (() -> Void)?)
 
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint?
     
@@ -70,6 +89,9 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     @discardableResult
     func onEndDecelerating(_ value: (() -> Void)?) -> Self
     
+    @discardableResult
+    func onScrollToTop(_ value: (() -> Void)?) -> Self
+    
 }
 
 public extension IQScrollView {
@@ -91,27 +113,7 @@ public extension IQScrollView {
     }
     
     func scrollToTop(animated: Bool = true, completion: (() -> Void)? = nil) {
-        let contentInset = self.contentInset
-        let beginContentOffset = self.contentOffset
-        let endContentOffset = QPoint(x: -contentInset.left, y: -contentInset.top)
-        let deltaContentOffset = abs(beginContentOffset.distance(to: endContentOffset))
-        if animated == true && deltaContentOffset > 0 {
-            let velocity = max(self.bounds.width, self.bounds.height)
-            QAnimation.default.run(
-                duration: TimeInterval(deltaContentOffset / velocity),
-                ease: QAnimation.Ease.QuadraticInOut(),
-                processing: { [unowned self] progress in
-                    let contentOffset = beginContentOffset.lerp(endContentOffset, progress: progress)
-                    self.contentOffset(contentOffset)
-                },
-                completion: {
-                    completion?()
-                }
-            )
-        } else {
-            self.contentOffset(QPoint(x: -contentInset.left, y: -contentInset.top))
-            completion?()
-        }
+        self.scrollToTop(animated: animated, completion: completion)
     }
     
 }

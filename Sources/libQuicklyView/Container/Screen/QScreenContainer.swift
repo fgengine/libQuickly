@@ -114,7 +114,7 @@ extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStac
     }
     
     public var stackBarVisibility: Float {
-        return self.screen.stackBarVisibility
+        return max(0, min(self.screen.stackBarVisibility, 1))
     }
     
     public var stackBarHidden: Bool {

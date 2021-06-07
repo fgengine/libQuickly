@@ -14,9 +14,6 @@ public class QBarItemView : IQBarItemView {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
-    public var name: String {
-        return self._view.name
-    }
     public var native: QNativeView {
         return self._view.native
     }
@@ -71,7 +68,6 @@ public class QBarItemView : IQBarItemView {
     private var _isSelected: Bool
     
     public init(
-        name: String? = nil,
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
         contentView: IQView,
         color: QColor? = nil,
@@ -80,16 +76,14 @@ public class QBarItemView : IQBarItemView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.contentView = contentView
         self._layout = Layout(
             contentInset: contentInset,
             contentItem: QLayoutItem(view: contentView)
         )
-        self._tapGesture = QTapGesture(name: "\(name)-TapGesture")
+        self._tapGesture = QTapGesture()
         self._isSelected = false
         self._view = QCustomView(
-            name: name,
             gestures: [ self._tapGesture ],
             contentLayout: self._layout,
             shouldHighlighting: true,

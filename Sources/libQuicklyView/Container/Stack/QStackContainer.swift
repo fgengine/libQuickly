@@ -86,9 +86,8 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             state: .idle(current: self._rootItem.item)
         )
         #if os(iOS)
-        self._interactiveGesture = QPanGesture(name: "QStackContainer-PanGesture", screenEdge: .left)
+        self._interactiveGesture = QPanGesture(screenEdge: .left)
         self._view = QCustomView(
-            name: "QStackContainer-RootView",
             gestures: [ self._interactiveGesture ],
             contentLayout: self._layout
         )
@@ -180,11 +179,18 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     }
     
     public func update(container: IQStackContentContainer, animated: Bool, completion: (() -> Void)?) {
-        guard let item = self._items.first(where: { $0.container === container }) else {
-            completion?()
-            return
+        let item: Item?
+        if self._rootItem.container === container {
+            item = self._rootItem
+        } else {
+            item = self._items.first(where: { $0.container === container })
         }
-        item.update()
+        if let item = item {
+            item.update()
+            completion?()
+        } else {
+            completion?()
+        }
     }
     
     public func set(rootContainer: IQStackContentContainer, animated: Bool, completion: (() -> Void)?) {
@@ -387,7 +393,6 @@ private extension QStackContainer {
             self.owner = owner
             self.item = QLayoutItem(
                 view: QCustomView(
-                    name: "QStackContainer-ContentView",
                     contentLayout: self._layout
                 )
             )

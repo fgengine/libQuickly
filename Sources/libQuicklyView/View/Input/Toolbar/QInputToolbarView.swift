@@ -64,7 +64,6 @@ public struct QInputToolbarFlexibleSpaceItem : IQInputToolbarItem {
 open class QInputToolbarView : IQInputToolbarView {
     
     public private(set) unowned var parentView: IQView?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -121,7 +120,6 @@ open class QInputToolbarView : IQInputToolbarView {
     private var _onDisappear: (() -> Void)?
     
     public init(
-        name: String? = nil,
         items: [IQInputToolbarItem],
         size: Float = 55,
         isTranslucent: Bool = false,
@@ -129,7 +127,6 @@ open class QInputToolbarView : IQInputToolbarView {
         contentTintColor: QColor = QColor(rgb: 0xffffff),
         color: QColor? = nil
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.items = items
         self.size = size
         self.isTranslucent = isTranslucent

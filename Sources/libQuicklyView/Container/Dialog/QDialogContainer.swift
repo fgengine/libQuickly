@@ -101,9 +101,8 @@ public class QDialogContainer : IQDialogContainer {
             state: .idle
         )
         #if os(iOS)
-        self._interactiveGesture = QPanGesture(name: "QDialogContainer-PanGesture")
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: "QDialogContainer-RootView",
             gestures: [ self._interactiveGesture ],
             contentLayout: self._layout
         )

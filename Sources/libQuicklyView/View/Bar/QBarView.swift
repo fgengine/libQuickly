@@ -14,9 +14,6 @@ public class QBarView : IQBarView {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
-    public var name: String {
-        return self._view.name
-    }
     public var native: QNativeView {
         return self._view.native
     }
@@ -56,7 +53,6 @@ public class QBarView : IQBarView {
     private var _view: QCustomView< Layout >
     
     public init(
-        name: String? = nil,
         contentView: IQView? = nil,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
@@ -64,14 +60,12 @@ public class QBarView : IQBarView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.contentView = contentView
         self._layout = Layout(
             safeArea: QInset(),
             contentItem: contentView.flatMap({ QLayoutItem(view: $0) })
         )
         self._view = QCustomView(
-            name: name,
             contentLayout: self._layout,
             color: color,
             border: border,

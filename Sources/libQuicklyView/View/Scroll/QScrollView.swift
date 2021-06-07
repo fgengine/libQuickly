@@ -4,16 +4,19 @@
 
 import Foundation
 import libQuicklyCore
+import libQuicklyObserver
 
 protocol ScrollViewDelegate : AnyObject {
     
-    func update(contentSize: QSize)
+    func _update(contentSize: QSize)
     
-    func beginScrolling()
-    func scrolling(contentOffset: QPoint)
-    func endScrolling(decelerate: Bool)
-    func beginDecelerating()
-    func endDecelerating()
+    func _beginScrolling()
+    func _scrolling(contentOffset: QPoint)
+    func _endScrolling(decelerate: Bool)
+    func _beginDecelerating()
+    func _endDecelerating()
+    
+    func _scrollToTop()
     
 }
 
@@ -21,7 +24,6 @@ public class QScrollView : IQScrollView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -111,6 +113,7 @@ public class QScrollView : IQScrollView {
         return self._reuse.content!
     }
     private var _contentOffset: QPoint
+    private var _observer: QObserver< IQScrollViewObserver >
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     private var _onBeginScrolling: (() -> Void)?
@@ -118,9 +121,9 @@ public class QScrollView : IQScrollView {
     private var _onEndScrolling: ((_ decelerate: Bool) -> Void)?
     private var _onBeginDecelerating: (() -> Void)?
     private var _onEndDecelerating: (() -> Void)?
+    private var _onScrollToTop: (() -> Void)?
     
     public init(
-        name: String? = nil,
         direction: QScrollViewDirection = [ .vertical ],
         indicatorDirection: QScrollViewDirection = [],
         contentInset: QInset = QInset(),
@@ -132,7 +135,6 @@ public class QScrollView : IQScrollView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.direction = direction
         self.indicatorDirection = indicatorDirection
         self.contentInset = contentInset
@@ -146,6 +148,7 @@ public class QScrollView : IQScrollView {
         self.shadow = shadow
         self.alpha = alpha
         self._reuse = QReuseItem()
+        self._observer = QObserver()
         self._contentOffset = QPoint()
         self.contentLayout.view = self
     }
@@ -163,6 +166,14 @@ public class QScrollView : IQScrollView {
         self._reuse.unload(owner: self)
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func add(observer: IQScrollViewObserver) {
+        self._observer.add(observer, priority: 0)
+    }
+    
+    public func remove(observer: IQScrollViewObserver) {
+        self._observer.remove(observer)
     }
     
     public func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint? {
@@ -274,47 +285,90 @@ public class QScrollView : IQScrollView {
         return self
     }
     
+    @discardableResult
+    public func onScrollToTop(_ value: (() -> Void)?) -> Self {
+        self._onScrollToTop = value
+        return self
+    }
+    
+    public func scrollToTop(animated: Bool, completion: (() -> Void)?) {
+        let contentInset = self.contentInset
+        let beginContentOffset = self.contentOffset
+        let endContentOffset = QPoint(x: -contentInset.left, y: -contentInset.top)
+        let deltaContentOffset = abs(beginContentOffset.distance(to: endContentOffset))
+        self._view.update(contentOffset: beginContentOffset, normalized: false)
+        if animated == true && deltaContentOffset > 0 {
+            let velocity = max(self.bounds.width, self.bounds.height) * 5
+            QAnimation.default.run(
+                duration: TimeInterval(deltaContentOffset / velocity),
+                ease: QAnimation.Ease.QuadraticInOut(),
+                processing: { [unowned self] progress in
+                    let contentOffset = beginContentOffset.lerp(endContentOffset, progress: progress)
+                    self.contentOffset(contentOffset)
+                },
+                completion: { [unowned self] in
+                    self._scrollToTop()
+                    completion?()
+                }
+            )
+        } else {
+            self.contentOffset(QPoint(x: -contentInset.left, y: -contentInset.top))
+            self._scrollToTop()
+            completion?()
+        }
+    }
+    
 }
 
 extension QScrollView : ScrollViewDelegate {
     
-    func update(contentSize: QSize) {
+    func _update(contentSize: QSize) {
         self.contentSize = contentSize
     }
     
-    func beginScrolling() {
+    func _beginScrolling() {
         if self.isScrolling == false {
             self.isScrolling = true
             self._onBeginScrolling?()
+            self._observer.notify({ $0.beginScrolling(scrollView: self) })
         }
     }
     
-    func scrolling(contentOffset: QPoint) {
+    func _scrolling(contentOffset: QPoint) {
         if self._contentOffset != contentOffset {
             self._contentOffset = contentOffset
             self._onScrolling?()
+            self._observer.notify({ $0.scrolling(scrollView: self) })
         }
     }
     
-    func endScrolling(decelerate: Bool) {
+    func _endScrolling(decelerate: Bool) {
         if self.isScrolling == true {
             self.isScrolling = false
             self._onEndScrolling?(decelerate)
+            self._observer.notify({ $0.endScrolling(scrollView: self, decelerate: decelerate) })
         }
     }
     
-    func beginDecelerating() {
+    func _beginDecelerating() {
         if self.isDecelerating == false {
             self.isDecelerating = true
             self._onBeginDecelerating?()
+            self._observer.notify({ $0.beginDecelerating(scrollView: self) })
         }
     }
     
-    func endDecelerating() {
+    func _endDecelerating() {
         if self.isDecelerating == true {
             self.isDecelerating = false
             self._onEndDecelerating?()
+            self._observer.notify({ $0.endDecelerating(scrollView: self) })
         }
+    }
+    
+    func _scrollToTop() {
+        self._onScrollToTop?()
+        self._observer.notify({ $0.scrollToTop(scrollView: self) })
     }
     
 }

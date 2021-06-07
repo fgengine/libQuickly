@@ -70,7 +70,6 @@ public class QRootContainer : IQRootContainer {
             item: QLayoutItem(view: container.view)
         )
         self._view = QCustomView(
-            name: "QRootContainer-RootView",
             contentLayout: self._layout
         )
         self._init()

@@ -63,7 +63,6 @@ public class QPageBarView : QBarView, IQPageBarView {
     private var _transitionSelectedView: IQView?
     
     public init(
-        name: String? = nil,
         indicatorView: IQView,
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
         itemSpacing: Float = 4,
@@ -73,7 +72,6 @@ public class QPageBarView : QBarView, IQPageBarView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.indicatorView = indicatorView
         self._itemViews = []
         self._contentLayout = Layout(
@@ -84,12 +82,10 @@ public class QPageBarView : QBarView, IQPageBarView {
             items: []
         )
         self._contentView = QScrollView(
-            name: "\(name)-BarView",
             direction: .horizontal,
             contentLayout: self._contentLayout
         )
         super.init(
-            name: name,
             contentView: self._contentView,
             color: color,
             border: border,

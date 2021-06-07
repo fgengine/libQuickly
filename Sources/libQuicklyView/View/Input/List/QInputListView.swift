@@ -17,7 +17,6 @@ public class QInputListView : IQInputListView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -142,7 +141,6 @@ public class QInputListView : IQInputListView {
     private var _onEndEditing: (() -> Void)?
     
     public init(
-        name: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         items: [IQInputListViewItem],
@@ -159,7 +157,6 @@ public class QInputListView : IQInputListView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.items = items

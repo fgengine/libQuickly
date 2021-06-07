@@ -102,9 +102,8 @@ public class QPushContainer : IQPushContainer {
             state: .empty
         )
         #if os(iOS)
-        self._interactiveGesture = QPanGesture(name: "QPushContainer-PanGesture")
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: "QPushContainer-RootView",
             gestures: [ self._interactiveGesture ],
             contentLayout: self._layout
         )

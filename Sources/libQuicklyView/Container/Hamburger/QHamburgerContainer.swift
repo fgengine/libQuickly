@@ -171,10 +171,9 @@ public class QHamburgerContainer : IQHamburgerContainer {
             trailingSize: trailingContainer?.hamburgerSize ?? 0
         )
         #if os(iOS)
-        self._pressedGesture = QTapGesture(name: "QHamburgerContainer-TapGesture")
-        self._interactiveGesture = QPanGesture(name: "QHamburgerContainer-PanGesture")
+        self._pressedGesture = QTapGesture()
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: "QHamburgerContainer-RootView",
             gestures: [ self._pressedGesture, self._interactiveGesture ],
             contentLayout: self._layout
         )

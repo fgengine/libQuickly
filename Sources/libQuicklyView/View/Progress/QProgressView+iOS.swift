@@ -11,11 +11,6 @@ extension QProgressView {
     
     final class ProgressView : UIProgressView {
         
-        override var debugDescription: String {
-            guard let view = self._view else { return super.debugDescription }
-            return view.debugDescription
-        }
-        
         private unowned var _view: QProgressView?
         private var _progress: UIProgressView!
         

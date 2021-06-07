@@ -17,9 +17,6 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
-    public var name: String {
-        return self._view.name
-    }
     public var native: QNativeView {
         return self._view.native
     }
@@ -131,7 +128,6 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.shouldPressed = shouldPressed
         self.contentView = contentView
         self.leadingView = leadingView
@@ -150,10 +146,9 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
             trailingSize: trailingSize
         )
         #if os(iOS)
-        self._pressedGesture = QTapGesture(name: "\(name)-TapGesture")
-        self._interactiveGesture = QPanGesture(name: "\(name)-PanGesture")
+        self._pressedGesture = QTapGesture()
+        self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
-            name: name,
             gestures: [ self._pressedGesture, self._interactiveGesture ],
             contentLayout: self._layout,
             shouldHighlighting: true,
@@ -165,7 +160,6 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         )
         #else
         self._view = QCustomView(
-            name: name,
             contentLayout: self._layout,
             shouldHighlighting: true,
             color: color,

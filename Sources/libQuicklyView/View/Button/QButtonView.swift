@@ -14,9 +14,6 @@ public class QButtonView : IQButtonView {
         set(value) { self._view.item = value }
         get { return self._view.item }
     }
-    public var name: String {
-        return self._view.name
-    }
     public var native: QNativeView {
         return self._view.native
     }
@@ -118,7 +115,6 @@ public class QButtonView : IQButtonView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        let name = name ?? String(describing: Self.self)
         self.backgroundView = backgroundView
         self.spinnerView = spinnerView
         self.imageView = imageView
@@ -136,7 +132,6 @@ public class QButtonView : IQButtonView {
             textItem: textView.flatMap({ return QLayoutItem(view: $0) })
         )
         self._view = QControlView(
-            name: name,
             contentLayout: self._layout,
             shouldHighlighting: true,
             shouldPressed: true,

@@ -9,7 +9,6 @@ public class QSpinnerView : IQSpinnerView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -81,7 +80,6 @@ public class QSpinnerView : IQSpinnerView {
     private var _onDisappear: (() -> Void)?
     
     public init(
-        name: String? = nil,
         size: QDimensionBehaviour,
         activityColor: QColor,
         isAnimating: Bool = false,
@@ -91,7 +89,6 @@ public class QSpinnerView : IQSpinnerView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.size = size
         self.activityColor = activityColor
         self._isAnimating = isAnimating

@@ -15,7 +15,6 @@ public class QSwitchView : IQSwitchView {
         
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
-    public private(set) var name: String
     public var native: QNativeView {
         return self._view
     }
@@ -106,7 +105,6 @@ public class QSwitchView : IQSwitchView {
     private var _onChangeValue: (() -> Void)?
     
     public init(
-        name: String? = nil,
         width: QDimensionBehaviour = .fill,
         height: QDimensionBehaviour,
         thumbColor: QColor,
@@ -119,7 +117,6 @@ public class QSwitchView : IQSwitchView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
-        self.name = name ?? String(describing: Self.self)
         self.width = width
         self.height = height
         self.thumbColor = thumbColor
