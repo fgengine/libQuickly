@@ -7,38 +7,49 @@ import libQuicklyCore
 
 public final class QApiProvider : NSObject, IQApiProvider {
 
-    public var baseUrl: URL? = nil
-    public var urlParams: [String: Any] = [:]
-    public var headers: [String: String] = [:]
+    public var url: URL?
+    public var queryParams: [String: Any]
+    public var headers: [String: String]
     public var bodyParams: [String: Any]?
-    public var allowInvalidCertificates: Bool = false
-    public var localCertificateUrls: [URL] = []
+    public var allowInvalidCertificates: Bool
+    public var localCertificateUrls: [URL]
     #if DEBUG
     public var logging: QApiLogging = .never
     #endif
 
-    public private(set) lazy var session: URLSession = URLSession(
-        configuration: self.sessionConfiguration,
-        delegate: self,
-        delegateQueue: self.sessionQueue
-    )
+    public private(set) var session: URLSession!
     public private(set) var sessionConfiguration: URLSessionConfiguration
     public private(set) var sessionQueue: OperationQueue
     
-    private var _queue: DispatchQueue = DispatchQueue(label: "QApiProvider")
-    private var _taskQueries: [Int: IQApiTaskQuery] = [:]
+    private var _queue: DispatchQueue
+    private var _taskQueries: [Int: IQApiTaskQuery]
 
-    public init(sessionConfiguration: URLSessionConfiguration, sessionQueue: OperationQueue) {
+    public init(
+        url: URL? = nil,
+        queryParams: [String: Any] = [:],
+        headers: [String: String] = [:],
+        bodyParams: [String: Any]? = nil,
+        allowInvalidCertificates: Bool = false,
+        localCertificateUrls: [URL] = [],
+        sessionConfiguration: URLSessionConfiguration,
+        sessionQueue: OperationQueue
+    ) {
+        self.url = url
+        self.queryParams = queryParams
+        self.headers = headers
+        self.bodyParams = bodyParams
+        self.allowInvalidCertificates = allowInvalidCertificates
+        self.localCertificateUrls = localCertificateUrls
         self.sessionConfiguration = sessionConfiguration
         self.sessionQueue = sessionQueue
+        self._queue = DispatchQueue(label: "QApiProvider")
+        self._taskQueries = [:]
         super.init()
-    }
-
-    public init(baseUrl: URL, sessionConfiguration: URLSessionConfiguration, sessionQueue: OperationQueue) {
-        self.baseUrl = baseUrl
-        self.sessionConfiguration = sessionConfiguration
-        self.sessionQueue = sessionQueue
-        super.init()
+        self.session = URLSession(
+            configuration: self.sessionConfiguration,
+            delegate: self,
+            delegateQueue: self.sessionQueue
+        )
     }
     
     public func send(query: IQApiQuery) {
@@ -56,27 +67,27 @@ public final class QApiProvider : NSObject, IQApiProvider {
 
 public extension QApiProvider {
 
-    func set(urlParam: String, value: Any?) {
+    func set(queryParam: String, value: Any?) {
         self._queue.sync {
             if let safeValue = value {
-                self.urlParams[urlParam] = safeValue
+                self.queryParams[queryParam] = safeValue
             } else {
-                self.urlParams.removeValue(forKey: urlParam)
+                self.queryParams.removeValue(forKey: queryParam)
             }
         }
     }
 
-    func get(urlParam: String) -> Any? {
+    func get(queryParam: String) -> Any? {
         var result: Any? = nil
         self._queue.sync {
-            result = self.urlParams[urlParam]
+            result = self.queryParams[queryParam]
         }
         return result
     }
 
-    func removeAllUrlParams() {
+    func removeAllQueryParams() {
         self._queue.sync {
-            self.urlParams.removeAll()
+            self.queryParams.removeAll()
         }
     }
 
@@ -554,13 +565,13 @@ extension QApiProvider : IQDebug {
         }
         buffer.append("<\(String(describing: self))\n")
 
-        if let baseUrl = self.baseUrl {
-            let debug = baseUrl.debugString(0, nextIndent, indent)
-            QDebugString("BaseUrl: \(debug)\n", &buffer, indent, nextIndent, indent)
+        if let url = self.url {
+            let debug = url.debugString(0, nextIndent, indent)
+            QDebugString("Url: \(debug)\n", &buffer, indent, nextIndent, indent)
         }
-        if self.urlParams.count > 0 {
-            let debug = self.urlParams.debugString(0, nextIndent, indent)
-            QDebugString("UrlParams: \(debug)\n", &buffer, indent, nextIndent, indent)
+        if self.queryParams.count > 0 {
+            let debug = self.queryParams.debugString(0, nextIndent, indent)
+            QDebugString("QueryParams: \(debug)\n", &buffer, indent, nextIndent, indent)
         }
         if self.headers.count > 0 {
             let debug = self.headers.debugString(0, nextIndent, indent)

@@ -8,52 +8,67 @@ import libQuicklyCore
 open class QApiRequest : IQApiRequest {
 
     public var method: String
-    public var url: URL?
-    public var urlPart: String?
-    public var urlParams: [String: Any] = [:]
-    public var trimArraySymbolsUrlParams: Bool = false
-    public var headers: [String: String] = [:]
+    public var path: Path
+    public var queryParams: [String: Any]
+    public var trimArraySymbolsQueryParams: Bool
+    public var headers: [String: String]
     public var bodyData: Data?
     public var bodyParams: [String: Any]?
     public var uploadItems: [QApiRequestUploadItem]?
 
-    public var timeout: TimeInterval = 30
-    public var retries: TimeInterval = 0
-    public var delay: TimeInterval = 1
-    public var cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
-    public var redirect: QApiRequestRedirectOption = [ .enabled, .authorization ]
+    public var timeout: TimeInterval
+    public var retries: TimeInterval
+    public var delay: TimeInterval
+    public var cachePolicy: URLRequest.CachePolicy
+    public var redirect: QApiRequestRedirectOption
     #if DEBUG
     public var logging: QApiLogging = .never
     #endif
 
-    public init(method: String) {
+    public init(
+        method: String,
+        path: Path,
+        queryParams: [String: Any] = [:],
+        trimArraySymbolsQueryParams: Bool = false,
+        headers: [String: String] = [:],
+        bodyData: Data? = nil,
+        bodyParams: [String: Any]? = nil,
+        uploadItems: [QApiRequestUploadItem]? = nil,
+        timeout: TimeInterval = 30,
+        retries: TimeInterval = 0,
+        delay: TimeInterval = 1,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
+        redirect: QApiRequestRedirectOption = [ .enabled, .authorization ]
+    ) {
         self.method = method
+        self.path = path
+        self.queryParams = queryParams
+        self.trimArraySymbolsQueryParams = trimArraySymbolsQueryParams
+        self.headers = headers
+        self.bodyData = bodyData
+        self.bodyParams = bodyParams
+        self.uploadItems = uploadItems
+        self.timeout = timeout
+        self.retries = retries
+        self.delay = delay
+        self.cachePolicy = cachePolicy
+        self.redirect = redirect
     }
 
-    public convenience init(method: String, url: URL) {
-        self.init(method: method)
-        self.url = url
-    }
-
-    public convenience init(method: String, urlPart: String) {
-        self.init(method: method)
-        self.urlPart = urlPart
-    }
-
-    public func set(urlParam: String, value: Any?) {
+    public func set(queryParam: String, value: Any?) {
         if let safeValue = value {
-            self.urlParams[urlParam] = safeValue
+            self.queryParams[queryParam] = safeValue
         } else {
-            self.urlParams.removeValue(forKey: urlParam)
+            self.queryParams.removeValue(forKey: queryParam)
         }
     }
 
-    public func get(urlParam: String) -> Any? {
-        return self.urlParams[urlParam]
+    public func get(queryParam: String) -> Any? {
+        return self.queryParams[queryParam]
     }
 
-    public func removeAllUrlParams() {
-        self.urlParams.removeAll()
+    public func removeAllQueryParams() {
+        self.queryParams.removeAll()
     }
 
     public func set(header: String, value: String?) {
@@ -122,8 +137,8 @@ open class QApiRequest : IQApiRequest {
         return headers
     }
     
-    open func processing(urlParams: [(String, String)]) -> [(String, String)] {
-        return urlParams
+    open func processing(queryParams: [(String, String)]) -> [(String, String)] {
+        return queryParams
     }
     
     open func processing(bodyParams: [(String, String)]) -> [(String, String)] {
@@ -132,29 +147,39 @@ open class QApiRequest : IQApiRequest {
     
 }
 
+public extension QApiRequest {
+    
+    enum Path {
+        case absolute(_ url: URL)
+        case relative(_ url: String)
+    }
+    
+}
+
 private extension QApiRequest {
 
     func _prepareUrlComponents(provider: IQApiProvider) -> URLComponents? {
-        if let selfUrl = self.url {
-            return URLComponents(string: selfUrl.absoluteString)
-        } else if let providerUrl = provider.baseUrl {
-            if var urlPart = self.urlPart {
-                var string = providerUrl.absoluteString
-                if urlPart.hasPrefix("/") == true {
-                    let startIndex = urlPart.index(urlPart.startIndex, offsetBy: 1)
-                    let endIndex = urlPart.endIndex
-                    urlPart = String(urlPart[startIndex ..< endIndex])
-                }
-                if string.hasSuffix("/") == true {
-                    string.append(urlPart)
-                } else {
-                    string.append("/\(urlPart)")
-                }
-                if let finalUrl = URL(string: string) {
-                    return URLComponents(string: finalUrl.absoluteString)
-                }
+        switch self.path {
+        case .absolute(let url):
+            return URLComponents(string: url.absoluteString)
+        case .relative(let url):
+            guard let providerUrl = provider.url else { return nil }
+            var string = providerUrl.absoluteString
+            let safeUrl: String
+            if url.hasPrefix("/") == true {
+                let startIndex = url.index(url.startIndex, offsetBy: 1)
+                let endIndex = url.endIndex
+                safeUrl = String(url[startIndex ..< endIndex])
             } else {
-                return URLComponents(string: providerUrl.absoluteString)
+                safeUrl = url
+            }
+            if string.hasSuffix("/") == true {
+                string.append(safeUrl)
+            } else {
+                string.append("/\(safeUrl)")
+            }
+            if let url = URL(string: string) {
+                return URLComponents(string: url.absoluteString)
             }
         }
         return nil
@@ -162,19 +187,19 @@ private extension QApiRequest {
 
     func _prepareUrlQuery(query: String?, provider: IQApiProvider) -> String? {
         var rawParams: [String: Any] = [:]
-        provider.urlParams.forEach({ (key, value) in
+        provider.queryParams.forEach({ (key, value) in
             rawParams[key] = value
         })
         if let query = query {
-            let componentsUrlParams = query.components(
+            let componentsQueryParams = query.components(
                 pairSeparatedBy: "&",
                 valueSeparatedBy: "="
             )
-            componentsUrlParams.forEach({ (key, value) in
+            componentsQueryParams.forEach({ (key, value) in
                 rawParams[key] = value
             })
         }
-        self.urlParams.forEach({ (key, value) in
+        self.queryParams.forEach({ (key, value) in
             rawParams[key] = value
         })
         var result = String()
@@ -197,7 +222,7 @@ private extension QApiRequest {
         if flatParams.count == 0 {
             return []
         }
-        let processedParams = self.processing(urlParams: flatParams)
+        let processedParams = self.processing(queryParams: flatParams)
         if processedParams.count == 0 {
             return []
         }
@@ -384,7 +409,7 @@ private extension QApiRequest {
 
     func _encode(key: String) -> String {
         var string = key
-        if self.trimArraySymbolsUrlParams == true {
+        if self.trimArraySymbolsQueryParams == true {
             if let regexp = try? NSRegularExpression(pattern: "\\[[0-9]+\\]", options: []) {
                 string = regexp.stringByReplacingMatches(in: string, options: [], range: NSRange(location: 0, length: string.count), withTemplate: "")
             }
@@ -419,17 +444,17 @@ extension QApiRequest : IQDebug {
         buffer.append("<\(String(describing: self))\n")
 
         QDebugString("Method: \(self.method)\n", &buffer, indent, nextIndent, indent)
-        if let url = self.url {
+        switch self.path {
+        case .absolute(let url):
+            let debug = url.debugString(0, nextIndent, indent)
+            QDebugString("Url: \(debug)\n", &buffer, indent, nextIndent, indent)
+        case .relative(let url):
             let debug = url.debugString(0, nextIndent, indent)
             QDebugString("Url: \(debug)\n", &buffer, indent, nextIndent, indent)
         }
-        if let urlPart = self.urlPart {
-            let debug = urlPart.debugString(0, nextIndent, indent)
-            QDebugString("UrlPart: \(debug)\n", &buffer, indent, nextIndent, indent)
-        }
-        if self.urlParams.count > 0 {
-            let debug = self.urlParams.debugString(0, nextIndent, indent)
-            QDebugString("UrlParams: \(debug)\n", &buffer, indent, nextIndent, indent)
+        if self.queryParams.count > 0 {
+            let debug = self.queryParams.debugString(0, nextIndent, indent)
+            QDebugString("QueryParams: \(debug)\n", &buffer, indent, nextIndent, indent)
         }
         if self.headers.count > 0 {
             let debug = self.headers.debugString(0, nextIndent, indent)

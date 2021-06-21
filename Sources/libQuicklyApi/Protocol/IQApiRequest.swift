@@ -18,7 +18,7 @@ public struct QApiRequestRedirectOption : OptionSet {
     
 }
 
-public protocol IQApiRequest : class {
+public protocol IQApiRequest : AnyObject {
 
     var timeout: TimeInterval { get }
     var retries: TimeInterval { get }

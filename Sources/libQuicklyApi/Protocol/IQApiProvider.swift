@@ -4,10 +4,10 @@
 
 import Foundation
 
-public protocol IQApiProvider : class {
+public protocol IQApiProvider : AnyObject {
 
-    var baseUrl: URL? { get }
-    var urlParams: [String: Any] { get }
+    var url: URL? { get }
+    var queryParams: [String: Any] { get }
     var headers: [String: String] { get }
     var bodyParams: [String: Any]? { get }
     #if DEBUG
