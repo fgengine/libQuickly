@@ -4,7 +4,7 @@
 
 import Foundation
 
-public protocol IQApiResponse : class {
+public protocol IQApiResponse : AnyObject {
 
     var error: Error? { get }
 
