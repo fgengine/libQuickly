@@ -7,12 +7,17 @@ import libQuicklyCore
 
 public protocol IQSwitchView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
-    var width: QDimensionBehaviour { get }
-    var height: QDimensionBehaviour { get }
-    var thumbColor: QColor { get }
-    var offColor: QColor { get }
-    var onColor: QColor { get }
-    var value: Bool { get }
+    var width: QDimensionBehaviour { set get }
+    
+    var height: QDimensionBehaviour { set get }
+    
+    var thumbColor: QColor { set get }
+    
+    var offColor: QColor { set get }
+    
+    var onColor: QColor { set get }
+    
+    var value: Bool { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour) -> Self

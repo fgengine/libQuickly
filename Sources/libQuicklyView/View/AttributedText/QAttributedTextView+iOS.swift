@@ -13,6 +13,8 @@ extension QAttributedTextView {
         
         typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
         
+        unowned var customDelegate: AttributedTextViewDelegate?
+        
         override var frame: CGRect {
             set(value) {
                 if super.frame != value {
@@ -27,11 +29,15 @@ extension QAttributedTextView {
         }
         
         private unowned var _view: View?
+        private var _tapGesture: UITapGestureRecognizer!
         
         override init(frame: CGRect) {
             super.init(frame: frame)
             
             self.clipsToBounds = true
+            
+            self._tapGesture = UITapGestureRecognizer(target: self, action: #selector(self._tapHandle(_:)))
+            self.addGestureRecognizer(self._tapGesture)
         }
         
         required init?(coder: NSCoder) {
@@ -56,6 +62,7 @@ extension QAttributedTextView.AttributedTextView {
         self.update(shadow: view.shadow)
         self.update(alpha: view.alpha)
         self.updateShadowPath()
+        self.customDelegate = view
     }
     
     func update(text: NSAttributedString) {
@@ -75,7 +82,50 @@ extension QAttributedTextView.AttributedTextView {
     }
     
     func cleanup() {
+        self.customDelegate = nil
         self._view = nil
+    }
+    
+}
+
+private extension QAttributedTextView.AttributedTextView {
+    
+    @objc
+    func _tapHandle(_ sender: Any) {
+        guard let attributes = self._tapAttributes() else { return }
+        self.customDelegate?.tap(attributes: attributes)
+    }
+    
+    
+    func _tapAttributes() -> [NSAttributedString.Key: Any]? {
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: CGSize.zero)
+        let textStorage = NSTextStorage(attributedString: self.attributedText!)
+        
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+        
+        textContainer.lineFragmentPadding = 0.0
+        textContainer.lineBreakMode = self.lineBreakMode
+        textContainer.maximumNumberOfLines = self.numberOfLines
+        let labelSize = self.bounds.size
+        textContainer.size = labelSize
+        
+        let locationOfTouchInLabel = self._tapGesture.location(in: self)
+        let textBoundingBox = layoutManager.usedRect(for: textContainer)
+        let textContainerOffset = CGPoint(
+            x: (labelSize.width - textBoundingBox.size.width) * 0.5 - textBoundingBox.origin.x,
+            y: (labelSize.height - textBoundingBox.size.height) * 0.5 - textBoundingBox.origin.y
+        )
+        let locationOfTouchInTextContainer = CGPoint(
+            x: locationOfTouchInLabel.x - textContainerOffset.x,
+            y: locationOfTouchInLabel.y - textContainerOffset.y
+        )
+        let indexOfCharacter = layoutManager.characterIndex(for: locationOfTouchInTextContainer, in: textContainer, fractionOfDistanceBetweenInsertionPoints: nil)
+        if indexOfCharacter >= textStorage.string.count {
+            return nil
+        }
+        return textStorage.attributes(at: indexOfCharacter, effectiveRange: nil)
     }
     
 }

@@ -42,13 +42,18 @@ public protocol IQScrollViewObserver : AnyObject {
 
 public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var direction: QScrollViewDirection { get }
-    var indicatorDirection: QScrollViewDirection { get }
-    var contentInset: QInset { get }
-    var contentOffset: QPoint { get }
+    var direction: QScrollViewDirection { set get }
+    
+    var indicatorDirection: QScrollViewDirection { set get }
+    
+    var contentInset: QInset { set get }
+    
+    var contentOffset: QPoint { set get }
+    
     var contentSize: QSize { get }
-    var contentLayout: IQLayout { get }
+    
     var isScrolling: Bool { get }
+    
     var isDecelerating: Bool { get }
     
     func add(observer: IQScrollViewObserver)
@@ -70,9 +75,6 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     @discardableResult
     func contentOffset(_ value: QPoint, normalized: Bool) -> Self
-    
-    @discardableResult
-    func contentLayout(_ value: IQLayout) -> Self
     
     @discardableResult
     func onBeginScrolling(_ value: (() -> Void)?) -> Self

@@ -59,12 +59,6 @@ public class QIconContentDetailComposition< IconView: IQView, ContentView: IQVie
         self.detailItem = QLayoutItem(view: detailView)
     }
     
-    public func invalidate(item: QLayoutItem) {
-    }
-    
-    public func invalidate() {
-    }
-    
     public func layout(bounds: QRect) -> QSize {
         let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
         let contentDetailValue = bounds.split(

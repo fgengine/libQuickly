@@ -7,9 +7,11 @@ import libQuicklyCore
 
 public protocol IQSpinnerView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var size: QDimensionBehaviour { get }
-    var activityColor: QColor { get }
-    var isAnimating: Bool { get }
+    var size: QDimensionBehaviour { set get }
+    
+    var activityColor: QColor { set get }
+    
+    var isAnimating: Bool { set get }
     
     @discardableResult
     func size(_ value: QDimensionBehaviour) -> Self

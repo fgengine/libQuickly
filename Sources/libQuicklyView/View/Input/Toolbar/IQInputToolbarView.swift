@@ -17,11 +17,15 @@ public protocol IQInputToolbarItem {
 
 public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     
-    var items: [IQInputToolbarItem] { get }
-    var size: Float { get }
-    var isTranslucent: Bool { get }
-    var tintColor: QColor? { get }
-    var contentTintColor: QColor { get }
+    var items: [IQInputToolbarItem] { set get }
+    
+    var size: Float { set get }
+    
+    var isTranslucent: Bool { set get }
+    
+    var tintColor: QColor? { set get }
+    
+    var contentTintColor: QColor { set get }
     
     @discardableResult
     func items(_ value: [IQInputToolbarItem]) -> Self

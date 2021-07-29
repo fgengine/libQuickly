@@ -5,6 +5,12 @@
 import Foundation
 import libQuicklyCore
 
+protocol AttributedTextViewDelegate : AnyObject {
+    
+    func tap(attributes: [NSAttributedString.Key: Any]?)
+    
+}
+
 public class QAttributedTextView : IQAttributedTextView {
     
     public private(set) unowned var layout: IQLayout?
@@ -16,76 +22,76 @@ public class QAttributedTextView : IQAttributedTextView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var width: QDimensionBehaviour? {
+    public var width: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var height: QDimensionBehaviour? {
+    public var height: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var text: NSAttributedString {
+    public var text: NSAttributedString {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(text: self.text)
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var alignment: QTextAlignment {
+    public var alignment: QTextAlignment {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alignment: self.alignment)
-            self.setNeedForceUpdate()
+            self.setNeedUpdate()
         }
     }
-    public private(set) var lineBreak: QTextLineBreak {
+    public var lineBreak: QTextLineBreak {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(lineBreak: self.lineBreak)
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var numberOfLines: UInt {
+    public var numberOfLines: UInt {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(numberOfLines: self.numberOfLines)
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -99,6 +105,7 @@ public class QAttributedTextView : IQAttributedTextView {
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onTap: ((_ attributes: [NSAttributedString.Key: Any]?) -> Void)?
     
     public init(
         width: QDimensionBehaviour? = nil,
@@ -232,5 +239,19 @@ public class QAttributedTextView : IQAttributedTextView {
         self._onDisappear = value
         return self
     }
+    
+    @discardableResult
+    public func onTap(_ value: ((_ attributes: [NSAttributedString.Key: Any]?) -> Void)?) -> Self {
+        self._onTap = value
+        return self
+    }
 
+}
+
+extension QAttributedTextView : AttributedTextViewDelegate {
+    
+    func tap(attributes: [NSAttributedString.Key: Any]?) {
+        self._onTap?(attributes)
+    }
+    
 }

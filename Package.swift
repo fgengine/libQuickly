@@ -56,9 +56,19 @@ let package = Package(
             targets: [ "libQuicklyDataSource" ]
         ),
         .library(
+            name: "libQuicklyPermission",
+            type: .static,
+            targets: [ "libQuicklyPermission" ]
+        ),
+        .library(
             name: "libQuicklyView",
             type: .static,
             targets: [ "libQuicklyView" ]
+        ),
+        .library(
+            name: "libQuicklyRemoteImageView",
+            type: .static,
+            targets: [ "libQuicklyRemoteImageView" ]
         )
     ],
     dependencies: [
@@ -116,10 +126,22 @@ let package = Package(
             ]
         ),
         .target(
+            name: "libQuicklyPermission",
+            dependencies: [
+                .target(name: "libQuicklyObserver")
+            ]
+        ),
+        .target(
             name: "libQuicklyView",
             dependencies: [
-                .target(name: "libQuicklyCore"),
                 .target(name: "libQuicklyObserver")
+            ]
+        ),
+        .target(
+            name: "libQuicklyRemoteImageView",
+            dependencies: [
+                .target(name: "libQuicklyApi"),
+                .target(name: "libQuicklyView")
             ]
         )
     ]

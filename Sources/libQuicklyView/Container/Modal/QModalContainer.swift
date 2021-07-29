@@ -94,7 +94,7 @@ public class QModalContainer : IQModalContainer {
         #endif
         self._contentContainer = contentContainer
         self._layout = Layout(
-            containerInset: QInset(),
+            containerInset: .zero,
             contentItem: QLayoutItem(view: contentContainer.view),
             state: .empty
         )
@@ -439,12 +439,6 @@ private extension QModalContainer {
             self.containerInset = containerInset
             self.contentItem = contentItem
             self.state = state
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

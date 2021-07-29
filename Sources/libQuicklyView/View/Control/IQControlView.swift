@@ -7,15 +7,11 @@ import libQuicklyCore
 
 public protocol IQControlView : IQView, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    associatedtype Layout : IQLayout
-    
-    var contentLayout: Layout { get }
     var contentSize: QSize { get }
-    var shouldHighlighting: Bool { get }
-    var shouldPressed: Bool { get }
     
-    @discardableResult
-    func contentLayout(_ value: Layout) -> Self
+    var shouldHighlighting: Bool { set get }
+    
+    var shouldPressed: Bool { set get }
     
     @discardableResult
     func shouldHighlighting(_ value: Bool) -> Self

@@ -7,14 +7,21 @@ import libQuicklyCore
 
 public protocol IQTextView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var width: QDimensionBehaviour? { get }
-    var height: QDimensionBehaviour? { get }
-    var text: String { get }
-    var textFont: QFont { get }
-    var textColor: QColor { get }
-    var alignment: QTextAlignment { get }
-    var lineBreak: QTextLineBreak { get }
-    var numberOfLines: UInt { get }
+    var width: QDimensionBehaviour? { set get }
+    
+    var height: QDimensionBehaviour? { set get }
+    
+    var text: String { set get }
+    
+    var textFont: QFont { set get }
+    
+    var textColor: QColor { set get }
+    
+    var alignment: QTextAlignment { set get }
+    
+    var lineBreak: QTextLineBreak { set get }
+    
+    var numberOfLines: UInt { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour?) -> Self

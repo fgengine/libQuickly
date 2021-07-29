@@ -7,15 +7,23 @@ import libQuicklyCore
 
 public protocol IQStackBarView : IQBarView {
     
-    var inset: QInset { get }
-    var leadingViews: [IQView] { get }
-    var leadingViewSpacing: Float { get }
-    var titleView: IQView? { get }
-    var titleSpacing: Float { get }
-    var detailView: IQView? { get }
-    var detailSpacing: Float { get }
-    var trailingViews: [IQView] { get }
-    var trailingViewSpacing: Float { get }
+    var inset: QInset { set get }
+    
+    var leadingViews: [IQView] { set get }
+    
+    var leadingViewSpacing: Float { set get }
+    
+    var titleView: IQView? { set get }
+    
+    var titleSpacing: Float { set get }
+    
+    var detailView: IQView? { set get }
+    
+    var detailSpacing: Float { set get }
+    
+    var trailingViews: [IQView] { set get }
+    
+    var trailingViewSpacing: Float { set get }
     
     @discardableResult
     func inset(_ value: QInset) -> Self

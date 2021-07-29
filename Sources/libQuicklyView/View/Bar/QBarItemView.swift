@@ -24,20 +24,21 @@ public class QBarItemView : IQBarItemView {
         return self._view.bounds
     }
     public unowned var delegate: IQBarItemViewDelegate?
-    public private(set) var contentInset: QInset {
+    public var contentInset: QInset {
         set(value) { self._layout.contentInset = value }
         get { return self._layout.contentInset }
     }
-    public private(set) var contentView: IQView {
+    public var contentView: IQView {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
             self._layout.contentItem = QLayoutItem(view: self.contentView)
         }
     }
     public var isHighlighted: Bool {
-        return self._view.isHighlighted
+        set(value) { self._view.isHighlighted = value }
+        get { return self._view.isHighlighted }
     }
-    public private(set) var isSelected: Bool {
+    public var isSelected: Bool {
         set(value) {
             if self._isSelected != value {
                 self._isSelected = value
@@ -47,18 +48,23 @@ public class QBarItemView : IQBarItemView {
         get { return self._isSelected }
     }
     public var color: QColor? {
+        set(value) { self._view.color = value }
         get { return self._view.color }
     }
-    public var border: QViewBorder {
-        get { return self._view.border }
-    }
     public var cornerRadius: QViewCornerRadius {
+        set(value) { self._view.cornerRadius = value }
         get { return self._view.cornerRadius }
     }
+    public var border: QViewBorder {
+        set(value) { self._view.border = value }
+        get { return self._view.border }
+    }
     public var shadow: QViewShadow? {
+        set(value) { self._view.shadow = value }
         get { return self._view.shadow }
     }
     public var alpha: Float {
+        set(value) { self._view.alpha = value }
         get { return self._view.alpha }
     }
     
@@ -217,12 +223,6 @@ private extension QBarItemView {
         ) {
             self.contentInset = contentInset
             self.contentItem = contentItem
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

@@ -23,29 +23,34 @@ public class QBarView : IQBarView {
     public var bounds: QRect {
         return self._view.bounds
     }
-    public private(set) var safeArea: QInset {
+    public var safeArea: QInset {
         set(value) { self._layout.safeArea = value }
         get { return self._layout.safeArea }
     }
-    public private(set) var contentView: IQView? {
+    public var contentView: IQView? {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
-            self._layout.contentItem = contentView.flatMap({ QLayoutItem(view: $0) })
+            self._layout.contentItem = self.contentView.flatMap({ QLayoutItem(view: $0) })
         }
     }
     public var color: QColor? {
+        set(value) { self._view.color = value }
         get { return self._view.color }
     }
-    public var border: QViewBorder {
-        get { return self._view.border }
-    }
     public var cornerRadius: QViewCornerRadius {
+        set(value) { self._view.cornerRadius = value }
         get { return self._view.cornerRadius }
     }
+    public var border: QViewBorder {
+        set(value) { self._view.border = value }
+        get { return self._view.border }
+    }
     public var shadow: QViewShadow? {
+        set(value) { self._view.shadow = value }
         get { return self._view.shadow }
     }
     public var alpha: Float {
+        set(value) { self._view.alpha = value }
         get { return self._view.alpha }
     }
     
@@ -62,7 +67,7 @@ public class QBarView : IQBarView {
     ) {
         self.contentView = contentView
         self._layout = Layout(
-            safeArea: QInset(),
+            safeArea: .zero,
             contentItem: contentView.flatMap({ QLayoutItem(view: $0) })
         )
         self._view = QCustomView(
@@ -164,20 +169,14 @@ extension QBarView {
             self.contentItem = contentItem
         }
         
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
-        }
-        
         func layout(bounds: QRect) -> QSize {
-            guard let contentItem = self.contentItem else { return QSize() }
+            guard let contentItem = self.contentItem else { return .zero }
             contentItem.frame = bounds.apply(inset: self.safeArea)
             return bounds.size
         }
         
         func size(_ available: QSize) -> QSize {
-            guard let contentItem = self.contentItem else { return QSize() }
+            guard let contentItem = self.contentItem else { return .zero }
             let contentSize = contentItem.size(available.apply(inset: self.safeArea))
             return QSize(
                 width: contentSize.width + (self.safeArea.left + self.safeArea.right),

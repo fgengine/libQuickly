@@ -30,7 +30,7 @@ struct QLayoutManager {
     init(contentView: QNativeView, delegate: IQLayoutDelegate) {
         self.contentView = contentView
         self.delegate = delegate
-        self.size = QSize()
+        self.size = .zero
         self.items = []
     }
     
@@ -39,7 +39,7 @@ struct QLayoutManager {
         if let layout = self.layout {
             self.size = layout.layout(bounds: bounds)
         } else {
-            self.size = QSize()
+            self.size = .zero
         }
     }
     

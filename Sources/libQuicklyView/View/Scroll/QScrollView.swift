@@ -20,7 +20,7 @@ protocol ScrollViewDelegate : AnyObject {
     
 }
 
-public class QScrollView : IQScrollView {
+public class QScrollView< Layout : IQLayout > : IQScrollView {
     
     public private(set) unowned var layout: IQLayout?
     public unowned var item: QLayoutItem?
@@ -31,28 +31,28 @@ public class QScrollView : IQScrollView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var direction: QScrollViewDirection {
+    public var direction: QScrollViewDirection {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(direction: self.direction)
         }
     }
-    public private(set) var indicatorDirection: QScrollViewDirection {
+    public var indicatorDirection: QScrollViewDirection {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(indicatorDirection: self.indicatorDirection)
         }
     }
-    public private(set) var contentInset: QInset {
+    public var contentInset: QInset {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(contentInset: self.contentInset)
         }
     }
-    public private(set) var contentOffset: QPoint {
+    public var contentOffset: QPoint {
         set(value) {
             self._contentOffset = value
             if self.isLoaded == true {
@@ -62,7 +62,7 @@ public class QScrollView : IQScrollView {
         get { return self._contentOffset }
     }
     public private(set) var contentSize: QSize
-    public private(set) var contentLayout: IQLayout {
+    public var contentLayout: Layout {
         willSet {
             self.contentLayout.view = nil
         }
@@ -74,41 +74,41 @@ public class QScrollView : IQScrollView {
     }
     public private(set) var isScrolling: Bool
     public private(set) var isDecelerating: Bool
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
         }
     }
     
-    private var _reuse: QReuseItem< ScrollView >
-    private var _view: ScrollView {
+    private var _reuse: QReuseItem< Reusable >
+    private var _view: Reusable.Content {
         if self.isLoaded == false { self._reuse.load(owner: self) }
         return self._reuse.content!
     }
@@ -126,9 +126,9 @@ public class QScrollView : IQScrollView {
     public init(
         direction: QScrollViewDirection = [ .vertical ],
         indicatorDirection: QScrollViewDirection = [],
-        contentInset: QInset = QInset(),
-        contentOffset: QPoint = QPoint(),
-        contentLayout: IQLayout,
+        contentInset: QInset = .zero,
+        contentOffset: QPoint = .zero,
+        contentLayout: Layout,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -139,7 +139,7 @@ public class QScrollView : IQScrollView {
         self.indicatorDirection = indicatorDirection
         self.contentInset = contentInset
         self.contentLayout = contentLayout
-        self.contentSize = QSize()
+        self.contentSize = .zero
         self.isScrolling = false
         self.isDecelerating = false
         self.color = color
@@ -149,7 +149,7 @@ public class QScrollView : IQScrollView {
         self.alpha = alpha
         self._reuse = QReuseItem()
         self._observer = QObserver()
-        self._contentOffset = QPoint()
+        self._contentOffset = .zero
         self.contentLayout.view = self
     }
     
@@ -208,7 +208,7 @@ public class QScrollView : IQScrollView {
     }
     
     @discardableResult
-    public func contentLayout(_ value: IQLayout) -> Self {
+    public func contentLayout(_ value: Layout) -> Self {
         self.contentLayout = value
         return self
     }

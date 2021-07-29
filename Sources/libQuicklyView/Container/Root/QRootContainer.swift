@@ -60,7 +60,7 @@ public class QRootContainer : IQRootContainer {
     private var _view: QCustomView< Layout >
     
     public init(
-        safeArea: QInset = QInset(),
+        safeArea: QInset = .zero,
         container: IQRootContentContainer
     ) {
         self.isPresented = false
@@ -91,7 +91,7 @@ public class QRootContainer : IQRootContainer {
         if self.container === container {
             return self.safeArea
         }
-        return QInset()
+        return .zero
     }
     
     public func didChangeInsets() {

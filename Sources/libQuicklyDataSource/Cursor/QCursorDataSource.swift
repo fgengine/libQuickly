@@ -11,9 +11,12 @@ public protocol IQCursorDataLoader {
     associatedtype Cursor
     associatedtype Error
     
+    typealias Success = (_ result: Result, _ cursor: Cursor, _ canMore: Bool) -> Void
+    typealias Failure = (_ error: Error) -> Void
+    
     func shouldPerform() -> Bool
     
-    func perform(cursor: Cursor?, success: @escaping (_ result: Result, _ cursor: Cursor, _ canMore: Bool) -> Void, failure: @escaping (_ error: Error) -> Void) -> IQCancellable
+    func perform(cursor: Cursor?, success: @escaping Success, failure: @escaping Failure) -> IQCancellable
     
     mutating func didPerform(isFirst: Bool, result: Result, cursor: Cursor, canMore: Bool)
     
@@ -35,7 +38,7 @@ public extension IQCursorDataLoader {
 
 }
 
-open class QCursorDataSource< Loader : IQCursorDataLoader > : IQCursorDataSource {
+open class QCursorDataSource< Loader : IQCursorDataLoader > : IQCursorDataSource, IQCancellable {
     
     public typealias Result = Loader.Result
     public typealias Cursor = Loader.Cursor

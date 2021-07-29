@@ -10,9 +10,12 @@ public protocol IQResultEmptyActionDataLoader {
     associatedtype Result
     associatedtype Error
     
+    typealias Success = (_ result: Result) -> Void
+    typealias Failure = (_ error: Error) -> Void
+    
     func shouldPerform() -> Bool
     
-    func perform(success: @escaping (_ result: Result) -> Void, failure: @escaping (_ error: Error) -> Void) -> IQCancellable
+    func perform(success: @escaping Success, failure: @escaping Failure) -> IQCancellable
     
     mutating func didPerform(result: Result)
     
@@ -34,7 +37,7 @@ public extension IQResultEmptyActionDataLoader {
 
 }
 
-open class QResultEmptyActionDataSource< Loader : IQResultEmptyActionDataLoader > : IQResultEmptyActionDataSource {
+open class QResultEmptyActionDataSource< Loader : IQResultEmptyActionDataLoader > : IQResultEmptyActionDataSource, IQCancellable {
     
     public typealias Result = Loader.Result
     public typealias Error = Loader.Error

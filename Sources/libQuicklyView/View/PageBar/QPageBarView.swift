@@ -8,21 +8,21 @@ import libQuicklyCore
 public class QPageBarView : QBarView, IQPageBarView {
     
     public var delegate: IQPageBarViewDelegate?
-    public private(set) var indicatorView: IQView {
+    public var indicatorView: IQView {
         didSet(oldValue) {
             guard self.indicatorView !== oldValue else { return }
             self._contentLayout.indicatorItem = QLayoutItem(view: self.indicatorView)
         }
     }
-    public private(set) var itemInset: QInset {
+    public var itemInset: QInset {
         set(value) { self._contentLayout.itemInset = value }
         get { return self._contentLayout.itemInset }
     }
-    public private(set) var itemSpacing: Float {
+    public var itemSpacing: Float {
         set(value) { self._contentLayout.itemSpacing = value }
         get { return self._contentLayout.itemSpacing }
     }
-    public private(set) var itemViews: [IQBarItemView] {
+    public var itemViews: [IQBarItemView] {
         set(value) {
             for itemView in self._itemViews {
                 itemView.delegate = nil
@@ -35,7 +35,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         }
         get { return self._itemViews }
     }
-    public private(set) var selectedItemView: IQBarItemView? {
+    public var selectedItemView: IQBarItemView? {
         set(value) {
             guard self._selectedItemView !== value else { return }
             self._selectedItemView?.select(false)
@@ -56,7 +56,7 @@ public class QPageBarView : QBarView, IQPageBarView {
     }
     
     private var _contentLayout: Layout
-    private var _contentView: QScrollView
+    private var _contentView: QScrollView< Layout >
     private var _itemViews: [IQBarItemView]
     private var _selectedItemView: IQBarItemView?
     private var _transitionContentOffset: QPoint?

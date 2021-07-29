@@ -22,40 +22,40 @@ public class QSwitchView : IQSwitchView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var width: QDimensionBehaviour {
+    public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var height: QDimensionBehaviour {
+    public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var thumbColor: QColor {
+    public var thumbColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(thumbColor: self.thumbColor)
         }
     }
-    public private(set) var offColor: QColor {
+    public var offColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(offColor: self.offColor)
         }
     }
-    public private(set) var onColor: QColor {
+    public var onColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(onColor: self.onColor)
         }
     }
-    public private(set) var value: Bool {
+    public var value: Bool {
         set(value) {
             self._value = value
             guard self.isLoaded == true else { return }
@@ -63,31 +63,31 @@ public class QSwitchView : IQSwitchView {
         }
         get { return self._value }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)

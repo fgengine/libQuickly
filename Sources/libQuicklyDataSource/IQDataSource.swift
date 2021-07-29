@@ -11,6 +11,4 @@ public protocol IQDataSource {
     
     var error: Error? { get }
     
-    func cancel()
-    
 }

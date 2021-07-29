@@ -10,9 +10,12 @@ public protocol IQPageDataLoader {
     associatedtype Result : RangeReplaceableCollection
     associatedtype Error
     
+    typealias Success = (_ result: Result, _ canMore: Bool) -> Void
+    typealias Failure = (_ error: Error) -> Void
+    
     func shouldPerform() -> Bool
     
-    func perform(reload: Bool, success: @escaping (_ result: Result, _ canMore: Bool) -> Void, failure: @escaping (_ error: Error) -> Void) -> IQCancellable
+    func perform(reload: Bool, success: @escaping Success, failure: @escaping Failure) -> IQCancellable
     
     mutating func didPerform(isFirst: Bool, result: Result, canMore: Bool)
     
@@ -34,7 +37,7 @@ public extension IQPageDataLoader {
 
 }
 
-open class QPageDataSource< Loader : IQPageDataLoader > : IQPageDataSource {
+open class QPageDataSource< Loader : IQPageDataLoader > : IQPageDataSource, IQCancellable {
     
     public typealias Result = Loader.Result
     public typealias Error = Loader.Error

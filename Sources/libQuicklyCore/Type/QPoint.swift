@@ -11,12 +11,18 @@ public struct QPoint : Hashable {
     
     @inlinable
     public init(
-        x: Float = 0,
-        y: Float = 0
+        x: Float,
+        y: Float
     ) {
         self.x = x
         self.y = y
     }
+    
+}
+
+public extension QPoint {
+    
+    static var zero = QPoint(x: 0, y: 0)
     
 }
 

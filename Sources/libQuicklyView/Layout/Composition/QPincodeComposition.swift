@@ -13,22 +13,20 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         didSet { self.setNeedForceUpdate() }
     }
     public var titleView: TitleView {
-        didSet {
-            self.titleItem = QLayoutItem(view: self.titleView)
-            self.setNeedUpdate()
-        }
+        didSet { self.titleItem = QLayoutItem(view: self.titleView) }
     }
-    public private(set) var titleItem: QLayoutItem
+    public private(set) var titleItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var pincodeInset: QInset {
         didSet { self.setNeedForceUpdate() }
     }
     public var pincodeView: PincodeView {
-        didSet {
-            self.pincodeItem = QLayoutItem(view: self.pincodeView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.pincodeItem = QLayoutItem(view: self.pincodeView) }
     }
-    public private(set) var pincodeItem: QLayoutItem
+    public private(set) var pincodeItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var errorInset: QInset {
         didSet { self.setNeedForceUpdate() }
     }
@@ -39,10 +37,11 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             } else {
                 self.errorItem = nil
             }
-            self.setNeedForceUpdate()
         }
     }
-    public private(set) var errorItem: QLayoutItem?
+    public private(set) var errorItem: QLayoutItem? {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonsInset: QInset {
         didSet { self.setNeedForceUpdate() }
     }
@@ -53,68 +52,59 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         didSet { self.setNeedForceUpdate() }
     }
     public var buttonOneView: ButtonView {
-        didSet {
-            self.buttonOneItem = QLayoutItem(view: self.buttonOneView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonOneItem = QLayoutItem(view: self.buttonOneView) }
     }
-    public private(set) var buttonOneItem: QLayoutItem
+    public private(set) var buttonOneItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonTwoView: ButtonView {
-        didSet {
-            self.buttonTwoItem = QLayoutItem(view: self.buttonTwoView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonTwoItem = QLayoutItem(view: self.buttonTwoView) }
     }
-    public private(set) var buttonTwoItem: QLayoutItem
+    public private(set) var buttonTwoItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonThreeView: ButtonView {
-        didSet {
-            self.buttonThreeItem = QLayoutItem(view: self.buttonThreeView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonThreeItem = QLayoutItem(view: self.buttonThreeView) }
     }
-    public private(set) var buttonThreeItem: QLayoutItem
+    public private(set) var buttonThreeItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonFourView: ButtonView {
-        didSet {
-            self.buttonFourItem = QLayoutItem(view: self.buttonFourView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonFourItem = QLayoutItem(view: self.buttonFourView) }
     }
-    public private(set) var buttonFourItem: QLayoutItem
+    public private(set) var buttonFourItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonFiveView: ButtonView {
-        didSet {
-            self.buttonFiveItem = QLayoutItem(view: self.buttonFiveView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonFiveItem = QLayoutItem(view: self.buttonFiveView) }
     }
-    public private(set) var buttonFiveItem: QLayoutItem
+    public private(set) var buttonFiveItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonSixView: ButtonView {
-        didSet {
-            self.buttonSixItem = QLayoutItem(view: self.buttonSixView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonSixItem = QLayoutItem(view: self.buttonSixView) }
     }
-    public private(set) var buttonSixItem: QLayoutItem
+    public private(set) var buttonSixItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonEightView: ButtonView {
-        didSet {
-            self.buttonEightItem = QLayoutItem(view: self.buttonEightView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonEightItem = QLayoutItem(view: self.buttonEightView) }
     }
-    public private(set) var buttonEightItem: QLayoutItem
+    public private(set) var buttonEightItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonNineView: ButtonView {
-        didSet {
-            self.buttonNineItem = QLayoutItem(view: self.buttonNineView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonNineItem = QLayoutItem(view: self.buttonNineView) }
     }
-    public private(set) var buttonNineItem: QLayoutItem
+    public private(set) var buttonNineItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var buttonZeroView: ButtonView {
-        didSet {
-            self.buttonZeroItem = QLayoutItem(view: self.buttonZeroView)
-            self.setNeedForceUpdate()
-        }
+        didSet { self.buttonZeroItem = QLayoutItem(view: self.buttonZeroView) }
     }
-    public private(set) var buttonZeroItem: QLayoutItem
+    public private(set) var buttonZeroItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var accessoryLeftView: AccessoryView? {
         didSet {
             if let view = self.accessoryLeftView {
@@ -122,10 +112,11 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             } else {
                 self.accessoryLeftItem = nil
             }
-            self.setNeedForceUpdate()
         }
     }
-    public private(set) var accessoryLeftItem: QLayoutItem?
+    public private(set) var accessoryLeftItem: QLayoutItem? {
+        didSet { self.setNeedForceUpdate() }
+    }
     public var accessoryRightView: AccessoryView? {
         didSet {
             if let view = self.accessoryRightView {
@@ -133,10 +124,11 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
             } else {
                 self.accessoryRightItem = nil
             }
-            self.setNeedForceUpdate()
         }
     }
-    public private(set) var accessoryRightItem: QLayoutItem?
+    public private(set) var accessoryRightItem: QLayoutItem? {
+        didSet { self.setNeedForceUpdate() }
+    }
     
     public init(
         titleInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -200,12 +192,6 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
         if let view = accessoryRightView {
             self.accessoryRightItem = QLayoutItem(view: view)
         }
-    }
-    
-    public func invalidate(item: QLayoutItem) {
-    }
-    
-    public func invalidate() {
     }
     
     public func layout(bounds: QRect) -> QSize {
@@ -275,7 +261,7 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
     
     public func size(_ available: QSize) -> QSize {
         guard available.width > 0 else {
-            return QSize()
+            return .zero
         }
         var result = QSize(
             width: available.width,

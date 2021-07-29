@@ -7,36 +7,19 @@ import libQuicklyCore
 
 public protocol IQStickyContainer : IQContainer, IQContainerParentable {
     
-    var contentContainer: IQStickyContentContainer { set get }
-    var accessoryContainer: IQStickyAccessoryContainer { set get }
+    var overlayView: IQBarView { get }
+    var overlaySize: Float { get }
+    var overlayHidden: Bool { get }
+    var contentContainer: IQContainer & IQContainerParentable { set get }
+    
+    func updateOverlay(animated: Bool, completion: (() -> Void)?)
     
 }
 
-public protocol IQStickyContentContainer : IQContainer, IQContainerParentable {
+public extension IQStickyContainer {
     
-    var stickyContainer: IQStickyContainer? { get }
-    
-}
-
-public extension IQStickyContentContainer {
-    
-    @inlinable
-    var stickyContainer: IQStickyContainer? {
-        return self.parent as? IQStickyContainer
-    }
-    
-}
-
-public protocol IQStickyAccessoryContainer : IQStickyContentContainer {
-    
-    var stickySize: Float { get }
-    
-}
-
-public extension IQStickyAccessoryContainer {
-    
-    var stickySize: Float? {
-        return 96
+    func updateOverlay(animated: Bool = true, completion: (() -> Void)? = nil) {
+        self.updateOverlay(animated: animated, completion: completion)
     }
     
 }

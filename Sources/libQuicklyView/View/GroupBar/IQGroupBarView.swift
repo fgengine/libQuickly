@@ -14,10 +14,14 @@ public protocol IQGroupBarViewDelegate : AnyObject {
 public protocol IQGroupBarView : IQBarView {
     
     var delegate: IQGroupBarViewDelegate? { set get }
-    var itemInset: QInset { get }
-    var itemSpacing: Float { get }
-    var itemViews: [IQBarItemView] { get }
-    var selectedItemView: IQBarItemView? { get }
+    
+    var itemInset: QInset { set get }
+    
+    var itemSpacing: Float { set get }
+    
+    var itemViews: [IQBarItemView] { set get }
+    
+    var selectedItemView: IQBarItemView? { set get }
     
     @discardableResult
     func itemInset(_ value: QInset) -> Self

@@ -81,7 +81,7 @@ extension QWindow {
             super.viewDidLoad()
             self.container.safeArea = self._safeArea()
             self.container.prepareShow(interactive: false)
-            self.container.finishShow(interactive: true)
+            self.container.finishShow(interactive: false)
         }
         
         override func viewDidLayoutSubviews() {
@@ -131,6 +131,8 @@ private extension QWindow.RootViewController {
         } else {
             return QInset(
                 top: Float(self.topLayoutGuide.length),
+                left: 0,
+                right: 0,
                 bottom: Float(self.bottomLayoutGuide.length)
             )
         }

@@ -13,41 +13,41 @@ public enum QInputDateViewMode {
 
 public protocol IQInputDateView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
-    var width: QDimensionBehaviour { get }
+    var width: QDimensionBehaviour { set get }
     
-    var height: QDimensionBehaviour { get }
+    var height: QDimensionBehaviour { set get }
     
-    var mode: QInputDateViewMode { get }
+    var mode: QInputDateViewMode { set get }
     
-    var minimumDate: Date? { get }
+    var minimumDate: Date? { set get }
     
-    var maximumDate: Date? { get }
+    var maximumDate: Date? { set get }
     
-    var selectedDate: Date? { get }
+    var selectedDate: Date? { set get }
     
-    var formatter: DateFormatter { get }
+    var formatter: DateFormatter { set get }
     
-    var locale: Locale { get }
+    var locale: Locale { set get }
     
-    var calendar: Calendar { get }
+    var calendar: Calendar { set get }
     
-    var timeZone: TimeZone? { get }
+    var timeZone: TimeZone? { set get }
     
-    var textFont: QFont { get }
+    var textFont: QFont { set get }
     
-    var textColor: QColor { get }
+    var textColor: QColor { set get }
     
-    var textInset: QInset { get }
+    var textInset: QInset { set get }
     
-    var placeholder: QInputPlaceholder { get }
+    var placeholder: QInputPlaceholder { set get }
     
-    var placeholderInset: QInset? { get }
+    var placeholderInset: QInset? { set get }
     
-    var alignment: QTextAlignment { get }
+    var alignment: QTextAlignment { set get }
     
     #if os(iOS)
     
-    var toolbar: IQInputToolbarView? { get }
+    var toolbar: IQInputToolbarView? { set get }
     
     #endif
     

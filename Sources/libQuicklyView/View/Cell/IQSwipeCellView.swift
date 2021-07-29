@@ -8,14 +8,18 @@ import libQuicklyCore
 public protocol IQSwipeCellView : IQCellView {
     
     var isShowedLeadingView: Bool { get }
-    var leadingView: IQView? { get }
-    var leadingSize: Float { get }
-    var leadingLimit: Float { get }
+    
+    var leadingSize: Float { set get }
+    
+    var leadingLimit: Float { set get }
+    
     var isShowedTrailingView: Bool { get }
-    var trailingView: IQView? { get }
-    var trailingSize: Float { get }
-    var trailingLimit: Float { get }
-    var animationVelocity: Float { get }
+    
+    var trailingSize: Float { set get }
+    
+    var trailingLimit: Float { set get }
+    
+    var animationVelocity: Float { set get }
     
     func showLeadingView(animated: Bool, completion: (() -> Void)?)
     func hideLeadingView(animated: Bool, completion: (() -> Void)?)
@@ -24,16 +28,10 @@ public protocol IQSwipeCellView : IQCellView {
     func hideTrailingView(animated: Bool, completion: (() -> Void)?)
     
     @discardableResult
-    func leadingView(_ value: IQView?) -> Self
-    
-    @discardableResult
     func leadingSize(_ value: Float) -> Self
     
     @discardableResult
     func leadingLimit(_ value: Float) -> Self
-    
-    @discardableResult
-    func trailingView(_ value: IQView?) -> Self
     
     @discardableResult
     func trailingSize(_ value: Float) -> Self

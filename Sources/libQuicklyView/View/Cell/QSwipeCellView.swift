@@ -27,13 +27,15 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         return self._view.bounds
     }
     public var shouldHighlighting: Bool {
+        set(value) { self._view.shouldHighlighting = value }
         get { return self._view.shouldHighlighting }
     }
     public var isHighlighted: Bool {
+        set(value) { self._view.isHighlighted = value }
         get { return self._view.isHighlighted }
     }
-    public private(set) var shouldPressed: Bool
-    public private(set) var contentView: ContentView {
+    public var shouldPressed: Bool
+    public var contentView: ContentView {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
             self._layout.contentItem = QLayoutItem(view: self.contentView)
@@ -55,18 +57,18 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
             }
         }
     }
-    public private(set) var leadingSize: Float {
+    public var leadingSize: Float {
         set(value) { self._layout.leadingSize = value }
         get { return self._layout.leadingSize }
     }
-    public private(set) var leadingLimit: Float
+    public var leadingLimit: Float
     public var isShowedTrailingView: Bool {
         switch self._layout.state {
         case .trailing: return true
         default: return false
         }
     }
-    public private(set) var trailingView: IQView? {
+    public var trailingView: IQView? {
         didSet(oldValue) {
             guard self.trailingView !== oldValue else { return }
             if let view = self.trailingView {
@@ -76,25 +78,30 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
             }
         }
     }
-    public private(set) var trailingSize: Float {
+    public var trailingSize: Float {
         set(value) { self._layout.trailingSize = value }
         get { return self._layout.trailingSize }
     }
     public var trailingLimit: Float
     public var animationVelocity: Float
     public var color: QColor? {
+        set(value) { self._view.color = value }
         get { return self._view.color }
     }
     public var cornerRadius: QViewCornerRadius {
+        set(value) { self._view.cornerRadius = value }
         get { return self._view.cornerRadius }
     }
     public var border: QViewBorder {
+        set(value) { self._view.border = value }
         get { return self._view.border }
     }
     public var shadow: QViewShadow? {
+        set(value) { self._view.shadow = value }
         get { return self._view.shadow }
     }
     public var alpha: Float {
+        set(value) { self._view.alpha = value }
         get { return self._view.alpha }
     }
     
@@ -113,7 +120,6 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     private var _onPressed: (() -> Void)?
     
     public init(
-        name: String? = nil,
         shouldPressed: Bool = true,
         contentView: ContentView,
         leadingView: IQView? = nil,
@@ -505,12 +511,6 @@ private extension QSwipeCellView {
             self.leadingSize = leadingSize
             self.trailingItem = trailingItem
             self.trailingSize = trailingSize
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

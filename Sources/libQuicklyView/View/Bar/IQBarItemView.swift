@@ -14,8 +14,10 @@ public protocol IQBarItemViewDelegate : AnyObject {
 public protocol IQBarItemView : IQView, IQViewSelectable, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var delegate: IQBarItemViewDelegate? { set get }
-    var contentInset: QInset { get }
-    var contentView: IQView { get }
+    
+    var contentInset: QInset { set get }
+    
+    var contentView: IQView { set get }
     
     @discardableResult
     func contentInset(_ value: QInset) -> Self

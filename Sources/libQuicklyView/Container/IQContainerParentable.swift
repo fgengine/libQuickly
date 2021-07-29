@@ -17,7 +17,7 @@ public protocol IQContainerParentable : AnyObject {
 public extension IQContainerParentable where Self : IQContainer {
     
     var inheritedInsets: QInset {
-        return self.parent?.insets(of: self) ?? QInset()
+        return self.parent?.insets(of: self) ?? .zero
     }
     
     #if os(iOS)

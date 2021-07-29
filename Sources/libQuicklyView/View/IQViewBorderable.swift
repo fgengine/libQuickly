@@ -12,7 +12,7 @@ public enum QViewBorder {
 
 public protocol IQViewBorderable : AnyObject {
     
-    var border: QViewBorder { get }
+    var border: QViewBorder { set get }
     
     @discardableResult
     func border(_ value: QViewBorder) -> Self

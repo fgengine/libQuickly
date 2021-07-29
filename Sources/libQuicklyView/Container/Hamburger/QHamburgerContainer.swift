@@ -339,12 +339,6 @@ private extension QHamburgerContainer {
             self.trailingSize = trailingSize
         }
         
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
-        }
-        
         func layout(bounds: QRect) -> QSize {
             switch self.state {
             case .idle:

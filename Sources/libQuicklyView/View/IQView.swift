@@ -7,6 +7,7 @@ import libQuicklyCore
 
 public protocol IQView : IQBaseView {
     
+    var isAppeared: Bool { get }
     var layout: IQLayout? { get }
     var item: QLayoutItem? { set get }
     
@@ -17,19 +18,22 @@ public protocol IQView : IQBaseView {
 public extension IQView {
     
     @inlinable
+    var isAppeared: Bool {
+        return self.layout != nil
+    }
+    
+    @inlinable
     func setNeedForceUpdate() {
-        guard let layout = self.layout else { return }
         if let item = self.item {
-            layout.setNeedForceUpdate(item: item)
+            self.layout?.setNeedForceUpdate(item: item)
         } else {
-            layout.setNeedForceUpdate()
+            self.layout?.setNeedForceUpdate()
         }
     }
     
     @inlinable
     func setNeedUpdate() {
-        guard let layout = self.layout else { return }
-        layout.setNeedUpdate()
+        self.layout?.setNeedUpdate()
     }
 
 }

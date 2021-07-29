@@ -13,10 +13,10 @@ public struct QInset : Hashable {
     
     @inlinable
     public init(
-        top: Float = 0,
-        left: Float = 0,
-        right: Float = 0,
-        bottom: Float = 0
+        top: Float,
+        left: Float,
+        right: Float,
+        bottom: Float
     ) {
         self.top = top
         self.left = left
@@ -26,14 +26,20 @@ public struct QInset : Hashable {
     
     @inlinable
     public init(
-        horizontal: Float = 0,
-        vertical: Float = 0
+        horizontal: Float,
+        vertical: Float
     ) {
         self.top = vertical
         self.left = horizontal
         self.right = horizontal
         self.bottom = vertical
     }
+    
+}
+
+public extension QInset {
+    
+    static var zero = QInset(top: 0, left: 0, right: 0, bottom: 0)
     
 }
 

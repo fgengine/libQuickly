@@ -24,28 +24,28 @@ public class QInputListView : IQInputListView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var width: QDimensionBehaviour {
+    public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var height: QDimensionBehaviour {
+    public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var items: [IQInputListViewItem] {
+    public var items: [IQInputListViewItem] {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(items: self.items)
         }
     }
-    public private(set) var selectedItem: IQInputListViewItem? {
+    public var selectedItem: IQInputListViewItem? {
         set(value) {
             self._selectedItem = value
             guard self.isLoaded == true else { return }
@@ -53,75 +53,75 @@ public class QInputListView : IQInputListView {
         }
         get { return self._selectedItem }
     }
-    public private(set) var textFont: QFont {
+    public var textFont: QFont {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(textFont: self.textFont)
         }
     }
-    public private(set) var textColor: QColor {
+    public var textColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(textColor: self.textColor)
         }
     }
-    public private(set) var textInset: QInset {
+    public var textInset: QInset {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(textInset: self.textInset)
         }
     }
-    public private(set) var placeholder: QInputPlaceholder {
+    public var placeholder: QInputPlaceholder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(placeholder: self.placeholder)
         }
     }
-    public private(set) var placeholderInset: QInset? {
+    public var placeholderInset: QInset? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(placeholderInset: self.placeholderInset)
         }
     }
-    public private(set) var alignment: QTextAlignment {
+    public var alignment: QTextAlignment {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alignment: self.alignment)
         }
     }
     #if os(iOS)
-    public private(set) var toolbar: IQInputToolbarView? {
+    public var toolbar: IQInputToolbarView? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(toolbar: self.toolbar)
         }
     }
     #endif
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)

@@ -80,7 +80,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         #endif
         self._rootItem = Item(
             container: rootContainer,
-            insets: QInset()
+            insets: .zero
         )
         self._layout = Layout(
             state: .idle(current: self._rootItem.item)
@@ -380,7 +380,7 @@ private extension QStackContainer {
             owner: AnyObject? = nil,
             insets: QInset
         ) {
-            container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right))
+            container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right, bottom: 0))
             self._layout = Layout(
                 barInset: insets.top,
                 barSize: container.stackBarSize,
@@ -399,7 +399,7 @@ private extension QStackContainer {
         }
         
         func set(insets: QInset) {
-            self.container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right))
+            self.container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right, bottom: 0))
             self._layout.barInset = insets.top
         }
         
@@ -452,12 +452,6 @@ private extension QStackContainer.Item {
             self.contentItem = contentItem
         }
         
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
-        }
-        
         func layout(bounds: QRect) -> QSize {
             let barSize = self.barInset + self.barSize
             let barOffset = barSize * (1 - self.barVisibility)
@@ -506,12 +500,6 @@ private extension QStackContainer {
 
         init(state: State = .empty) {
             self.state = state
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

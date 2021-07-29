@@ -36,7 +36,7 @@ public extension IQScreen {
     }
     
     var inheritedInsets: QInset {
-        return self.container?.inheritedInsets ?? QInset()
+        return self.container?.inheritedInsets ?? .zero
     }
     
     func setup() {

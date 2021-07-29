@@ -7,45 +7,45 @@ import libQuicklyCore
 
 public class QStackBarView : QBarView, IQStackBarView {
     
-    public private(set) var inset: QInset {
+    public var inset: QInset {
         set(value) { self._contentLayout.inset = value }
         get { return self._contentLayout.inset }
     }
-    public private(set) var leadingViews: [IQView] {
+    public var leadingViews: [IQView] {
         didSet(oldValue) {
             self._contentLayout.leadingItems = self.leadingViews.compactMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var leadingViewSpacing: Float {
+    public var leadingViewSpacing: Float {
         set(value) { self._contentLayout.leadingItemSpacing = value }
         get { return self._contentLayout.leadingItemSpacing }
     }
-    public private(set) var titleView: IQView? {
+    public var titleView: IQView? {
         didSet(oldValue) {
             guard self.titleView !== oldValue else { return }
             self._contentLayout.titleItem = self.titleView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var titleSpacing: Float {
+    public var titleSpacing: Float {
         set(value) { self._contentLayout.titleSpacing = value }
         get { return self._contentLayout.titleSpacing }
     }
-    public private(set) var detailView: IQView? {
+    public var detailView: IQView? {
         didSet(oldValue) {
             guard self.detailView !== oldValue else { return }
             self._contentLayout.detailItem = self.detailView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var detailSpacing: Float {
+    public var detailSpacing: Float {
         set(value) { self._contentLayout.detailSpacing = value }
         get { return self._contentLayout.detailSpacing }
     }
-    public private(set) var trailingViews: [IQView] {
+    public var trailingViews: [IQView] {
         didSet(oldValue) {
             self._contentLayout.trailingItems = self.trailingViews.compactMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var trailingViewSpacing: Float {
+    public var trailingViewSpacing: Float {
         set(value) { self._contentLayout.trailingItemSpacing = value }
         get { return self._contentLayout.trailingItemSpacing }
     }
@@ -251,7 +251,7 @@ private extension QStackBarView {
                 bounds: headerBounds,
                 direction: .horizontal,
                 origin: .forward,
-                inset: QInset(),
+                inset: .zero,
                 spacing: self.leadingItemSpacing,
                 items: self.leadingItems,
                 cache: &self._leadingItemsCache
@@ -260,7 +260,7 @@ private extension QStackBarView {
                 bounds: headerBounds,
                 direction: .horizontal,
                 origin: .backward,
-                inset: QInset(),
+                inset: .zero,
                 spacing: self.trailingItemSpacing,
                 items: self.trailingItems,
                 cache: &self._trailingItemsCache
@@ -294,14 +294,14 @@ private extension QStackBarView {
             let leadingSize = QListLayout.Helper.size(
                 available: itemsAvailable,
                 direction: .horizontal,
-                inset: QInset(),
+                inset: .zero,
                 spacing: self.leadingItemSpacing,
                 items: self.leadingItems
             )
             let trailingSize = QListLayout.Helper.size(
                 available: itemsAvailable,
                 direction: .horizontal,
-                inset: QInset(),
+                inset: .zero,
                 spacing: self.trailingItemSpacing,
                 items: self.trailingItems
             )

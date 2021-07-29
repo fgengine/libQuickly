@@ -16,64 +16,64 @@ public class QProgressView : IQProgressView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var width: QDimensionBehaviour {
+    public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var height: QDimensionBehaviour {
+    public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var progressColor: QColor {
+    public var progressColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(progressColor: self.progressColor)
         }
     }
-    public private(set) var trackColor: QColor {
+    public var trackColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(trackColor: self.trackColor)
         }
     }
-    public private(set) var progress: Float {
+    public var progress: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(progress: self.progress)
         }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)

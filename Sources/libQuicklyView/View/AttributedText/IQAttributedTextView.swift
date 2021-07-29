@@ -5,14 +5,19 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQAttributedTextView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable {
+public protocol IQAttributedTextView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var width: QDimensionBehaviour? { get }
-    var height: QDimensionBehaviour? { get }
-    var text: NSAttributedString { get }
-    var alignment: QTextAlignment { get }
-    var lineBreak: QTextLineBreak { get }
-    var numberOfLines: UInt { get }
+    var width: QDimensionBehaviour? { set get }
+    
+    var height: QDimensionBehaviour? { set get }
+    
+    var text: NSAttributedString { set get }
+    
+    var alignment: QTextAlignment { set get }
+    
+    var lineBreak: QTextLineBreak { set get }
+    
+    var numberOfLines: UInt { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour?) -> Self
@@ -31,5 +36,8 @@ public protocol IQAttributedTextView : IQView, IQViewColorable, IQViewBorderable
     
     @discardableResult
     func numberOfLines(_ value: UInt) -> Self
+    
+    @discardableResult
+    func onTap(_ value: ((_ attributes: [NSAttributedString.Key: Any]?) -> Void)?) -> Self
 
 }

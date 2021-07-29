@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public protocol IQViewAlphable : AnyObject {
     
-    var alpha: Float { get }
+    var alpha: Float { set get }
     
     @discardableResult
     func alpha(_ value: Float) -> Self

@@ -23,10 +23,10 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var gestures: [IQGesture] {
+    public var gestures: [IQGesture] {
         set(value) {
             self._gestures = value
             if self.isLoaded == true {
@@ -35,7 +35,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         }
         get { return self._gestures }
     }
-    public private(set) var contentLayout: Layout {
+    public var contentLayout: Layout {
         willSet {
             self.contentLayout.view = nil
         }
@@ -44,22 +44,23 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
             guard self.isLoaded == true else { return }
             self._view.update(contentLayout: self.contentLayout)
             self.contentLayout.setNeedForceUpdate()
+            self.setNeedForceUpdate()
         }
     }
     public var contentSize: QSize {
         get {
-            guard self.isLoaded == true else { return QSize() }
+            guard self.isLoaded == true else { return .zero }
             return self._view.contentSize
         }
     }
-    public private(set) var shouldHighlighting: Bool {
+    public var shouldHighlighting: Bool {
         didSet {
             if self.shouldHighlighting == false {
                 self.isHighlighted = false
             }
         }
     }
-    public private(set) var isHighlighted: Bool {
+    public var isHighlighted: Bool {
         set(value) {
             if self._isHighlighted != value {
                 self._isHighlighted = value
@@ -68,33 +69,33 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         }
         get { return self._isHighlighted }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)

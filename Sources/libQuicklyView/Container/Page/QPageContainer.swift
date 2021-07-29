@@ -96,7 +96,11 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     private var _items: [Item]
     private var _current: Item?
     
-    public init(screen: Screen) {
+    public init(
+        screen: Screen,
+        containers: [IQPageContentContainer],
+        current: IQPageContentContainer? = nil
+    ) {
         self.isPresented = false
         self.screen = screen
         #if os(iOS)
@@ -122,7 +126,16 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
             contentLayout: self._layout
         )
         #endif
-        self._items = []
+        self._items = containers.compactMap({ Item(container: $0) })
+        if let current = current {
+            if let index = self._items.firstIndex(where: { $0.container === current }) {
+                self._current = self._items[index]
+            } else {
+                self._current = self._items.first
+            }
+        } else {
+            self._current = self._items.first
+        }
         self._init()
     }
     
@@ -145,7 +158,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     
     public func didChangeInsets() {
         let inheritedInsets = self.inheritedInsets
-        self._barView.safeArea(QInset(top: inheritedInsets.top, left: inheritedInsets.left, right: inheritedInsets.right))
+        self._barView.safeArea(QInset(top: inheritedInsets.top, left: inheritedInsets.left, right: inheritedInsets.right, bottom: 0))
         self._layout.barInset = inheritedInsets.top
         for item in self._items {
             item.container.didChangeInsets()
@@ -326,6 +339,9 @@ private extension QPageContainer {
     func _init() {
         self._barView.delegate = self
         self.screen.container = self
+        for item in self._items {
+            item.container.parent = self
+        }
         #if os(iOS)
         self._interactiveGesture.onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -344,6 +360,11 @@ private extension QPageContainer {
         })
         #else
         #endif
+        self._barView.itemViews(self._items.compactMap({ $0.barView }))
+        if let current = self._current {
+            self._barView.selectedItemView(current.barView)
+            self._layout.state = .idle(current: current.pageItem)
+        }
         self.screen.setup()
     }
     
@@ -769,7 +790,7 @@ private extension QPageContainer {
 
         init(
             container: IQPageContentContainer,
-            insets: QInset
+            insets: QInset = .zero
         ) {
             self.container = container
             self.barItem = QLayoutItem(view: container.pageItemView)
@@ -823,12 +844,6 @@ private extension QPageContainer {
             self.barVisibility = barVisibility
             self.barHidden = barHidden
             self.state = state
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

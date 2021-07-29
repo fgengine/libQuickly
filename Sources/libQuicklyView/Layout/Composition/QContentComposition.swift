@@ -13,12 +13,13 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
         didSet { self.setNeedUpdate() }
     }
     public var contentView: ContentView {
-        didSet {
-            self.contentItem = QLayoutItem(view: self.contentView)
-            self.setNeedUpdate()
-        }
+        didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
-    public private(set) var contentItem: QLayoutItem
+    public private(set) var contentItem: QLayoutItem {
+        didSet { self.setNeedUpdate() }
+    }
+    
+    private var _cacheContentSize: QSize?
 
     public init(
         contentInset: QInset = QInset(horizontal: 8, vertical: 4),
@@ -30,24 +31,66 @@ public class QContentComposition< ContentView: IQView > : IQLayout {
     }
     
     public func invalidate(item: QLayoutItem) {
+        if self.contentItem === item {
+            self._cacheContentSize = nil
+        }
     }
     
     public func invalidate() {
+        self._cacheContentSize = nil
     }
     
     public func layout(bounds: QRect) -> QSize {
-        self.contentItem.frame = bounds.apply(inset: self.contentInset)
-        return bounds.size
+        let contentSize = self._contentSize(bounds.size)
+        self.contentItem.frame = QRect(
+            x: bounds.origin.x + self.contentInset.left,
+            y: bounds.origin.y + self.contentInset.top,
+            width: contentSize.width,
+            height: contentSize.height
+        )
+        return QSize(
+            width: contentSize.width + self.contentInset.horizontal,
+            height: contentSize.height + self.contentInset.vertical
+        )
     }
     
     public func size(_ available: QSize) -> QSize {
-        let contentSize = self.contentItem.size(available.apply(inset: self.contentInset))
-        let contentBounds = contentSize.apply(inset: -self.contentInset)
-        return contentBounds
+        let contentSize: QSize
+        if available.width.isInfinite == true && available.height.isInfinite == true {
+            contentSize = self.contentItem.size(QSize(
+                width: .infinity,
+                height: .infinity
+            ))
+        } else if available.width.isInfinite == true && available.height.isInfinite == false {
+            contentSize = self.contentItem.size(QSize(
+                width: .infinity,
+                height: available.height - self.contentInset.vertical
+            ))
+        } else if available.width.isInfinite == false && available.height.isInfinite == true {
+            contentSize = self.contentItem.size(QSize(
+                width: available.width - self.contentInset.horizontal,
+                height: .infinity
+            ))
+        } else {
+            contentSize = self.contentItem.size(available.apply(inset: self.contentInset))
+        }
+        return contentSize.apply(inset: self.contentInset)
     }
     
     public func items(bounds: QRect) -> [QLayoutItem] {
         return [ self.contentItem ]
+    }
+    
+}
+
+private extension QContentComposition {
+    
+    func _contentSize(_ available: QSize) -> QSize {
+        if let cacheContentSize = self._cacheContentSize {
+            return cacheContentSize
+        }
+        self._cacheContentSize = self.contentItem.size(available.apply(inset: self.contentInset))
+        return self._cacheContentSize!
     }
     
 }

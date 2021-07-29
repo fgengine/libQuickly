@@ -23,38 +23,38 @@ public class QButtonView : IQButtonView {
     public var bounds: QRect {
         return self._view.bounds
     }
-    public private(set) var inset: QInset {
+    public var inset: QInset {
         set(value) { self.setNeedForceUpdate() }
         get { return self._layout.inset }
     }
-    public private(set) var backgroundView: IQView
-    public private(set) var spinnerPosition: QButtonViewSpinnerPosition {
+    public var backgroundView: IQView
+    public var spinnerPosition: QButtonViewSpinnerPosition {
         set(value) { self._layout.spinnerPosition = value }
         get { return self._layout.spinnerPosition }
     }
-    public private(set) var spinnerAnimating: Bool {
+    public var spinnerAnimating: Bool {
         set(value) {
             self._layout.spinnerAnimating = value
             self.spinnerView?.animating(value)
         }
         get { return self._layout.spinnerAnimating }
     }
-    public private(set) var spinnerView: IQSpinnerView?
-    public private(set) var imagePosition: QButtonViewImagePosition {
+    public var spinnerView: IQSpinnerView?
+    public var imagePosition: QButtonViewImagePosition {
         set(value) { self._layout.imagePosition = value }
         get { return self._layout.imagePosition }
     }
-    public private(set) var imageInset: QInset {
+    public var imageInset: QInset {
         set(value) { self._layout.imageInset = value }
         get { return self._layout.imageInset }
     }
-    public private(set) var imageView: IQView?
-    public private(set) var textInset: QInset {
+    public var imageView: IQView?
+    public var textInset: QInset {
         set(value) { self._layout.textInset = value }
         get { return self._layout.textInset }
     }
-    public private(set) var textView: IQView?
-    public private(set) var isHighlighted: Bool {
+    public var textView: IQView?
+    public var isHighlighted: Bool {
         set(value) {
             if self._isHighlighted != value {
                 self._isHighlighted = value
@@ -63,7 +63,7 @@ public class QButtonView : IQButtonView {
         }
         get { return self._isHighlighted }
     }
-    public private(set) var isSelected: Bool {
+    public var isSelected: Bool {
         set(value) {
             if self._isSelected != value {
                 self._isSelected = value
@@ -73,18 +73,23 @@ public class QButtonView : IQButtonView {
         get { return self._isSelected }
     }
     public var color: QColor? {
+        set(value) { self._view.color = value }
         get { return self._view.color }
     }
-    public var border: QViewBorder {
-        get { return self._view.border }
-    }
     public var cornerRadius: QViewCornerRadius {
+        set(value) { self._view.cornerRadius = value }
         get { return self._view.cornerRadius }
     }
+    public var border: QViewBorder {
+        set(value) { self._view.border = value }
+        get { return self._view.border }
+    }
     public var shadow: QViewShadow? {
+        set(value) { self._view.shadow = value }
         get { return self._view.shadow }
     }
     public var alpha: Float {
+        set(value) { self._view.alpha = value }
         get { return self._view.alpha }
     }
     
@@ -96,7 +101,6 @@ public class QButtonView : IQButtonView {
     private var _onPressed: (() -> Void)?
     
     public init(
-        name: String? = nil,
         inset: QInset = QInset(horizontal: 4, vertical: 4),
         backgroundView: IQView,
         spinnerPosition: QButtonViewSpinnerPosition = .fill,
@@ -301,6 +305,9 @@ extension QButtonView {
         var textItem: QLayoutItem? {
             didSet { self.setNeedForceUpdate() }
         }
+        private var _cacheSpinnerSize: QSize?
+        private var _cacheImageSize: QSize?
+        private var _cacheTextSize: QSize?
 
         init(
             inset: QInset,
@@ -326,22 +333,32 @@ extension QButtonView {
             self.textItem = textItem
         }
         
-        func invalidate(item: QLayoutItem) {
+        public func invalidate(item: QLayoutItem) {
+            if self.spinnerItem === item {
+                self._cacheSpinnerSize = nil
+            } else if self.imageItem === item {
+                self._cacheImageSize = nil
+            } else if self.textItem === item {
+                self._cacheTextSize = nil
+            }
         }
         
-        func invalidate() {
+        public func invalidate() {
+            self._cacheSpinnerSize = nil
+            self._cacheImageSize = nil
+            self._cacheTextSize = nil
         }
         
         func layout(bounds: QRect) -> QSize {
             self.backgroundItem.frame = bounds
             if self.spinnerAnimating == true, let spinnerItem = self.spinnerItem {
-                let spinnerSize = spinnerItem.size(bounds.size)
+                let spinnerSize = self._spinnerSize(bounds.size, item: spinnerItem)
                 switch self.spinnerPosition {
                 case .fill:
                     spinnerItem.frame = QRect(center: bounds.center, size: spinnerSize)
                 case .image:
                     if self.imageItem != nil, let textItem = self.textItem {
-                        let textSize = textItem.size(bounds.size)
+                        let textSize = self._textSize(bounds.size, item: textItem)
                         let frames = self._frame(
                             position: self.imagePosition,
                             bounds: bounds,
@@ -357,8 +374,8 @@ extension QButtonView {
                     }
                 }
             } else if let imageItem = self.imageItem, let textItem = self.textItem {
-                let imageSize = imageItem.size(bounds.size)
-                let textSize = textItem.size(bounds.size)
+                let imageSize = self._imageSize(bounds.size, item: imageItem)
+                let textSize = self._textSize(bounds.size, item: textItem)
                 let frames = self._frame(
                     position: self.imagePosition,
                     bounds: bounds,
@@ -370,10 +387,10 @@ extension QButtonView {
                 imageItem.frame = frames.primary
                 textItem.frame = frames.secondary
             } else if let imageItem = self.imageItem {
-                let imageSize = imageItem.size(bounds.size)
+                let imageSize = self._imageSize(bounds.size, item: imageItem)
                 imageItem.frame = QRect(center: bounds.center, size: imageSize)
             } else if let textItem = self.textItem {
-                let textSize = textItem.size(bounds.size)
+                let textSize = self._textSize(bounds.size, item: textItem)
                 textItem.frame = QRect(center: bounds.center, size: textSize)
             }
             return bounds.size
@@ -458,30 +475,60 @@ extension QButtonView {
 
 private extension QButtonView.Layout {
     
-    func _frame(position: QButtonViewImagePosition, bounds: QRect, primarySize: QSize, primaryInset: QInset, secondarySize: QSize, secondaryInset: QInset) -> (primary: QRect, secondary: QRect) {
-        var primary = QRect(topLeft: QPoint(), size: primarySize)
-        var secondary = QRect(topLeft: QPoint(), size: secondarySize)
-        switch position {
-        case .top: secondary.origin.y = primaryInset.bottom + secondaryInset.top
-        case .left: secondary.origin.x = primaryInset.right + secondaryInset.left
-        case .right: primary.origin.x = secondaryInset.right + primaryInset.left
-        case .bottom: primary.origin.y = secondaryInset.bottom + primaryInset.top
+    func _spinnerSize(_ available: QSize, item: QLayoutItem) -> QSize {
+        if let size = self._cacheSpinnerSize {
+            return size
         }
+        self._cacheSpinnerSize = item.size(available)
+        return self._cacheSpinnerSize!
+    }
+    
+    func _imageSize(_ available: QSize, item: QLayoutItem) -> QSize {
+        if let size = self._cacheImageSize {
+            return size
+        }
+        self._cacheImageSize = item.size(available)
+        return self._cacheImageSize!
+    }
+    
+    func _textSize(_ available: QSize, item: QLayoutItem) -> QSize {
+        if let size = self._cacheTextSize {
+            return size
+        }
+        self._cacheTextSize = item.size(available)
+        return self._cacheTextSize!
+    }
+    
+    func _frame(position: QButtonViewImagePosition, bounds: QRect, primarySize: QSize, primaryInset: QInset, secondarySize: QSize, secondaryInset: QInset) -> (primary: QRect, secondary: QRect) {
+        let primary: QRect
+        let secondary: QRect
         switch position {
-        case .top, .bottom:
-            let width = max(primary.size.width, secondary.size.width)
-            primary.origin.x = (width - primary.size.width) / 2
-            secondary.origin.x = (width - secondary.size.width) / 2
-        case .left, .right:
-            let height = max(primary.size.height, secondary.size.height)
-            primary.origin.y = (height - primary.size.height) / 2
-            secondary.origin.y = (height - secondary.size.height) / 2
+        case .top:
+            let offest = primaryInset.top + primarySize.height + secondaryInset.top
+            primary = QRect(x: 0, y: 0, width: primarySize.width, height: primarySize.height)
+            secondary = QRect(x: 0, y: offest, width: secondarySize.width, height: secondarySize.height)
+        case .left:
+            let offest = primaryInset.left + primarySize.width + secondaryInset.left
+            primary = QRect(x: 0, y: 0, width: primarySize.width, height: primarySize.height)
+            secondary = QRect(x: offest, y: 0, width: secondarySize.width, height: secondarySize.height)
+        case .right:
+            let offest = primaryInset.left + secondarySize.width + secondaryInset.right
+            primary = QRect(x: offest, y: 0, width: primarySize.width, height: primarySize.height)
+            secondary = QRect(x: 0, y: 0, width: secondarySize.width, height: secondarySize.height)
+        case .bottom:
+            let offest = primaryInset.top + secondarySize.height + secondaryInset.bottom
+            primary = QRect(x: 0, y: offest, width: primarySize.width, height: primarySize.height)
+            secondary = QRect(x: 0, y: 0, width: secondarySize.width, height: secondarySize.height)
         }
         let union = primary.union(secondary)
-        let offset = QRect(center: bounds.center, size: union.size).origin
+        let center = bounds.center
+        let offset = QPoint(
+            x: center.x - (union.width / 2),
+            y: center.y - (union.height / 2)
+        )
         return (
-            primary: primary.offset(point: offset),
-            secondary: secondary.offset(point: offset)
+            primary: QRect(center: primary.center + offset, size: primarySize),
+            secondary: QRect(center: secondary.center + offset, size: secondarySize)
         )
     }
     

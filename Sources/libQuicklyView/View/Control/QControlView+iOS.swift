@@ -83,12 +83,9 @@ final class NativeControlView : UIControl {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let frame = QRect(self.frame)
-        self._layoutManager.layout(bounds: QRect(self.bounds))
-        if self._layoutManager.size != frame.size {
-            self._layoutManager.layout?.setNeedForceUpdate()
-        }
-        self._layoutManager.visible(bounds: QRect(self.bounds))
+        let bounds = QRect(self.bounds)
+        self._layoutManager.layout(bounds:bounds)
+        self._layoutManager.visible(bounds: bounds)
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -141,7 +138,7 @@ final class NativeControlView : UIControl {
 
 extension NativeControlView {
     
-    func update< View : IQControlView & NativeControlViewDelegate >(view: View) {
+    func update< Layout : IQLayout >(view: QControlView< Layout >) {
         self._view = view
         self.update(contentLayout: view.contentLayout)
         self.update(color: view.color)

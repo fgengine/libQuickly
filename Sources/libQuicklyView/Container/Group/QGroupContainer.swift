@@ -138,7 +138,7 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
     
     public func didChangeInsets() {
         let inheritedInsets = self.inheritedInsets
-        self._barView.safeArea(QInset(left: inheritedInsets.left, right: inheritedInsets.right, bottom: inheritedInsets.bottom))
+        self._barView.safeArea(QInset(top: 0, left: inheritedInsets.left, right: inheritedInsets.right, bottom: inheritedInsets.bottom))
         self._rootLayout.barInset = inheritedInsets.bottom
         for item in self._items {
             item.container.didChangeInsets()
@@ -328,7 +328,7 @@ private extension QGroupContainer {
 
         init(
             container: IQGroupContentContainer,
-            insets: QInset = QInset()
+            insets: QInset = .zero
         ) {
             self.container = container
             self.barItem = QLayoutItem(view: container.groupItemView)
@@ -385,12 +385,6 @@ private extension QGroupContainer {
             self.barVisibility = barVisibility
             self.barHidden = barHidden
             self.state = state
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

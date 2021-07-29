@@ -13,7 +13,7 @@ public enum QViewCornerRadius {
 
 public protocol IQViewCornerRadiusable : AnyObject {
     
-    var cornerRadius: QViewCornerRadius { get }
+    var cornerRadius: QViewCornerRadius { set get }
     
     @discardableResult
     func cornerRadius(_ value: QViewCornerRadius) -> Self

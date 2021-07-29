@@ -9,121 +9,144 @@ import libQuicklyCore
 
 extension QScrollView {
     
-    final class ScrollView : UIScrollView {
+    struct Reusable : IQReusable {
         
-        typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
-        
-        unowned var customDelegate: ScrollViewDelegate?
-        var needLayoutContent: Bool {
-            didSet(oldValue) {
-                if self.needLayoutContent == true {
-                    self.setNeedsLayout()
-                }
-            }
-        }
-        override var frame: CGRect {
-            set(value) {
-                if super.frame != value {
-                    let oldValue = value
-                    super.frame = value
-                    if let view = self._view {
-                        self.update(cornerRadius: view.cornerRadius)
-                        self.updateShadowPath()
-                    }
-                    if oldValue.size != value.size {
-                        self.needLayoutContent = true
-                        self.setNeedsLayout()
-                    }
-                }
-            }
-            get { return super.frame }
-        }
-        override var contentSize: CGSize {
-            set(value) {
-                if super.contentSize != value {
-                    self._contentView.frame = CGRect(origin: CGPoint.zero, size: value)
-                    super.contentSize = value
-                    self.setNeedsLayout()
-                }
-            }
-            get { return super.contentSize }
-        }
-        
-        private unowned var _view: View?
-        private var _contentView: UIView!
-        private var _layoutManager: QLayoutManager!
-        
-        override init(frame: CGRect) {
-            self.needLayoutContent = true
-            
-            super.init(frame: frame)
+        typealias Owner = QScrollView
+        typealias Content = NativeScrollView
 
-            if #available(iOS 11.0, *) {
-                self.contentInsetAdjustmentBehavior = .never
-            }
-            self.clipsToBounds = true
-            self.delegate = self
-            
-            self._contentView = UIView(frame: .zero)
-            self.addSubview(self._contentView)
-            
-            self._layoutManager = QLayoutManager(contentView: self._contentView, delegate: self)
+        static var reuseIdentificator: String {
+            return "QScrollView"
         }
         
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
+        static func createReuse(owner: Owner) -> Content {
+            return Content(frame: .zero)
         }
         
-        override func willMove(toSuperview superview: UIView?) {
-            super.willMove(toSuperview: superview)
-            
-            if superview != nil {
-                self.needLayoutContent = true
-                self.setNeedsLayout()
-            } else {
-                self._layoutManager.clear()
-            }
+        static func configureReuse(owner: Owner, content: Content) {
+            content.update(view: owner)
         }
         
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            
-            if self.needLayoutContent == true {
-                let frame = self.bounds
-                if #available(iOS 11.0, *) {
-                    let inset = self.adjustedContentInset
-                    self._layoutManager.layout(
-                        bounds: QRect(
-                            x: 0,
-                            y: 0,
-                            width: Float(frame.width - (inset.left + inset.right)),
-                            height: Float(frame.height - (inset.top + inset.bottom))
-                        )
-                    )
-                } else {
-                    self._layoutManager.layout(
-                        bounds: QRect(
-                            x: 0,
-                            y: 0,
-                            width: Float(frame.width),
-                            height: Float(frame.height)
-                        )
-                    )
-                }
-                self.contentSize = self._layoutManager.size.cgSize
-                self.customDelegate?._update(contentSize: self._layoutManager.size)
-                self.needLayoutContent = false
-            }
-            self._layoutManager.visible(bounds: QRect(self.bounds))
+        static func cleanupReuse(owner: Owner, content: Content) {
+            content.cleanup()
         }
         
     }
-        
+    
 }
 
-extension QScrollView.ScrollView {
+final class NativeScrollView : UIScrollView {
     
-    func update(view: QScrollView) {
+    typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
+    
+    unowned var customDelegate: ScrollViewDelegate?
+    var needLayoutContent: Bool {
+        didSet(oldValue) {
+            if self.needLayoutContent == true {
+                self.setNeedsLayout()
+            }
+        }
+    }
+    override var frame: CGRect {
+        set(value) {
+            if super.frame != value {
+                let oldValue = value
+                super.frame = value
+                if let view = self._view {
+                    self.update(cornerRadius: view.cornerRadius)
+                    self.updateShadowPath()
+                }
+                if oldValue.size != value.size {
+                    self.needLayoutContent = true
+                    self.setNeedsLayout()
+                }
+            }
+        }
+        get { return super.frame }
+    }
+    override var contentSize: CGSize {
+        set(value) {
+            if super.contentSize != value {
+                self._contentView.frame = CGRect(origin: CGPoint.zero, size: value)
+                super.contentSize = value
+                self.setNeedsLayout()
+            }
+        }
+        get { return super.contentSize }
+    }
+    
+    private unowned var _view: View?
+    private var _contentView: UIView!
+    private var _layoutManager: QLayoutManager!
+    
+    override init(frame: CGRect) {
+        self.needLayoutContent = true
+        
+        super.init(frame: frame)
+
+        if #available(iOS 11.0, *) {
+            self.contentInsetAdjustmentBehavior = .never
+        }
+        self.clipsToBounds = true
+        self.delegate = self
+        
+        self._contentView = UIView(frame: .zero)
+        self.addSubview(self._contentView)
+        
+        self._layoutManager = QLayoutManager(contentView: self._contentView, delegate: self)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func willMove(toSuperview superview: UIView?) {
+        super.willMove(toSuperview: superview)
+        
+        if superview != nil {
+            self.needLayoutContent = true
+            self.setNeedsLayout()
+        } else {
+            self._layoutManager.clear()
+        }
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        if self.needLayoutContent == true {
+            let frame = self.bounds
+            if #available(iOS 11.0, *) {
+                let inset = self.adjustedContentInset
+                self._layoutManager.layout(
+                    bounds: QRect(
+                        x: 0,
+                        y: 0,
+                        width: Float(frame.width - (inset.left + inset.right)),
+                        height: Float(frame.height - (inset.top + inset.bottom))
+                    )
+                )
+            } else {
+                self._layoutManager.layout(
+                    bounds: QRect(
+                        x: 0,
+                        y: 0,
+                        width: Float(frame.width),
+                        height: Float(frame.height)
+                    )
+                )
+            }
+            self.contentSize = self._layoutManager.size.cgSize
+            self.customDelegate?._update(contentSize: self._layoutManager.size)
+            self.needLayoutContent = false
+        }
+        self._layoutManager.visible(bounds: QRect(self.bounds))
+    }
+    
+}
+
+extension NativeScrollView {
+    
+    func update< Layout : IQLayout >(view: QScrollView< Layout >) {
         self._view = view
         self.update(direction: view.direction)
         self.update(indicatorDirection: view.indicatorDirection)
@@ -208,7 +231,7 @@ extension QScrollView.ScrollView {
     
 }
 
-extension QScrollView.ScrollView : UIScrollViewDelegate {
+extension NativeScrollView : UIScrollViewDelegate {
     
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         self.customDelegate?._beginScrolling()
@@ -236,7 +259,7 @@ extension QScrollView.ScrollView : UIScrollViewDelegate {
     
 }
 
-extension QScrollView.ScrollView : IQLayoutDelegate {
+extension NativeScrollView : IQLayoutDelegate {
     
     func setNeedUpdate(_ layout: IQLayout, force: Bool) {
         self.needLayoutContent = true
@@ -245,29 +268,6 @@ extension QScrollView.ScrollView : IQLayoutDelegate {
     
     func updateIfNeeded(_ layout: IQLayout) {
         self.layoutIfNeeded()
-    }
-    
-}
-
-extension QScrollView.ScrollView : IQReusable {
-    
-    typealias Owner = QScrollView
-    typealias Content = QScrollView.ScrollView
-
-    static var reuseIdentificator: String {
-        return "QScrollView"
-    }
-    
-    static func createReuse(owner: Owner) -> Content {
-        return Content(frame: .zero)
-    }
-    
-    static func configureReuse(owner: Owner, content: Content) {
-        content.update(view: owner)
-    }
-    
-    static func cleanupReuse(owner: Owner, content: Content) {
-        content.cleanup()
     }
     
 }

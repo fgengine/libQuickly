@@ -71,40 +71,40 @@ open class QInputToolbarView : IQInputToolbarView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var items: [IQInputToolbarItem] {
+    public var items: [IQInputToolbarItem] {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(items: self.items)
         }
     }
-    public private(set) var size: Float {
+    public var size: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(size: self.size)
         }
     }
-    public private(set) var isTranslucent: Bool {
+    public var isTranslucent: Bool {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(translucent: self.isTranslucent)
         }
     }
-    public private(set) var tintColor: QColor? {
+    public var tintColor: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(tintColor: self.tintColor)
         }
     }
-    public private(set) var contentTintColor: QColor {
+    public var contentTintColor: QColor {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(contentTintColor: self.contentTintColor)
         }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)

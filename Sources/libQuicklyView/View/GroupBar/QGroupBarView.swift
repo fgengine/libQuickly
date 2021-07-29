@@ -8,15 +8,15 @@ import libQuicklyCore
 public class QGroupBarView : QBarView, IQGroupBarView {
     
     public var delegate: IQGroupBarViewDelegate?
-    public private(set) var itemInset: QInset {
+    public var itemInset: QInset {
         set(value) { self._contentLayout.itemInset = value }
         get { return self._contentLayout.itemInset }
     }
-    public private(set) var itemSpacing: Float {
+    public var itemSpacing: Float {
         set(value) { self._contentLayout.itemSpacing = value }
         get { return self._contentLayout.itemSpacing }
     }
-    public private(set) var itemViews: [IQBarItemView] {
+    public var itemViews: [IQBarItemView] {
         set(value) {
             for itemView in self._itemViews {
                 itemView.delegate = nil
@@ -29,7 +29,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
         }
         get { return self._itemViews }
     }
-    public private(set) var selectedItemView: IQBarItemView? {
+    public var selectedItemView: IQBarItemView? {
         set(value) {
             guard self._selectedItemView !== value else { return }
             self._selectedItemView?.select(false)

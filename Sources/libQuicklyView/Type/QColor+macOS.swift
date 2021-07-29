@@ -6,39 +6,81 @@
 
 import AppKit
 
-public extension QColor {
+public struct QColor {
+    
+    public var native: UIColor
     
     @inlinable
-    var cgColor: CGColor {
-        return self.native.cgColor
+    public init(
+        r: Float,
+        g: Float,
+        b: Float,
+        a: Float = 1
+    ) {
+        self.native = NSColor(
+            red: r,
+            green: g,
+            blue: b,
+            alpha: a
+        )
     }
     
     @inlinable
-    var native: NSColor {
-        return NSColor(
-            red: CGFloat(self.r),
-            green: CGFloat(self.g),
-            blue: CGFloat(self.b),
-            alpha: CGFloat(self.a)
+    public init(
+        r: UInt8,
+        g: UInt8,
+        b: UInt8,
+        a: UInt8 = 255
+    ) {
+        self.native = NSColor(
+            red: Float(r) / 255,
+            green: Float(g) / 255,
+            blue: Float(b) / 255,
+            alpha: Float(a) / 255
+        )
+    }
+    
+    @inlinable
+    public init(
+        rgb: UInt32
+    ) {
+        self.native = NSColor(
+            red: Float((rgb >> 16) & 0xff) / 255.0,
+            green: Float((rgb >> 8) & 0xff) / 255.0,
+            blue: Float(rgb & 0xff) / 255.0,
+            alpha: 1
+        )
+    }
+    
+    @inlinable
+    public init(
+        rgba: UInt32
+    ) {
+        self.native = NSColor(
+            red: Float((rgba >> 24) & 0xff) / 255.0,
+            green: Float((rgba >> 16) & 0xff) / 255.0,
+            blue: Float((rgba >> 8) & 0xff) / 255.0,
+            alpha: Float(rgba & 0xff) / 255.0
         )
     }
     
     @inlinable
     init(_ native: NSColor) {
-        var r: CGFloat = 0
-        var g: CGFloat = 0
-        var b: CGFloat = 0
-        var a: CGFloat = 0
-        native.getRed(&r, green: &g, blue: &b, alpha: &a)
-        self.r = Float(r)
-        self.g = Float(g)
-        self.b = Float(b)
-        self.a = Float(a)
+        self.native = native
     }
     
     @inlinable
     init(_ cgColor: CGColor) {
         self.init(NSColor(cgColor: cgColor) ?? NSColor.black)
+    }
+    
+}
+
+public extension QColor {
+    
+    @inlinable
+    var cgColor: CGColor {
+        return self.native.cgColor
     }
     
 }

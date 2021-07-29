@@ -11,12 +11,19 @@ public struct QSize : Hashable {
     
     @inlinable
     public init(
-        width: Float = 0,
-        height: Float = 0
+        width: Float,
+        height: Float
     ) {
         self.width = width
         self.height = height
     }
+    
+}
+
+public extension QSize {
+    
+    static let infinity = QSize(width: .infinity, height: .infinity)
+    static let zero = QSize(width: 0, height: 0)
     
 }
 

@@ -14,10 +14,15 @@ public protocol IQPageBarViewDelegate : AnyObject {
 public protocol IQPageBarView : IQBarView {
     
     var delegate: IQPageBarViewDelegate? { set get }
+    
     var indicatorView: IQView { get }
+    
     var itemInset: QInset { get }
+    
     var itemSpacing: Float { get }
+    
     var itemViews: [IQBarItemView] { get }
+    
     var selectedItemView: IQBarItemView? { get }
     
     @discardableResult

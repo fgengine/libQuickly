@@ -44,12 +44,6 @@ public class QContentValueComposition< ContentView: IQView, ValueView: IQView > 
         self.valueItem = QLayoutItem(view: valueView)
     }
     
-    public func invalidate(item: QLayoutItem) {
-    }
-    
-    public func invalidate() {
-    }
-    
     public func layout(bounds: QRect) -> QSize {
         let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
         let contentValue = bounds.split(

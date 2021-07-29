@@ -13,10 +13,13 @@ public enum QImageViewMode {
 
 public protocol IQImageView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var width: QDimensionBehaviour? { get }
-    var height: QDimensionBehaviour? { get }
-    var image: QImage { get }
-    var mode: QImageViewMode { get }
+    var width: QDimensionBehaviour? { set get }
+    
+    var height: QDimensionBehaviour? { set get }
+    
+    var image: QImage { set get }
+    
+    var mode: QImageViewMode { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour?) -> Self

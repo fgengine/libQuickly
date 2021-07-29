@@ -7,11 +7,15 @@ import libQuicklyCore
 
 public protocol IQWebView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var width: QDimensionBehaviour { get }
-    var height: QDimensionBehaviour { get }
-    var contentInset: QInset { get }
-    var request: URLRequest? { get }
-    var isLoading: Bool { get }
+    var width: QDimensionBehaviour { set get }
+    
+    var height: QDimensionBehaviour { set get }
+    
+    var contentInset: QInset { set get }
+    
+    var request: URLRequest? { set get }
+    
+    var isLoading: Bool { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour) -> Self

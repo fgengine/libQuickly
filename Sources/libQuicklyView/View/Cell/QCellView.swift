@@ -27,35 +27,41 @@ public class QCellView< ContentView : IQView > : IQCellView {
         return self._view.bounds
     }
     public var shouldHighlighting: Bool {
+        set(value) { self._view.shouldHighlighting = value }
         get { return self._view.shouldHighlighting }
     }
     public var isHighlighted: Bool {
+        set(value) { self._view.isHighlighted = value }
         get { return self._view.isHighlighted }
     }
-    public private(set) var shouldPressed: Bool
+    public var shouldPressed: Bool
     public private(set) var contentView: ContentView {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
-            self._layout.contentItem = QLayoutItem(view: self.contentView)
+            self._view.contentLayout.contentItem = QLayoutItem(view: self.contentView)
         }
     }
     public var color: QColor? {
+        set(value) { self._view.color = value }
         get { return self._view.color }
     }
     public var cornerRadius: QViewCornerRadius {
+        set(value) { self._view.cornerRadius = value }
         get { return self._view.cornerRadius }
     }
     public var border: QViewBorder {
+        set(value) { self._view.border = value }
         get { return self._view.border }
     }
     public var shadow: QViewShadow? {
+        set(value) { self._view.shadow = value }
         get { return self._view.shadow }
     }
     public var alpha: Float {
+        set(value) { self._view.alpha = value }
         get { return self._view.alpha }
     }
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _pressedGesture: IQTapGesture
@@ -73,14 +79,13 @@ public class QCellView< ContentView : IQView > : IQCellView {
     ) {
         self.shouldPressed = shouldPressed
         self.contentView = contentView
-        self._layout = Layout(
-            contentItem: QLayoutItem(view: contentView)
-        )
         #if os(iOS)
         self._pressedGesture = QTapGesture()
         self._view = QCustomView(
             gestures: [ self._pressedGesture ],
-            contentLayout: self._layout,
+            contentLayout: Layout(
+                contentItem: QLayoutItem(view: contentView)
+            ),
             shouldHighlighting: true,
             color: color,
             border: border,
@@ -90,7 +95,9 @@ public class QCellView< ContentView : IQView > : IQCellView {
         )
         #else
         self._view = QCustomView(
-            layout: self._layout,
+            contentLayout: Layout(
+                contentItem: QLayoutItem(view: contentView)
+            ),
             shouldHighlighting: true,
             color: color,
             border: border,
@@ -212,12 +219,6 @@ private extension QCellView {
             contentItem: QLayoutItem
         ) {
             self.contentItem = contentItem
-        }
-        
-        func invalidate(item: QLayoutItem) {
-        }
-        
-        func invalidate() {
         }
         
         func layout(bounds: QRect) -> QSize {

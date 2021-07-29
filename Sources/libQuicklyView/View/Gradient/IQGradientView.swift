@@ -50,9 +50,11 @@ public struct QGradientViewPoint {
 
 public protocol IQGradientView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
-    var width: QDimensionBehaviour { get }
-    var height: QDimensionBehaviour { get }
-    var fill: QGradientViewFill { get }
+    var width: QDimensionBehaviour { set get }
+    
+    var height: QDimensionBehaviour { set get }
+    
+    var fill: QGradientViewFill { set get }
     
     @discardableResult
     func width(_ value: QDimensionBehaviour) -> Self

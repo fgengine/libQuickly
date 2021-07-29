@@ -7,31 +7,31 @@ import libQuicklyCore
 
 public protocol IQInputStringView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
-    var width: QDimensionBehaviour { get }
+    var width: QDimensionBehaviour { set get }
     
-    var height: QDimensionBehaviour { get }
+    var height: QDimensionBehaviour { set get }
     
-    var text: String { get }
+    var text: String { set get }
     
-    var textFont: QFont { get }
+    var textFont: QFont { set get }
     
-    var textColor: QColor { get }
+    var textColor: QColor { set get }
     
-    var textInset: QInset { get }
+    var textInset: QInset { set get }
     
-    var editingColor: QColor { get }
+    var editingColor: QColor { set get }
     
-    var placeholder: QInputPlaceholder { get }
+    var placeholder: QInputPlaceholder { set get }
     
-    var placeholderInset: QInset? { get }
+    var placeholderInset: QInset? { set get }
     
-    var alignment: QTextAlignment { get }
+    var alignment: QTextAlignment { set get }
     
     #if os(iOS)
     
-    var toolbar: IQInputToolbarView? { get }
+    var toolbar: IQInputToolbarView? { set get }
     
-    var keyboard: QInputKeyboard? { get }
+    var keyboard: QInputKeyboard? { set get }
     
     #endif
     

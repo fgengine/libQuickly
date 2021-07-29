@@ -22,7 +22,7 @@ public extension IQScreenViewable {
     
 }
 
-public extension IQScreenViewable where Self : IQScreen, View : QScrollView {
+public extension IQScreenViewable where Self : IQScreen, View : IQScrollView {
     
     func didChangeInsets() {
         self.view.contentInset(self.inheritedInsets)

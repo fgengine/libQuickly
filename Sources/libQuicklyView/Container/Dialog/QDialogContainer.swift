@@ -96,7 +96,7 @@ public class QDialogContainer : IQDialogContainer {
         #endif
         self._contentContainer = contentContainer
         self._layout = Layout(
-            containerInset: QInset(),
+            containerInset: .zero,
             contentItem: QLayoutItem(view: contentContainer.view),
             state: .idle
         )

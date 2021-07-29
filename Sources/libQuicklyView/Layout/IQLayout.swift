@@ -56,6 +56,14 @@ public extension IQLayout {
     }
     
     @inlinable
+    func invalidate(item: QLayoutItem) {
+    }
+    
+    @inlinable
+    func invalidate() {
+    }
+    
+    @inlinable
     func visible(items: [QLayoutItem], for bounds: QRect) -> [QLayoutItem] {
         guard let firstIndex = items.firstIndex(where: { return bounds.isIntersects(rect: $0.frame) }) else { return [] }
         var result: [QLayoutItem] = [ items[firstIndex] ]
@@ -70,35 +78,6 @@ public extension IQLayout {
             }
         }
         return result
-    }
-    
-}
-
-public class QLayoutItem {
-    
-    public var frame: QRect
-    public private(set) var view: IQView
-    
-    public init(
-        view: IQView
-    ) {
-        self.frame = QRect()
-        self.view = view
-        
-        self.view.item = self
-    }
-    
-    deinit {
-        self.view.item = nil
-    }
-    
-}
-
-public extension QLayoutItem {
-    
-    @inlinable
-    func size(_ available: QSize) -> QSize {
-        return self.view.size(available)
     }
     
 }

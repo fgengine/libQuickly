@@ -235,17 +235,6 @@ public extension QListLayout {
 
 public extension QListLayout.Helper {
     
-    enum Origin {
-        case forward
-        case backward
-    }
-    
-    enum Alignment {
-        case leading
-        case center
-        case trailing
-        case fill
-    }
     
     enum OperationType {
         case insert
@@ -928,8 +917,8 @@ private extension QListLayout.Helper {
         cache: inout [QSize?],
         keyPath: WritableKeyPath< QSize, Float >
     ) -> SizePass {
-        var fillSize = QSize()
-        var maxSize = QSize()
+        var fillSize = QSize.zero
+        var maxSize = QSize.zero
         var sizes = Array< QSize >()
         for index in 0 ..< items.count {
             var itemSize: QSize

@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public protocol IQViewSelectable : IQViewStyleable {
     
-    var isSelected: Bool { get }
+    var isSelected: Bool { set get }
     
     @discardableResult
     func select(_ value: Bool) -> Self

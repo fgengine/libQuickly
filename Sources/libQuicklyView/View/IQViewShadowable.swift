@@ -29,7 +29,7 @@ public struct QViewShadow {
 
 public protocol IQViewShadowable : AnyObject {
     
-    var shadow: QViewShadow? { get }
+    var shadow: QViewShadow? { set get }
     
     @discardableResult
     func shadow(_ value: QViewShadow?) -> Self

@@ -11,10 +11,10 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
-        x: Float = 0,
-        y: Float = 0,
-        width: Float = 0,
-        height: Float = 0
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float
     ) {
         self.origin = QPoint(x: x, y: y)
         self.size = QSize(width: width, height: height)
@@ -124,6 +124,12 @@ public struct QRect : Hashable {
         )
         self.size = size
     }
+    
+}
+
+public extension QRect {
+    
+    static var zero = QRect(x: 0, y: 0, width: 0, height: 0)
     
 }
 

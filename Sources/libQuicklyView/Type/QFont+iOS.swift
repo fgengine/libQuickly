@@ -21,6 +21,14 @@ public struct QFont {
     
     @inlinable
     public init(
+        name: String,
+        size: Float
+    ) {
+        self.native = UIFont(name: name, size: CGFloat(size))!
+    }
+    
+    @inlinable
+    public init(
         _ native: UIFont
     ) {
         self.native = native

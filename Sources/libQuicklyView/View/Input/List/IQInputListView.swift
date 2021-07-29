@@ -13,29 +13,29 @@ public protocol IQInputListViewItem : AnyObject {
 
 public protocol IQInputListView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
-    var width: QDimensionBehaviour { get }
+    var width: QDimensionBehaviour { set get }
     
-    var height: QDimensionBehaviour { get }
+    var height: QDimensionBehaviour { set get }
     
-    var items: [IQInputListViewItem] { get }
+    var items: [IQInputListViewItem] { set get }
     
-    var selectedItem: IQInputListViewItem? { get }
+    var selectedItem: IQInputListViewItem? { set get }
     
-    var textFont: QFont { get }
+    var textFont: QFont { set get }
     
-    var textColor: QColor { get }
+    var textColor: QColor { set get }
     
-    var textInset: QInset { get }
+    var textInset: QInset { set get }
     
-    var placeholder: QInputPlaceholder { get }
+    var placeholder: QInputPlaceholder { set get }
     
-    var placeholderInset: QInset? { get }
+    var placeholderInset: QInset? { set get }
     
-    var alignment: QTextAlignment { get }
+    var alignment: QTextAlignment { set get }
     
     #if os(iOS)
     
-    var toolbar: IQInputToolbarView? { get }
+    var toolbar: IQInputToolbarView? { set get }
     
     #endif
     

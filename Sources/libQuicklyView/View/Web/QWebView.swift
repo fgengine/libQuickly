@@ -23,61 +23,61 @@ public class QWebView : IQWebView {
         return self._reuse.isLoaded
     }
     public var bounds: QRect {
-        guard self.isLoaded == true else { return QRect() }
+        guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
-    public private(set) var width: QDimensionBehaviour {
+    public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var height: QDimensionBehaviour {
+    public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceUpdate()
         }
     }
-    public private(set) var isLoading: Bool
-    public private(set) var contentInset: QInset {
+    public var isLoading: Bool
+    public var contentInset: QInset {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(contentInset: self.contentInset)
         }
     }
-    public private(set) var request: URLRequest? {
+    public var request: URLRequest? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(request: request)
         }
     }
-    public private(set) var color: QColor? {
+    public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
-    public private(set) var cornerRadius: QViewCornerRadius {
+    public var cornerRadius: QViewCornerRadius {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var border: QViewBorder {
+    public var border: QViewBorder {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
-    public private(set) var shadow: QViewShadow? {
+    public var shadow: QViewShadow? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
             self._view.updateShadowPath()
         }
     }
-    public private(set) var alpha: Float {
+    public var alpha: Float {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
@@ -97,7 +97,7 @@ public class QWebView : IQWebView {
     public init(
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
-        contentInset: QInset = QInset(),
+        contentInset: QInset = .zero,
         color: QColor? = QColor(rgba: 0x00000000),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,

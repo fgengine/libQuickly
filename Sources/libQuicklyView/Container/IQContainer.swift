@@ -44,7 +44,7 @@ public protocol IQContainer : AnyObject {
 public extension IQContainer {
     
     var inheritedInsets: QInset {
-        return QInset()
+        return .zero
     }
     
 }

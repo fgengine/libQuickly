@@ -86,12 +86,9 @@ final class NativeCustomView : UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let frame = QRect(self.frame)
-        self._layoutManager.layout(bounds: QRect(self.bounds))
-        if self._layoutManager.size != frame.size {
-            self._layoutManager.layout?.setNeedForceUpdate()
-        }
-        self._layoutManager.visible(bounds: QRect(self.bounds))
+        let bounds = QRect(self.bounds)
+        self._layoutManager.layout(bounds:bounds)
+        self._layoutManager.visible(bounds: bounds)
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -132,7 +129,7 @@ final class NativeCustomView : UIView {
 
 extension NativeCustomView {
     
-    func update< View : IQCustomView & NativeCustomViewDelegate >(view: View) {
+    func update< Layout : IQLayout >(view: QCustomView< Layout >) {
         self._view = view
         self.update(gestures: view.gestures)
         self.update(contentLayout: view.contentLayout)

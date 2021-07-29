@@ -74,12 +74,6 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
         self.valueItem = QLayoutItem(view: valueView)
     }
     
-    public func invalidate(item: QLayoutItem) {
-    }
-    
-    public func invalidate() {
-    }
-    
     public func layout(bounds: QRect) -> QSize {
         let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
         let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
