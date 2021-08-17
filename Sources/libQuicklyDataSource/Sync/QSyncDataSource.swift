@@ -113,6 +113,7 @@ private extension QSyncDataSource {
     func _didSync(result: Result) {
         self._query = nil
         self.result = result
+        self.error = nil
         self.syncAt = Date()
         self.loader.didPerform(result: result)
         self.didSync(result: result)

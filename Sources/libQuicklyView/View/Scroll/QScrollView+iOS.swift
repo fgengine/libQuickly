@@ -235,24 +235,25 @@ extension NativeScrollView {
     
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint? {
         guard let item = view.item else { return nil }
-        let contentSize = QSize(self.contentSize)
-        let visibleSize = QSize(self.bounds.size)
-        let itemFrame = item.frame
-        let x: Float
+        let contentInset = self.contentInset
+        let contentSize = self.contentSize
+        let visibleSize = self.bounds.size
+        let itemFrame = item.frame.cgRect
+        let x: CGFloat
         switch horizontal {
         case .leading: x = itemFrame.origin.x
         case .center: x = (itemFrame.origin.x + (itemFrame.size.width / 2)) - (visibleSize.width / 2)
         case .trailing: x = (itemFrame.origin.x + itemFrame.size.width) - visibleSize.width
         }
-        let y: Float
+        let y: CGFloat
         switch vertical {
         case .leading: y = itemFrame.origin.y
         case .center: y = (itemFrame.origin.y + (itemFrame.size.height / 2)) - (visibleSize.height / 2)
         case .trailing: y = (itemFrame.origin.y + itemFrame.size.height) - visibleSize.height
         }
         return QPoint(
-            x: max(0, min(x, contentSize.width - visibleSize.width)),
-            y: max(0, min(y, contentSize.height - visibleSize.height))
+            x: Float(max(-contentInset.left, min(x - contentInset.left, contentSize.width - visibleSize.width))),
+            y: Float(max(-contentInset.top, min(y - contentInset.top, contentSize.height - visibleSize.height)))
         )
     }
     

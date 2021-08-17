@@ -88,6 +88,7 @@ private extension QSimpleParamsActionDataSource {
 
     func _didPerform() {
         self._query = nil
+        self.error = nil
         self.loader.didPerform()
         self.didPerform()
     }

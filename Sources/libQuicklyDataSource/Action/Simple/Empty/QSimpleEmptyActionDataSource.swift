@@ -86,6 +86,7 @@ private extension QSimpleEmptyActionDataSource {
 
     func _didPerform() {
         self._query = nil
+        self.error = nil
         self.loader.didPerform()
         self.didPerform()
     }

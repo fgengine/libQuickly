@@ -98,6 +98,7 @@ private extension QPageDataSource {
         } else {
             self.result?.append(contentsOf: result)
         }
+        self.error = nil
         self.canMore = canMore
         self.loader.didPerform(isFirst: isFirst, result: result, canMore: canMore)
         self.didLoad(isFirst: isFirst, result: result, canMore: canMore)

@@ -102,6 +102,7 @@ private extension QCursorDataSource {
             self.result?.append(contentsOf: result)
         }
         self.cursor = cursor
+        self.error = nil
         self.canMore = canMore
         self.loader.didPerform(isFirst: isFirst, result: result, cursor: cursor, canMore: canMore)
         self.didLoad(isFirst: isFirst, result: result, cursor: cursor, canMore: canMore)

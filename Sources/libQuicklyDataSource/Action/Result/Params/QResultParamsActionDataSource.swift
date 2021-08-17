@@ -93,6 +93,7 @@ private extension QResultParamsActionDataSource {
     func _didPerform(result: Result) {
         self._query = nil
         self.result = result
+        self.error = nil
         self.loader.didPerform(result: result)
         self.didPerform(result: result)
     }

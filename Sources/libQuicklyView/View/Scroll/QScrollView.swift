@@ -184,7 +184,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     }
     
     public func size(_ available: QSize) -> QSize {
-        return self.contentLayout.size(available)
+        return available
     }
     
     public func appear(to layout: IQLayout) {
