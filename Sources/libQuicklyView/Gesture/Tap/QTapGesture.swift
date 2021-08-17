@@ -12,15 +12,32 @@ public final class QTapGesture : NSObject, IQTapGesture {
     public var native: QNativeGesture {
         return self._native
     }
-    public private(set) var isEnabled: Bool {
+    public var isEnabled: Bool {
         set(value) { self._native.isEnabled = value }
         get { return self._native.isEnabled }
     }
-    public private(set) var numberOfTapsRequired: UInt {
+    public var cancelsTouchesInView: Bool {
+        set(value) { self._native.cancelsTouchesInView = value }
+        get { return self._native.cancelsTouchesInView }
+    }
+    public var delaysTouchesBegan: Bool {
+        set(value) { self._native.delaysTouchesBegan = value }
+        get { return self._native.delaysTouchesBegan }
+    }
+    public var delaysTouchesEnded: Bool {
+        set(value) { self._native.delaysTouchesEnded = value }
+        get { return self._native.delaysTouchesEnded }
+    }
+    @available(iOS 9.2, *)
+    public var requiresExclusiveTouchType: Bool {
+        set(value) { self._native.requiresExclusiveTouchType = value }
+        get { return self._native.requiresExclusiveTouchType }
+    }
+    public var numberOfTapsRequired: UInt {
         set(value) { self._native.numberOfTapsRequired = Int(value) }
         get { return UInt(self._native.numberOfTapsRequired) }
     }
-    public private(set) var numberOfTouchesRequired: UInt {
+    public var numberOfTouchesRequired: UInt {
         set(value) { self._native.numberOfTouchesRequired = Int(value) }
         get { return UInt(self._native.numberOfTouchesRequired) }
     }
@@ -33,10 +50,41 @@ public final class QTapGesture : NSObject, IQTapGesture {
     private var _onTriggered: (() -> Void)?
     
     public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true,
         numberOfTapsRequired: UInt = 1,
         numberOfTouchesRequired: UInt = 1
     ) {
         self._native = UITapGestureRecognizer()
+        self._native.isEnabled = isEnabled
+        self._native.cancelsTouchesInView = cancelsTouchesInView
+        self._native.delaysTouchesBegan = delaysTouchesBegan
+        self._native.delaysTouchesEnded = delaysTouchesEnded
+        self._native.numberOfTapsRequired = Int(numberOfTapsRequired)
+        self._native.numberOfTouchesRequired = Int(numberOfTouchesRequired)
+        super.init()
+        self._native.delegate = self
+        self._native.addTarget(self, action: #selector(self._handle))
+    }
+        
+    @available(iOS 9.2, *)
+    public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true,
+        requiresExclusiveTouchType: Bool = true,
+        numberOfTapsRequired: UInt = 1,
+        numberOfTouchesRequired: UInt = 1
+    ) {
+        self._native = UITapGestureRecognizer()
+        self._native.isEnabled = isEnabled
+        self._native.cancelsTouchesInView = cancelsTouchesInView
+        self._native.delaysTouchesBegan = delaysTouchesBegan
+        self._native.delaysTouchesEnded = delaysTouchesEnded
+        self._native.requiresExclusiveTouchType = requiresExclusiveTouchType
         self._native.numberOfTapsRequired = Int(numberOfTapsRequired)
         self._native.numberOfTouchesRequired = Int(numberOfTouchesRequired)
         super.init()
@@ -112,6 +160,13 @@ private extension QTapGesture {
 }
 
 extension QTapGesture : UIGestureRecognizerDelegate {
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if touch.view is UIControl {
+            return false
+        }
+        return true
+    }
     
     public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         return self._onShouldBegin?() ?? true

@@ -19,30 +19,31 @@ public class QTextView : IQTextView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var width: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var text: String {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(text: self.text)
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var textFont: QFont {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(textFont: self.textFont)
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var textColor: QColor {
@@ -55,21 +56,21 @@ public class QTextView : IQTextView {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(alignment: self.alignment)
-            self.setNeedUpdate()
+            self.setNeedLayout()
         }
     }
     public var lineBreak: QTextLineBreak {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(lineBreak: self.lineBreak)
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var numberOfLines: UInt {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(numberOfLines: self.numberOfLines)
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var color: QColor? {
@@ -107,13 +108,19 @@ public class QTextView : IQTextView {
     
     private var _reuse: QReuseItem< TextView >
     private var _view: TextView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
+    private var _cacheAvailable: QSize?
+    private var _cacheSize: QSize?
     
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        reuseName: String? = nil,
         width: QDimensionBehaviour? = nil,
         height: QDimensionBehaviour? = nil,
         text: String,
@@ -122,12 +129,13 @@ public class QTextView : IQTextView {
         alignment: QTextAlignment = .left,
         lineBreak: QTextLineBreak = .wordWrapping,
         numberOfLines: UInt = 0,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = QColor(r: 0.0, g: 0.0, b: 0.0, a: 0.0),
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.width = width
         self.height = height
         self.text = text
@@ -141,24 +149,56 @@ public class QTextView : IQTextView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
-        if let width = self.width, let height = self.height {
-            return available.apply(width: width, height: height)
-        } else if let width = self.width {
-            return self.text.size(font: self.textFont, available: QSize(
-                width: available.width.apply(width),
-                height: available.height
-            ))
-        } else if let height = self.height {
-            return self.text.size(font: self.textFont, available: QSize(
-                width: available.width,
-                height: available.height.apply(height)
-            ))
+        if let cacheAvailable = self._cacheAvailable, let cacheSize = self._cacheSize {
+            if cacheAvailable == available {
+                return cacheSize
+            } else {
+                self._cacheAvailable = nil
+                self._cacheSize = nil
+            }
         }
-        return self.text.size(font: self.textFont, available: available)
+        let size: QSize
+        if let width = self.width, let height = self.height {
+            size = available.apply(width: width, height: height)
+        } else if let width = self.width {
+            let availableSize = QSize(
+                width: width.value(available.width) ?? 0,
+                height: available.height
+            )
+            let textSize = self.text.size(font: self.textFont, available: availableSize)
+            size = QSize(
+                width: availableSize.width,
+                height: textSize.height
+            )
+        } else if let height = self.height {
+            let availableSize = QSize(
+                width: available.width,
+                height: height.value(available.height) ?? 0
+            )
+            let textSize = self.text.size(font: self.textFont, available: availableSize)
+            size = QSize(
+                width: textSize.width,
+                height: availableSize.height
+            )
+        } else {
+            size = self.text.size(font: self.textFont, available: available)
+        }
+        self._cacheAvailable = available
+        self._cacheSize = size
+        return size
     }
     
     public func appear(to layout: IQLayout) {
@@ -167,9 +207,23 @@ public class QTextView : IQTextView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     @discardableResult
@@ -259,6 +313,24 @@ public class QTextView : IQTextView {
     @discardableResult
     public func onDisappear(_ value: (() -> Void)?) -> Self {
         self._onDisappear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
         return self
     }
 

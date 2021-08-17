@@ -37,8 +37,8 @@ public final class QVirtualKeyboard {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardDidHideNotification, object: nil)
     }
 
-    public func add(observer: IQVirtualKeyboardObserver) {
-        self._observer.add(observer, priority: 0)
+    public func add(observer: IQVirtualKeyboardObserver, priority: QObserverPriority) {
+        self._observer.add(observer, priority: priority)
     }
 
     public func remove(observer: IQVirtualKeyboardObserver) {

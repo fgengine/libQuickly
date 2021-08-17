@@ -31,6 +31,16 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        topLeft: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = topLeft
+        self.size = QSize(width: width, height: height)
+    }
+    
+    @inlinable
+    public init(
         top: QPoint,
         size: QSize
     ) {
@@ -39,6 +49,19 @@ public struct QRect : Hashable {
             y: top.y
         )
         self.size = size
+    }
+    
+    @inlinable
+    public init(
+        top: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: top.x - (width / 2),
+            y: top.y
+        )
+        self.size = QSize(width: width, height: height)
     }
     
     @inlinable
@@ -55,6 +78,19 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        topRight: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: topRight.x - width,
+            y: topRight.y
+        )
+        self.size = QSize(width: width, height: height)
+    }
+    
+    @inlinable
+    public init(
         left: QPoint,
         size: QSize
     ) {
@@ -63,6 +99,19 @@ public struct QRect : Hashable {
             y: left.y - (size.height / 2)
         )
         self.size = size
+    }
+    
+    @inlinable
+    public init(
+        left: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: left.x,
+            y: left.y - (height / 2)
+        )
+        self.size = QSize(width: width, height: height)
     }
     
     @inlinable
@@ -79,6 +128,19 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        center: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: center.x - (width / 2),
+            y: center.y - (height / 2)
+        )
+        self.size = QSize(width: width, height: height)
+    }
+    
+    @inlinable
+    public init(
         right: QPoint,
         size: QSize
     ) {
@@ -87,6 +149,19 @@ public struct QRect : Hashable {
             y: right.y - (size.height / 2)
         )
         self.size = size
+    }
+    
+    @inlinable
+    public init(
+        right: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: right.x - width,
+            y: right.y - (height / 2)
+        )
+        self.size = QSize(width: width, height: height)
     }
     
     @inlinable
@@ -103,6 +178,19 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        bottomLeft: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: bottomLeft.x,
+            y: bottomLeft.y - height
+        )
+        self.size = QSize(width: width, height: height)
+    }
+    
+    @inlinable
+    public init(
         bottom: QPoint,
         size: QSize
     ) {
@@ -115,6 +203,19 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        bottom: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: bottom.x - (width / 2),
+            y: bottom.y - height
+        )
+        self.size = QSize(width: width, height: height)
+    }
+    
+    @inlinable
+    public init(
         bottomRight: QPoint,
         size: QSize
     ) {
@@ -123,6 +224,19 @@ public struct QRect : Hashable {
             y: bottomRight.y - size.height
         )
         self.size = size
+    }
+    
+    @inlinable
+    public init(
+        bottomRight: QPoint,
+        width: Float,
+        height: Float
+    ) {
+        self.origin = QPoint(
+            x: bottomRight.x - width,
+            y: bottomRight.y - height
+        )
+        self.size = QSize(width: width, height: height)
     }
     
 }
@@ -258,6 +372,18 @@ public extension QRect {
         guard self.origin.y <= rect.origin.y + rect.size.height && self.origin.y + self.size.height >= rect.origin.y else { return false }
         return true
     }
+    
+    @inlinable
+    func isHorizontalIntersects(rect: QRect) -> Bool {
+        guard self.origin.x <= rect.origin.x + rect.size.width && self.origin.x + self.size.width >= rect.origin.x else { return false }
+        return true
+    }
+    
+    @inlinable
+    func isVerticalIntersects(rect: QRect) -> Bool {
+        guard self.origin.y <= rect.origin.y + rect.size.height && self.origin.y + self.size.height >= rect.origin.y else { return false }
+        return true
+    }
 
     @inlinable
     func offset(x: Float, y: Float) -> QRect {
@@ -311,10 +437,10 @@ public extension QRect {
     }
     
     @inlinable
-    func apply(width: QDimensionBehaviour, height: QDimensionBehaviour) -> QRect {
+    func apply(width: QDimensionBehaviour?, height: QDimensionBehaviour?, aspectRatio: Float? = nil) -> QRect {
         return QRect(
             center: self.center,
-            size: self.size.apply(width: width, height: height)
+            size: self.size.apply(width: width, height: height, aspectRatio: aspectRatio)
         )
     }
     

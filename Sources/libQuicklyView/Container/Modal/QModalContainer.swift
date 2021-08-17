@@ -12,29 +12,37 @@ public class QModalContainer : IQModalContainer {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
-        return self._contentContainer.shouldInteractive
+        return self.contentContainer?.shouldInteractive ?? false
     }
     #if os(iOS)
     public var statusBarHidden: Bool {
-        guard let current = self._current else { return self._contentContainer.statusBarHidden }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarHidden ?? false
+        }
         return current.container.statusBarHidden
     }
     public var statusBarStyle: UIStatusBarStyle {
-        guard let current = self._current else { return self._contentContainer.statusBarStyle }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarStyle ?? .default
+        }
         return current.container.statusBarStyle
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        guard let current = self._current else { return self._contentContainer.statusBarAnimation }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarAnimation ?? .fade
+        }
         return current.container.statusBarAnimation
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        guard let current = self._current else { return self._contentContainer.supportedOrientations }
+        guard let current = self._current else {
+            return self.contentContainer?.supportedOrientations ?? .all
+        }
         return current.container.supportedOrientations
     }
     #endif
@@ -42,22 +50,24 @@ public class QModalContainer : IQModalContainer {
     public var view: IQView {
         return self._view
     }
-    public var contentContainer: IQContainer & IQContainerParentable {
-        set(value) {
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+    public var contentContainer: (IQContainer & IQContainerParentable)? {
+        didSet(oldValue) {
+            if let contentContainer = self.contentContainer {
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
+                contentContainer.parent = nil
             }
-            self._contentContainer.parent = nil
-            self._contentContainer = value
-            self._layout.contentItem = QLayoutItem(view: value.view)
-            self._contentContainer.parent = self
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+            self._view.contentLayout.contentItem = self.contentContainer.flatMap({ QLayoutItem(view: $0.view) })
+            if let contentContainer = self.contentContainer {
+                contentContainer.parent = self
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
             }
         }
-        get { return self._contentContainer }
     }
     public var containers: [IQModalContentContainer] {
         return self._items.compactMap({ return $0.container })
@@ -73,53 +83,62 @@ public class QModalContainer : IQModalContainer {
     public var interactiveLimit: Float
     #endif
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: QPanGesture
     private var _interactiveBeginLocation: QPoint?
     #endif
-    private var _contentContainer: IQContainer & IQContainerParentable
     private var _items: [Item]
     private var _previous: Item?
-    private var _current: Item?
+    private var _current: Item? {
+        didSet {
+            #if os(iOS)
+            self._interactiveGesture.isEnabled = self._current != nil
+            #endif
+        }
+    }
     
     public init(
-        contentContainer: IQContainer & IQContainerParentable
+        contentContainer: (IQContainer & IQContainerParentable)? = nil
     ) {
         self.isPresented = false
         #if os(iOS)
         self.animationVelocity = 500
         self.interactiveLimit = 20
         #endif
-        self._contentContainer = contentContainer
-        self._layout = Layout(
-            containerInset: .zero,
-            contentItem: QLayoutItem(view: contentContainer.view),
-            state: .empty
-        )
+        self.contentContainer = contentContainer
         #if os(iOS)
-        self._interactiveGesture = QPanGesture()
+        self._interactiveGesture = QPanGesture(
+            isEnabled: false
+        )
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .empty
+            )
         )
         #else
         self._view = QCustomView(
-            contentLayout: self._layout
+            contentLayout: Layout(
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .empty
+            )
         )
         #endif
         self._items = []
         self._init()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        return self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        return self.inheritedInsets(interactive: interactive)
     }
     
     public func didChangeInsets() {
-        self._layout.containerInset = self.inheritedInsets
-        self._contentContainer.didChangeInsets()
+        self._view.contentLayout.containerInset = self.inheritedInsets(interactive: true)
+        self.contentContainer?.didChangeInsets()
         for container in self.containers {
             container.didChangeInsets()
         }
@@ -131,38 +150,42 @@ public class QModalContainer : IQModalContainer {
                 return true
             }
         }
-        return self._contentContainer.activate()
+        if let contentContainer = self.contentContainer {
+            return contentContainer.activate()
+        }
+        return false
     }
     
     public func prepareShow(interactive: Bool) {
-        self._contentContainer.prepareShow(interactive: interactive)
+        self.didChangeInsets()
+        self.contentContainer?.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
     }
     
     public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self._contentContainer.finishShow(interactive: interactive)
+        self.contentContainer?.finishShow(interactive: interactive)
         self.currentContainer?.finishShow(interactive: interactive)
     }
     
     public func cancelShow(interactive: Bool) {
-        self._contentContainer.cancelShow(interactive: interactive)
+        self.contentContainer?.cancelShow(interactive: interactive)
         self.currentContainer?.cancelShow(interactive: interactive)
     }
     
     public func prepareHide(interactive: Bool) {
-        self._contentContainer.prepareHide(interactive: interactive)
+        self.contentContainer?.prepareHide(interactive: interactive)
         self.currentContainer?.prepareHide(interactive: interactive)
     }
     
     public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self._contentContainer.finishHide(interactive: interactive)
+        self.contentContainer?.finishHide(interactive: interactive)
         self.currentContainer?.finishHide(interactive: interactive)
     }
     
     public func cancelHide(interactive: Bool) {
-        self._contentContainer.cancelHide(interactive: interactive)
+        self.contentContainer?.cancelHide(interactive: interactive)
         self.currentContainer?.cancelHide(interactive: interactive)
     }
     
@@ -205,12 +228,13 @@ extension QModalContainer : IQRootContentContainer {
 private extension QModalContainer {
     
     func _init() {
-        self._contentContainer.parent = self
+        self.contentContainer?.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
-            guard self._current != nil else { return false }
             guard let view = gesture.view else { return false }
-            guard self.contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            if let contentContainer = self.contentContainer {
+                guard contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            }
             return true
         }).onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -248,19 +272,19 @@ private extension QModalContainer {
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .present(modal: modal, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .present(modal: modal, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
                     modal.container.finishShow(interactive: false)
-                    self._layout.state = .idle(modal: modal)
+                    self._view.contentLayout.state = .idle(modal: modal)
                     completion?()
                 }
             )
         } else {
             modal.container.finishShow(interactive: false)
-            self._layout.state = .idle(modal: modal)
+            self._view.contentLayout.state = .idle(modal: modal)
         }
     }
 
@@ -284,19 +308,19 @@ private extension QModalContainer {
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .dismiss(modal: modal, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(modal: modal, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
                     modal.container.finishHide(interactive: false)
-                    self._layout.state = .empty
+                    self._view.contentLayout.state = .empty
                     completion?()
                 }
             )
         } else {
             modal.container.finishHide(interactive: false)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
         }
     }
     
@@ -318,9 +342,9 @@ private extension QModalContainer {
         let deltaLocation = currentLocation.y - beginLocation.y
         if deltaLocation > 0 {
             let progress = deltaLocation / self._view.bounds.size.height
-            self._layout.state = .dismiss(modal: current, progress: progress)
+            self._view.contentLayout.state = .dismiss(modal: current, progress: progress)
         } else {
-            self._layout.state = .idle(modal: current)
+            self._view.contentLayout.state = .idle(modal: current)
         }
     }
 
@@ -335,8 +359,8 @@ private extension QModalContainer {
                 elapsed: TimeInterval(-deltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .dismiss(modal: current, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(modal: current, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -350,8 +374,8 @@ private extension QModalContainer {
                 duration: TimeInterval((height * baseProgress) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .present(modal: current, progress: 1 + (baseProgress - (baseProgress * progress)))
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .present(modal: current, progress: 1 + (baseProgress - (baseProgress * progress)))
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -359,7 +383,7 @@ private extension QModalContainer {
                 }
             )
         } else {
-            self._layout.state = .idle(modal: current)
+            self._view.contentLayout.state = .idle(modal: current)
             self._cancelInteractiveAnimation()
         }
     }
@@ -377,11 +401,11 @@ private extension QModalContainer {
                 self._present(modal: previous, animated: true, completion: nil)
             } else {
                 self._current = nil
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
             }
         } else {
             self._current = nil
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
         }
     }
     
@@ -389,9 +413,9 @@ private extension QModalContainer {
         self._interactiveBeginLocation = nil
         if let current = self._current {
             current.container.cancelHide(interactive: true)
-            self._layout.state = .idle(modal: current)
+            self._view.contentLayout.state = .idle(modal: current)
         } else {
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
         }
     }
     
@@ -422,10 +446,10 @@ private extension QModalContainer {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var containerInset: QInset {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
-        var contentItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+        var contentItem: QLayoutItem? {
+            didSet { self.setNeedUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -433,7 +457,7 @@ private extension QModalContainer {
 
         init(
             containerInset: QInset,
-            contentItem: QLayoutItem,
+            contentItem: QLayoutItem?,
             state: State
         ) {
             self.containerInset = containerInset
@@ -442,7 +466,9 @@ private extension QModalContainer {
         }
         
         func layout(bounds: QRect) -> QSize {
-            self.contentItem.frame = bounds
+            if let contentItem = self.contentItem {
+                contentItem.frame = bounds
+            }
             switch self.state {
             case .empty:
                 break
@@ -465,12 +491,17 @@ private extension QModalContainer {
         }
         
         func items(bounds: QRect) -> [QLayoutItem] {
-            switch self.state {
-            case .empty: return [ self.contentItem ]
-            case .idle(let modal): return [ self.contentItem, modal.item ]
-            case .present(let modal, _): return [ self.contentItem, modal.item ]
-            case .dismiss(let modal, _): return [ self.contentItem, modal.item ]
+            var items: [QLayoutItem] = []
+            if let contentItem = self.contentItem {
+                items.append(contentItem)
             }
+            switch self.state {
+            case .empty: break
+            case .idle(let modal): items.append(modal.item)
+            case .present(let modal, _): items.append(modal.item)
+            case .dismiss(let modal, _): items.append(modal.item)
+            }
+            return items
         }
         
     }

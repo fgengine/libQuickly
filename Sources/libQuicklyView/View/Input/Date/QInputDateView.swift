@@ -27,16 +27,17 @@ public class QInputDateView : IQInputDateView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var mode: QInputDateViewMode {
@@ -166,17 +167,21 @@ public class QInputDateView : IQInputDateView {
     
     private var _reuse: QReuseItem< InputDateView >
     private var _view: InputDateView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _selectedDate: Date?
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
     private var _onBeginEditing: (() -> Void)?
     private var _onEditing: (() -> Void)?
     private var _onEndEditing: (() -> Void)?
     
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        reuseName: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         mode: QInputDateViewMode,
@@ -193,12 +198,13 @@ public class QInputDateView : IQInputDateView {
         placeholder: QInputPlaceholder,
         placeholderInset: QInset? = nil,
         alignment: QTextAlignment = .left,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.width = width
         self.height = height
         self.mode = mode
@@ -220,7 +226,16 @@ public class QInputDateView : IQInputDateView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -235,9 +250,23 @@ public class QInputDateView : IQInputDateView {
     
     public func disappear() {
         self.toolbar?.disappear()
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     @discardableResult
@@ -385,6 +414,24 @@ public class QInputDateView : IQInputDateView {
     @discardableResult
     public func onDisappear(_ value: (() -> Void)?) -> Self {
         self._onDisappear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
         return self
     }
     

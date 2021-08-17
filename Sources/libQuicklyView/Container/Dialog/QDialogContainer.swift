@@ -12,29 +12,37 @@ public class QDialogContainer : IQDialogContainer {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
-        return self._contentContainer.shouldInteractive
+        return self.contentContainer?.shouldInteractive ?? false
     }
     #if os(iOS)
     public var statusBarHidden: Bool {
-        guard let current = self._current else { return self._contentContainer.statusBarHidden }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarHidden ?? false
+        }
         return current.container.statusBarHidden
     }
     public var statusBarStyle: UIStatusBarStyle {
-        guard let current = self._current else { return self._contentContainer.statusBarStyle }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarStyle ?? .default
+        }
         return current.container.statusBarStyle
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        guard let current = self._current else { return self._contentContainer.statusBarAnimation }
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarAnimation ?? .fade
+        }
         return current.container.statusBarAnimation
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        guard let current = self._current else { return self._contentContainer.supportedOrientations }
+        guard let current = self._current else {
+            return self.contentContainer?.supportedOrientations ?? .all
+        }
         return current.container.supportedOrientations
     }
     #endif
@@ -42,22 +50,24 @@ public class QDialogContainer : IQDialogContainer {
     public var view: IQView {
         return self._view
     }
-    public var contentContainer: IQContainer & IQContainerParentable {
-        set(value) {
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+    public var contentContainer: (IQContainer & IQContainerParentable)? {
+        didSet(oldValue) {
+            if let contentContainer = self.contentContainer {
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
+                contentContainer.parent = nil
             }
-            self._contentContainer.parent = nil
-            self._contentContainer = value
-            self._layout.contentItem = QLayoutItem(view: value.view)
-            self._contentContainer.parent = self
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+            self._view.contentLayout.contentItem = self.contentContainer.flatMap({ QLayoutItem(view: $0.view) })
+            if let contentContainer = self.contentContainer {
+                contentContainer.parent = self
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
             }
         }
-        get { return self._contentContainer }
     }
     public var containers: [IQDialogContentContainer] {
         return self._items.compactMap({ return $0.container })
@@ -73,7 +83,6 @@ public class QDialogContainer : IQDialogContainer {
     public var interactiveLimit: Float
     #endif
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: QPanGesture
@@ -81,47 +90,57 @@ public class QDialogContainer : IQDialogContainer {
     private var _interactiveDialogItem: Item?
     private var _interactiveDialogSize: QSize?
     #endif
-    private var _contentContainer: IQContainer & IQContainerParentable
     private var _items: [Item]
     private var _previous: Item?
-    private var _current: Item?
+    private var _current: Item? {
+        didSet {
+            #if os(iOS)
+            self._interactiveGesture.isEnabled = self._current != nil
+            #endif
+        }
+    }
     
     public init(
-        contentContainer: IQContainer & IQContainerParentable
+        contentContainer: (IQContainer & IQContainerParentable)? = nil
     ) {
         self.isPresented = false
         #if os(iOS)
         self.animationVelocity = 700
         self.interactiveLimit = 20
         #endif
-        self._contentContainer = contentContainer
-        self._layout = Layout(
-            containerInset: .zero,
-            contentItem: QLayoutItem(view: contentContainer.view),
-            state: .idle
-        )
+        self.contentContainer = contentContainer
         #if os(iOS)
-        self._interactiveGesture = QPanGesture()
+        self._interactiveGesture = QPanGesture(
+            isEnabled: false
+        )
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .idle
+            )
         )
         #else
         self._view = QCustomView(
-            contentLayout: self._layout
+            contentLayout: Layout(
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .idle
+            )
         )
         #endif
         self._items = []
         self._init()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        return self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        return self.inheritedInsets(interactive: interactive)
     }
     
     public func didChangeInsets() {
-        self._layout.containerInset = self.inheritedInsets
-        self._contentContainer.didChangeInsets()
+        self._view.contentLayout.containerInset = self.inheritedInsets(interactive: true)
+        self.contentContainer?.didChangeInsets()
         for container in self.containers {
             container.didChangeInsets()
         }
@@ -133,38 +152,42 @@ public class QDialogContainer : IQDialogContainer {
                 return true
             }
         }
-        return self._contentContainer.activate()
+        if let contentContainer = self.contentContainer {
+            return contentContainer.activate()
+        }
+        return false
     }
     
     public func prepareShow(interactive: Bool) {
-        self._contentContainer.prepareShow(interactive: interactive)
+        self.didChangeInsets()
+        self.contentContainer?.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
     }
     
     public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self._contentContainer.finishShow(interactive: interactive)
+        self.contentContainer?.finishShow(interactive: interactive)
         self.currentContainer?.finishShow(interactive: interactive)
     }
     
     public func cancelShow(interactive: Bool) {
-        self._contentContainer.cancelShow(interactive: interactive)
+        self.contentContainer?.cancelShow(interactive: interactive)
         self.currentContainer?.cancelShow(interactive: interactive)
     }
     
     public func prepareHide(interactive: Bool) {
-        self._contentContainer.prepareHide(interactive: interactive)
+        self.contentContainer?.prepareHide(interactive: interactive)
         self.currentContainer?.prepareHide(interactive: interactive)
     }
     
     public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self._contentContainer.finishHide(interactive: interactive)
+        self.contentContainer?.finishHide(interactive: interactive)
         self.currentContainer?.finishHide(interactive: interactive)
     }
     
     public func cancelHide(interactive: Bool) {
-        self._contentContainer.cancelHide(interactive: interactive)
+        self.contentContainer?.cancelHide(interactive: interactive)
         self.currentContainer?.cancelHide(interactive: interactive)
     }
     
@@ -207,12 +230,13 @@ extension QDialogContainer : IQRootContentContainer {
 private extension QDialogContainer {
     
     func _init() {
-        self._contentContainer.parent = self
+        self.contentContainer?.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
-            guard self._current != nil else { return false }
             guard let view = gesture.view else { return false }
-            guard self.contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            if let contentContainer = self.contentContainer {
+                guard contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            }
             return true
         }).onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -244,23 +268,23 @@ private extension QDialogContainer {
 
     func _present(dialog: Item, animated: Bool, completion: (() -> Void)?) {
         self._current = dialog
-        self._layout.dialogItem = dialog
-        if let dialogSize = self._layout.dialogSize {
+        self._view.contentLayout.dialogItem = dialog
+        if let dialogSize = self._view.contentLayout.dialogSize {
             dialog.container.prepareShow(interactive: false)
             if animated == true {
-                let size = self._layout._size(dialog: dialog, size: dialogSize)
+                let size = self._view.contentLayout._size(dialog: dialog, size: dialogSize)
                 QAnimation.default.run(
                     duration: TimeInterval(size / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .present(progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .present(progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
                         dialog.container.finishShow(interactive: false)
-                        self._layout.state = .idle
+                        self._view.contentLayout.state = .idle
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
                         completion?()
@@ -268,14 +292,14 @@ private extension QDialogContainer {
                 )
             } else {
                 dialog.container.finishShow(interactive: false)
-                self._layout.state = .idle
+                self._view.contentLayout.state = .idle
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
                 completion?()
             }
         } else {
-            self._layout.state = .idle
-            self._layout.dialogItem = nil
+            self._view.contentLayout.state = .idle
+            self._view.contentLayout.dialogItem = nil
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
             completion?()
@@ -295,24 +319,24 @@ private extension QDialogContainer {
     }
     
     func _dismiss(dialog: Item, animated: Bool, completion: (() -> Void)?) {
-        self._layout.dialogItem = dialog
-        if let dialogSize = self._layout.dialogSize {
+        self._view.contentLayout.dialogItem = dialog
+        if let dialogSize = self._view.contentLayout.dialogSize {
             dialog.container.prepareHide(interactive: false)
             if animated == true {
-                let size = self._layout._size(dialog: dialog, size: dialogSize)
+                let size = self._view.contentLayout._size(dialog: dialog, size: dialogSize)
                 QAnimation.default.run(
                     duration: TimeInterval(size / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .dismiss(progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .dismiss(progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
                         dialog.container.finishHide(interactive: false)
-                        self._layout.state = .idle
-                        self._layout.dialogItem = nil
+                        self._view.contentLayout.state = .idle
+                        self._view.contentLayout.dialogItem = nil
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
                         completion?()
@@ -320,15 +344,15 @@ private extension QDialogContainer {
                 )
             } else {
                 dialog.container.finishHide(interactive: false)
-                self._layout.state = .idle
-                self._layout.dialogItem = nil
+                self._view.contentLayout.state = .idle
+                self._view.contentLayout.dialogItem = nil
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
                 completion?()
             }
         } else {
-            self._layout.state = .idle
-            self._layout.dialogItem = nil
+            self._view.contentLayout.state = .idle
+            self._view.contentLayout.dialogItem = nil
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
             completion?()
@@ -344,8 +368,8 @@ private extension QDialogContainer {
     func _beginInteractiveGesture() {
         guard let current = self._current else { return }
         self._interactiveBeginLocation = self._interactiveGesture.location(in: self._view)
-        self._interactiveDialogItem = self._layout.dialogItem
-        self._interactiveDialogSize = self._layout.dialogSize
+        self._interactiveDialogItem = self._view.contentLayout.dialogItem
+        self._interactiveDialogSize = self._view.contentLayout.dialogSize
         current.container.prepareHide(interactive: true)
     }
     
@@ -355,8 +379,8 @@ private extension QDialogContainer {
         guard let dialogSize = self._interactiveDialogSize else { return }
         let currentLocation = self._interactiveGesture.location(in: self._view)
         let deltaLocation = currentLocation - beginLocation
-        let progress = self._layout._progress(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
-        self._layout.state = .dismiss(progress: progress)
+        let progress = self._view.contentLayout._progress(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
+        self._view.contentLayout.state = .dismiss(progress: progress)
     }
 
     func _endInteractiveGesture(_ canceled: Bool) {
@@ -365,11 +389,11 @@ private extension QDialogContainer {
         guard let dialogSize = self._interactiveDialogSize else { return }
         let currentLocation = self._interactiveGesture.location(in: self._view)
         let deltaLocation = currentLocation - beginLocation
-        let size = self._layout._size(dialog: dialogItem, size: dialogSize)
-        let offset = self._layout._offset(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
-        let baseProgress = self._layout._progress(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
+        let size = self._view.contentLayout._size(dialog: dialogItem, size: dialogSize)
+        let offset = self._view.contentLayout._offset(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
+        let baseProgress = self._view.contentLayout._progress(dialog: dialogItem, size: dialogSize, delta: deltaLocation)
         if offset > self.interactiveLimit {
-            let viewAlphable = self._layout.dialogItem?.container.view as? IQViewAlphable
+            let viewAlphable = self._view.contentLayout.dialogItem?.container.view as? IQViewAlphable
             QAnimation.default.run(
                 duration: TimeInterval(size / self.animationVelocity),
                 processing: { [weak self] progress in
@@ -377,8 +401,8 @@ private extension QDialogContainer {
                     if let view = viewAlphable {
                         view.alpha(1 - progress)
                     }
-                    self._layout.state = .dismiss(progress: baseProgress + progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(progress: baseProgress + progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -393,8 +417,8 @@ private extension QDialogContainer {
                 duration: TimeInterval((size * abs(baseProgress)) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .dismiss(progress: baseProgress * (1 - progress))
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(progress: baseProgress * (1 - progress))
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -417,15 +441,15 @@ private extension QDialogContainer {
                 self._present(dialog: previous, animated: true, completion: nil)
             } else {
                 self._current = nil
-                self._layout.state = .idle
-                self._layout.dialogItem = nil
+                self._view.contentLayout.state = .idle
+                self._view.contentLayout.dialogItem = nil
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
             }
         } else {
             self._current = nil
-            self._layout.state = .idle
-            self._layout.dialogItem = nil
+            self._view.contentLayout.state = .idle
+            self._view.contentLayout.dialogItem = nil
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
         }
@@ -436,7 +460,7 @@ private extension QDialogContainer {
         if let current = self._current {
             current.container.cancelHide(interactive: true)
         }
-        self._layout.state = .idle
+        self._view.contentLayout.state = .idle
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
     }
@@ -474,16 +498,16 @@ private extension QDialogContainer {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var containerInset: QInset {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
-        var contentItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+        var contentItem: QLayoutItem? {
+            didSet { self.setNeedUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
         }
         var dialogItem: Item? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var dialogSize: QSize? {
             self.updateIfNeeded()
@@ -495,7 +519,7 @@ private extension QDialogContainer {
 
         init(
             containerInset: QInset,
-            contentItem: QLayoutItem,
+            contentItem: QLayoutItem?,
             state: State
         ) {
             self.containerInset = containerInset
@@ -509,21 +533,19 @@ private extension QDialogContainer {
             }
         }
         
-        func invalidate() {
-            self._dialogSize = nil
-        }
-        
         func layout(bounds: QRect) -> QSize {
             if let lastBoundsSize = self._lastBoundsSize {
                 if lastBoundsSize != bounds.size {
-                    self.invalidate()
+                    self._dialogSize = nil
                     self._lastBoundsSize = bounds.size
                 }
             } else {
-                self.invalidate()
+                self._dialogSize = nil
                 self._lastBoundsSize = bounds.size
             }
-            self.contentItem.frame = bounds
+            if let contentItem = self.contentItem {
+                contentItem.frame = bounds
+            }
             if let dialog = self.dialogItem {
                 let size: QSize
                 if let dialogSize = self._dialogSize {
@@ -553,10 +575,14 @@ private extension QDialogContainer {
         }
         
         func items(bounds: QRect) -> [QLayoutItem] {
-            if let dialogItem = self.dialogItem {
-                return [ self.contentItem, dialogItem.item ]
+            var items: [QLayoutItem] = []
+            if let contentItem = self.contentItem {
+                items.append(contentItem)
             }
-            return [ self.contentItem ]
+            if let dialogItem = self.dialogItem {
+                items.append(dialogItem.item)
+            }
+            return items
         }
         
     }

@@ -221,7 +221,7 @@ extension QInputDateView.InputDateView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

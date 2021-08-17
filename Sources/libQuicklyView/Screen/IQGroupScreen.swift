@@ -10,7 +10,6 @@ public protocol IQGroupScreen : IQScreen {
     associatedtype GroupBar : IQGroupBarView
     
     var groupBarView: GroupBar { get }
-    var groupBarSize: Float { get }
     var groupBarVisibility: Float { get }
     var groupBarHidden: Bool { get }
     
@@ -21,10 +20,6 @@ public extension IQGroupScreen {
     @inlinable
     var groupContainer: IQGroupContainer? {
         return self.container as? IQGroupContainer
-    }
-    
-    var groupBarSize: Float {
-        return 55
     }
     
     var groupBarVisibility: Float {

@@ -28,6 +28,7 @@ public protocol IQBaseView : AnyObject {
 public extension IQBaseView {
     
     func isChild(of view: IQView, recursive: Bool) -> Bool {
+        guard self.isLoaded == true && view.isLoaded == true else { return false }
         return self.native.isChild(of: view.native, recursive: recursive)
     }
     

@@ -82,9 +82,9 @@ public extension QScrollViewHidingBarExtension {
         self._observer.remove(observer)
     }
     
-    func reset() {
-        self._set(state: .showed)
+    func reset(animate: Bool, completion: (() -> Void)? = nil) {
         self._anchor = nil
+        self._set(isShowed: true, animate: animate, completion: completion)
     }
     
 }
@@ -92,14 +92,6 @@ public extension QScrollViewHidingBarExtension {
 extension QScrollViewHidingBarExtension : IQScrollViewObserver {
     
     public func beginScrolling(scrollView: IQScrollView) {
-        let offset: Float
-        switch self.direction {
-        case .horizontal:
-            offset = scrollView.contentOffset.x + scrollView.contentInset.left
-        case .vertical:
-            offset = scrollView.contentOffset.y + scrollView.contentInset.top
-        }
-        self._anchor = offset
     }
     
     public func scrolling(scrollView: IQScrollView) {
@@ -132,6 +124,9 @@ extension QScrollViewHidingBarExtension : IQScrollViewObserver {
                 offset: offset,
                 size: size
             )
+            if newState == .showed || newState == .hided {
+                self._anchor = max(0, offset)
+            }
             self._set(state: newState)
         }
     }
@@ -222,9 +217,112 @@ private extension QScrollViewHidingBarExtension {
         }
     }
     
-}
-
-private extension QScrollViewHidingBarExtension {
+    @inline(__always)
+    func _set(isShowed: Bool, animate: Bool, completion: (() -> Void)?) {
+        if animate == true {
+            switch self.state {
+            case .showed:
+                if isShowed == false {
+                    QAnimation.default.run(
+                        duration: TimeInterval(self.threshold / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .hiding(progress:  progress))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .hided)
+                            completion?()
+                        }
+                    )
+                } else {
+                    completion?()
+                }
+            case .hided:
+                if isShowed == true {
+                    QAnimation.default.run(
+                        duration: TimeInterval(self.threshold / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .showing(progress: progress))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .showed)
+                            completion?()
+                        }
+                    )
+                } else {
+                    completion?()
+                }
+            case .showing(let baseProgress):
+                if isShowed == true {
+                    QAnimation.default.run(
+                        duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .showing(progress: baseProgress + ((1 - baseProgress) * progress)))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .showed)
+                            completion?()
+                        }
+                    )
+                } else {
+                    QAnimation.default.run(
+                        duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .showing(progress: baseProgress - (baseProgress * progress)))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .hided)
+                            completion?()
+                        }
+                    )
+                }
+            case .hiding(let baseProgress):
+                if isShowed == true {
+                    QAnimation.default.run(
+                        duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .hiding(progress: baseProgress - (baseProgress * progress)))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .showed)
+                            completion?()
+                        }
+                    )
+                } else {
+                    QAnimation.default.run(
+                        duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
+                        ease: QAnimation.Ease.QuadraticInOut(),
+                        processing: { [weak self] progress in
+                            guard let self = self else { return }
+                            self._set(state: .hiding(progress: baseProgress + ((1 - baseProgress) * progress)))
+                        },
+                        completion: { [weak self] in
+                            guard let self = self else { return }
+                            self._set(state: .hided)
+                            completion?()
+                        }
+                    )
+                }
+            }
+        } else {
+            self._set(state: isShowed == true ? .showed : .hided)
+            completion?()
+        }
+    }
     
     @inline(__always)
     func _set(state: State) {

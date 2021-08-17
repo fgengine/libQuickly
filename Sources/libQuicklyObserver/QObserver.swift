@@ -20,6 +20,11 @@ public final class QObserver< T > {
 
 }
 
+public enum QObserverPriority : UInt {
+    case utility
+    case userInitiated
+}
+
 public extension QObserver {
     
     func add< Priority : RawRepresentable >(_ observer: T, priority: Priority) where Priority.RawValue == UInt {

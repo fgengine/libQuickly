@@ -26,6 +26,9 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
     public var shouldHighlighting: Bool {
         set(value) { self._view.shouldHighlighting = value }
         get { return self._view.shouldHighlighting }
@@ -128,7 +131,7 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         trailingView: IQView? = nil,
         trailingLimit: Float = 0,
         trailingSize: Float = 0,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -178,6 +181,10 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         self._init()
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -188,6 +195,18 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
     }
     
     public func showLeadingView(animated: Bool, completion: (() -> Void)?) {
@@ -431,6 +450,24 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
     @discardableResult
     public func onDisappear(_ value: (() -> Void)?) -> Self {
         self._view.onDisappear(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
         return self
     }
     

@@ -7,6 +7,7 @@ import libQuicklyCore
 #if os(iOS)
 
 import UIKit
+import ImageIO
 
 public struct QImage {
 
@@ -29,31 +30,22 @@ public struct QImage {
         self.size = QSize(image.size)
     }
     
-    @inlinable
     public init?(
         data: Data,
         renderingMode: UIImage.RenderingMode? = nil
     ) {
-        guard let image = UIImage(data: data) else { return nil }
-        if let renderingMode = renderingMode {
-            self.native = image.withRenderingMode(renderingMode)
-        } else {
-            self.native = image
-        }
+        guard let image = Self._create(data: data, renderingMode: renderingMode) else { return nil }
+        self.native = image
         self.size = QSize(image.size)
     }
     
-    @inlinable
     public init?(
         url: URL,
         renderingMode: UIImage.RenderingMode? = nil
     ) {
-        guard let image = UIImage(contentsOfFile: url.path) else { return nil }
-        if let renderingMode = renderingMode {
-            self.native = image.withRenderingMode(renderingMode)
-        } else {
-            self.native = image
-        }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        guard let image = Self._create(data: data, renderingMode: renderingMode) else { return nil }
+        self.native = image
         self.size = QSize(image.size)
     }
     
@@ -198,6 +190,54 @@ public extension QImage {
             }
         }
         return nil
+    }
+    
+}
+
+private extension QImage {
+    
+    static func _create(
+        data: Data,
+        renderingMode: UIImage.RenderingMode? = nil
+    ) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let image: UIImage
+        let count = CGImageSourceGetCount(source)
+        if count > 1 {
+            var frameImages: [UIImage] = []
+            var frameDurations: [TimeInterval] = []
+            for index in 0 ..< count {
+                guard let frameImage = CGImageSourceCreateImageAtIndex(source, index, nil) else { continue }
+                frameImages.append(UIImage(cgImage: frameImage))
+                
+                var frameDuration: TimeInterval = 0
+                if let frameProperties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [AnyHashable : Any] {
+                    if let gifInfo = frameProperties[kCGImagePropertyGIFDictionary] as? [AnyHashable : Any] {
+                        if let gifDelayTime = gifInfo[kCGImagePropertyGIFDelayTime] as? NSNumber {
+                            frameDuration = TimeInterval(gifDelayTime.doubleValue)
+                        }
+                    }
+                }
+                frameDurations.append(frameDuration)
+            }
+            var totalDuration: TimeInterval = 0
+            for frameDuration in frameDurations {
+                totalDuration += frameDuration
+            }
+            if let animatedImage = UIImage.animatedImage(with: frameImages, duration: totalDuration) {
+                image = animatedImage
+            } else {
+                return nil
+            }
+        } else if let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+            image = UIImage(cgImage: cgImage)
+        } else {
+            return nil
+        }
+        if let renderingMode = renderingMode {
+            return image.withRenderingMode(renderingMode)
+        }
+        return image
     }
     
 }

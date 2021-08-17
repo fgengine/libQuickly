@@ -26,9 +26,9 @@ public extension QListLayout {
         ) -> QSize {
             switch direction {
             case .horizontal:
-                guard items.count > 0 else { return QSize(width: 0, height: bounds.size.height) }
+                guard items.count > 0 else { return QSize(width: 0, height: bounds.height) }
                 var size = self._passSize(
-                    available: QSize(width: .infinity, height: bounds.size.height - inset.vertical),
+                    available: QSize(width: .infinity, height: bounds.height - inset.vertical),
                     items: items,
                     operations: operations,
                     cache: &cache,
@@ -43,7 +43,7 @@ public extension QListLayout {
                 if items.count > 1 {
                     pass = self._layoutPassSpacing(
                         pass: pass,
-                        available: bounds.size.width,
+                        available: bounds.width,
                         inset: inset.horizontal,
                         spacing: &spacing,
                         itemsCount: items.count,
@@ -53,7 +53,7 @@ public extension QListLayout {
                 }
                 pass = self._layoutPassSize(
                     pass: pass,
-                    available: bounds.size.width,
+                    available: bounds.width,
                     inset: inset.horizontal,
                     spacing: spacing,
                     itemsCount: items.count,
@@ -79,9 +79,9 @@ public extension QListLayout {
                     }
                 }
             case .vertical:
-                guard items.count > 0 else { return QSize(width: bounds.size.width, height: 0) }
+                guard items.count > 0 else { return QSize(width: bounds.width, height: 0) }
                 var size = self._passSize(
-                    available: QSize(width: bounds.size.width - inset.horizontal, height: .infinity),
+                    available: QSize(width: bounds.width - inset.horizontal, height: .infinity),
                     items: items,
                     operations: operations,
                     cache: &cache,
@@ -96,7 +96,7 @@ public extension QListLayout {
                 if items.count > 1 {
                     pass = self._layoutPassSpacing(
                         pass: pass,
-                        available: bounds.size.height,
+                        available: bounds.height,
                         inset: inset.vertical,
                         spacing: &spacing,
                         itemsCount: items.count,
@@ -106,7 +106,7 @@ public extension QListLayout {
                 }
                 pass = self._layoutPassSize(
                     pass: pass,
-                    available: bounds.size.height,
+                    available: bounds.height,
                     inset: inset.vertical,
                     spacing: spacing,
                     itemsCount: items.count,
@@ -183,8 +183,14 @@ public extension QListLayout {
                 )
                 let height: Float
                 switch alignment {
-                case .leading, .center, .trailing: height = size.max.height + inset.vertical
-                case .fill: height = available.height
+                case .leading, .center, .trailing:
+                    height = size.max.height + inset.vertical
+                case .fill:
+                    if available.height.isInfinite == true {
+                        height = size.max.height + inset.vertical
+                    } else {
+                        height = available.height
+                    }
                 }
                 return QSize(width: pass.full, height: height)
             case .vertical:
@@ -222,8 +228,14 @@ public extension QListLayout {
                 )
                 let width: Float
                 switch alignment {
-                case .leading, .center, .trailing: width = size.max.width + inset.horizontal
-                case .fill: width = available.width
+                case .leading, .center, .trailing:
+                    width = size.max.width + inset.horizontal
+                case .fill:
+                    if available.height.isInfinite == true {
+                        width = size.max.width + inset.horizontal
+                    } else {
+                        width = available.width
+                    }
                 }
                 return QSize(width: width, height: pass.full)
             }
@@ -336,8 +348,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: bounds.origin.y + inset.top
+            x: bounds.x + inset.left,
+            y: bounds.y + inset.top
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -362,8 +374,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: (bounds.origin.y + (bounds.size.height / 2)) + inset.top
+            x: bounds.x + inset.left,
+            y: (bounds.y + (bounds.height / 2)) + inset.top
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -388,8 +400,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: (bounds.origin.y + bounds.size.height) - inset.bottom
+            x: bounds.x + inset.left,
+            y: (bounds.y + bounds.height) - inset.bottom
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -414,10 +426,15 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: bounds.origin.y + inset.top
+            x: bounds.x + inset.left,
+            y: bounds.y + inset.top
         )
-        let height = bounds.size.height - inset.vertical
+        let height: Float
+        if bounds.height.isInfinite == true {
+            height = size.max.height
+        } else {
+            height = bounds.height - inset.vertical
+        }
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
@@ -426,7 +443,7 @@ private extension QListLayout.Helper {
         }
         return QSize(
             width: pass.full,
-            height: bounds.size.height
+            height: bounds.height
         )
     }
     
@@ -445,8 +462,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: bounds.origin.y + inset.top
+            x: (bounds.x + bounds.width) - inset.right,
+            y: bounds.y + inset.top
         )
         for index in 0..<items.count {
             guard let size = sizes[index] else { continue }
@@ -471,8 +488,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: (bounds.origin.y + (bounds.size.height / 2)) + inset.top
+            x: (bounds.x + bounds.width) - inset.right,
+            y: (bounds.y + (bounds.height / 2)) + inset.top
         )
         for index in 0..<items.count {
             guard let size = sizes[index] else { continue }
@@ -497,8 +514,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: (bounds.origin.y + bounds.size.height) + inset.bottom
+            x: (bounds.x + bounds.width) - inset.right,
+            y: (bounds.y + bounds.height) + inset.bottom
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -523,10 +540,15 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: bounds.origin.y + inset.top
+            x: (bounds.x + bounds.width) - inset.right,
+            y: bounds.y + inset.top
         )
-        let height = bounds.size.height - inset.vertical
+        let height: Float
+        if bounds.height.isInfinite == true {
+            height = size.max.height
+        } else {
+            height = bounds.height - inset.vertical
+        }
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
@@ -535,7 +557,7 @@ private extension QListLayout.Helper {
         }
         return QSize(
             width: size.max.width + inset.horizontal,
-            height: bounds.size.height
+            height: bounds.height
         )
     }
     
@@ -554,8 +576,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: bounds.origin.y + inset.top
+            x: bounds.x + inset.left,
+            y: bounds.y + inset.top
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -580,8 +602,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
-            y: bounds.origin.y + inset.top
+            x: (bounds.x + (bounds.width / 2)) + inset.left,
+            y: bounds.y + inset.top
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -606,8 +628,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: bounds.origin.y + inset.top
+            x: (bounds.x + bounds.width) - inset.right,
+            y: bounds.y + inset.top
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -632,10 +654,15 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: bounds.origin.y + inset.top
+            x: bounds.x + inset.left,
+            y: bounds.y + inset.top
         )
-        let width = bounds.size.width - inset.horizontal
+        let width: Float
+        if bounds.width.isInfinite == true {
+            width = size.max.width
+        } else {
+            width = bounds.width - inset.horizontal
+        }
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
@@ -643,7 +670,7 @@ private extension QListLayout.Helper {
             origin.y += size.height + spacing
         }
         return QSize(
-            width: bounds.size.width,
+            width: bounds.width,
             height: pass.full
         )
     }
@@ -663,8 +690,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: (bounds.origin.y + bounds.size.height) - inset.bottom
+            x: bounds.x + inset.left,
+            y: (bounds.y + bounds.height) - inset.bottom
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -689,8 +716,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + (bounds.size.width / 2)) + inset.left,
-            y: (bounds.origin.y + bounds.size.height) - inset.bottom
+            x: (bounds.x + (bounds.width / 2)) + inset.left,
+            y: (bounds.y + bounds.height) - inset.bottom
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -715,8 +742,8 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: (bounds.origin.x + bounds.size.width) - inset.right,
-            y: (bounds.origin.y + bounds.size.height) - inset.bottom
+            x: (bounds.x + bounds.width) - inset.right,
+            y: (bounds.y + bounds.height) - inset.bottom
         )
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
@@ -741,10 +768,15 @@ private extension QListLayout.Helper {
         sizes: [QSize?]
     ) -> QSize {
         var origin = QPoint(
-            x: bounds.origin.x + inset.left,
-            y: (bounds.origin.y + bounds.size.height) - inset.bottom
+            x: bounds.x + inset.left,
+            y: (bounds.y + bounds.height) - inset.bottom
         )
-        let width = bounds.size.width - inset.horizontal
+        let width: Float
+        if bounds.width.isInfinite == true {
+            width = size.max.width
+        } else {
+            width = bounds.width - inset.horizontal
+        }
         for index in 0 ..< items.count {
             guard let size = sizes[index] else { continue }
             let item = items[index]
@@ -752,7 +784,7 @@ private extension QListLayout.Helper {
             origin.y -= size.height + spacing
         }
         return QSize(
-            width: bounds.size.width,
+            width: bounds.width,
             height: pass.full
         )
     }

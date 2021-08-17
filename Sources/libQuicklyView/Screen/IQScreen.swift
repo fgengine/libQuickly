@@ -35,10 +35,6 @@ public extension IQScreen {
         return self.container?.isPresented ?? false
     }
     
-    var inheritedInsets: QInset {
-        return self.container?.inheritedInsets ?? .zero
-    }
-    
     func setup() {
     }
     
@@ -65,6 +61,14 @@ public extension IQScreen {
     }
     
     func cancelHide(interactive: Bool) {
+    }
+    
+}
+
+public extension IQScreen {
+    
+    func inheritedInsets(interactive: Bool = false) -> QInset {
+        return self.container?.inheritedInsets(interactive: interactive) ?? .zero
     }
     
 }

@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public struct QViewShadow {
+public struct QViewShadow : Equatable {
 
     public let color: QColor
     public let opacity: Float

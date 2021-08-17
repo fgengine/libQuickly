@@ -82,7 +82,6 @@ public protocol IQStackContentContainer : IQContainer, IQContainerParentable {
     var stackContainer: IQStackContainer? { get }
     
     var stackBarView: IQStackBarView { get }
-    var stackBarSize: Float { get }
     var stackBarVisibility: Float { get }
     var stackBarHidden: Bool { get }
     

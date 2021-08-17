@@ -26,6 +26,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var gestures: [IQGesture] {
         set(value) {
             self._gestures = value
@@ -44,7 +45,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
             guard self.isLoaded == true else { return }
             self._view.update(contentLayout: self.contentLayout)
             self.contentLayout.setNeedForceUpdate()
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var contentSize: QSize {
@@ -104,13 +105,15 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     
     private var _reuse: QReuseItem< Reusable >
     private var _view: Reusable.Content {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _gestures: [IQGesture]
     private var _isHighlighted: Bool
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
     private var _onChangeStyle: ((_ userIteraction: Bool) -> Void)?
     
     public init(
@@ -118,12 +121,13 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         contentLayout: Layout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self._gestures = gestures
         self.contentLayout = contentLayout
         self.shouldHighlighting = shouldHighlighting
@@ -135,6 +139,15 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         self.alpha = alpha
         self._reuse = QReuseItem()
         self.contentLayout.view = self
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -147,9 +160,23 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     public func triggeredChangeStyle(_ userIteraction: Bool) {
@@ -241,6 +268,24 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     @discardableResult
     public func onDisappear(_ value: (() -> Void)?) -> Self {
         self._onDisappear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
         return self
     }
     

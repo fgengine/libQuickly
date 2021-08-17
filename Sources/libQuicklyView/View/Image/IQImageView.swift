@@ -11,11 +11,13 @@ public enum QImageViewMode {
     case aspectFill
 }
 
-public protocol IQImageView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQImageView : IQView, IQViewColorable, IQViewTintColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var width: QDimensionBehaviour? { set get }
     
     var height: QDimensionBehaviour? { set get }
+    
+    var aspectRatio: Float? { set get }
     
     var image: QImage { set get }
     
@@ -26,6 +28,9 @@ public protocol IQImageView : IQView, IQViewColorable, IQViewBorderable, IQViewC
     
     @discardableResult
     func height(_ value: QDimensionBehaviour?) -> Self
+    
+    @discardableResult
+    func aspectRatio(_ value: Float?) -> Self
     
     @discardableResult
     func image(_ value: QImage) -> Self

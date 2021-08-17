@@ -34,20 +34,24 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var direction: QScrollViewDirection {
-        didSet {
+        didSet(oldValue) {
+            guard self.direction != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(direction: self.direction)
         }
     }
     public var indicatorDirection: QScrollViewDirection {
-        didSet {
+        didSet(oldValue) {
+            guard self.indicatorDirection != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(indicatorDirection: self.indicatorDirection)
         }
     }
     public var contentInset: QInset {
-        didSet {
+        didSet(oldValue) {
+            guard self.contentInset != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(contentInset: self.contentInset)
         }
@@ -60,6 +64,13 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
             }
         }
         get { return self._contentOffset }
+    }
+    public var visibleInset: QInset {
+        didSet(oldValue) {
+            guard self.visibleInset != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self._view.update(visibleInset: self.visibleInset)
+        }
     }
     public private(set) var contentSize: QSize
     public var contentLayout: Layout {
@@ -75,33 +86,38 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     public private(set) var isScrolling: Bool
     public private(set) var isDecelerating: Bool
     public var color: QColor? {
-        didSet {
+        didSet(oldValue) {
+            guard self.color != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(color: self.color)
         }
     }
     public var cornerRadius: QViewCornerRadius {
-        didSet {
+        didSet(oldValue) {
+            guard self.cornerRadius != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(cornerRadius: self.cornerRadius)
             self._view.updateShadowPath()
         }
     }
     public var border: QViewBorder {
-        didSet {
+        didSet(oldValue) {
+            guard self.border != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(border: self.border)
         }
     }
     public var shadow: QViewShadow? {
-        didSet {
+        didSet(oldValue) {
+            guard self.shadow != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(shadow: self.shadow)
             self._view.updateShadowPath()
         }
     }
     public var alpha: Float {
-        didSet {
+        didSet(oldValue) {
+            guard self.alpha != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(alpha: self.alpha)
         }
@@ -109,13 +125,15 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     
     private var _reuse: QReuseItem< Reusable >
     private var _view: Reusable.Content {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _contentOffset: QPoint
     private var _observer: QObserver< IQScrollViewObserver >
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
     private var _onBeginScrolling: (() -> Void)?
     private var _onScrolling: (() -> Void)?
     private var _onEndScrolling: ((_ decelerate: Bool) -> Void)?
@@ -126,17 +144,20 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     public init(
         direction: QScrollViewDirection = [ .vertical ],
         indicatorDirection: QScrollViewDirection = [],
+        visibleInset: QInset = .zero,
         contentInset: QInset = .zero,
         contentOffset: QPoint = .zero,
         contentLayout: Layout,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.direction = direction
         self.indicatorDirection = indicatorDirection
+        self.visibleInset = visibleInset
         self.contentInset = contentInset
         self.contentLayout = contentLayout
         self.contentSize = .zero
@@ -149,8 +170,17 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         self.alpha = alpha
         self._reuse = QReuseItem()
         self._observer = QObserver()
-        self._contentOffset = .zero
+        self._contentOffset = contentOffset
         self.contentLayout.view = self
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -163,9 +193,23 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     public func add(observer: IQScrollViewObserver) {
@@ -189,6 +233,12 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     @discardableResult
     public func indicatorDirection(_ value: QScrollViewDirection) -> Self {
         self.indicatorDirection = value
+        return self
+    }
+    
+    @discardableResult
+    public func visibleInset(_ value: QInset) -> Self {
+        self.visibleInset = value
         return self
     }
     
@@ -256,6 +306,24 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     }
     
     @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
+        return self
+    }
+    
+    @discardableResult
     public func onBeginScrolling(_ value: (() -> Void)?) -> Self {
         self._onBeginScrolling = value
         return self
@@ -296,7 +364,6 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         let beginContentOffset = self.contentOffset
         let endContentOffset = QPoint(x: -contentInset.left, y: -contentInset.top)
         let deltaContentOffset = abs(beginContentOffset.distance(to: endContentOffset))
-        self._view.update(contentOffset: beginContentOffset, normalized: false)
         if animated == true && deltaContentOffset > 0 {
             let velocity = max(self.bounds.width, self.bounds.height) * 5
             QAnimation.default.run(
@@ -312,7 +379,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
                 }
             )
         } else {
-            self.contentOffset(QPoint(x: -contentInset.left, y: -contentInset.top))
+            self.contentOffset = QPoint(x: -contentInset.left, y: -contentInset.top)
             self._scrollToTop()
             completion?()
         }

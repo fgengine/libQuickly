@@ -7,14 +7,14 @@ import libQuicklyCore
 
 public protocol IQReusable {
     
-    associatedtype Owner
+    associatedtype Owner : AnyObject
     associatedtype Content
     
     static var reuseIdentificator: String { get }
     
     static func createReuse(owner: Owner) -> Content
     static func configureReuse(owner: Owner, content: Content)
-    static func cleanupReuse(owner: Owner, content: Content)
+    static func cleanupReuse(content: Content)
     
 }
 
@@ -28,18 +28,28 @@ public final class QReuseCache {
         self._items = [:]
     }
     
-    public func set< Reusable: IQReusable >(_ reusable: Reusable.Type, owner: Reusable.Owner, content: Reusable.Content) {
-        let identificator = reusable.reuseIdentificator
+    public func set< Reusable: IQReusable >(_ reusable: Reusable.Type, name: String?, content: Reusable.Content) {
+        let identificator: String
+        if let name = name {
+            identificator = "\(reusable.reuseIdentificator)::\(name)"
+        } else {
+            identificator = reusable.reuseIdentificator
+        }
         if let items = self._items[identificator] {
             self._items[identificator] = items + [ content ]
         } else {
             self._items[identificator] = [ content ]
         }
-        reusable.cleanupReuse(owner: owner, content: content)
+        reusable.cleanupReuse(content: content)
     }
     
-    public func get< Reusable: IQReusable >(_ reusable: Reusable.Type, owner: Reusable.Owner) -> Reusable.Content {
-        let identificator = Reusable.reuseIdentificator
+    public func get< Reusable: IQReusable >(_ reusable: Reusable.Type, name: String?, owner: Reusable.Owner) -> Reusable.Content {
+        let identificator: String
+        if let name = name {
+            identificator = "\(reusable.reuseIdentificator)::\(name)"
+        } else {
+            identificator = reusable.reuseIdentificator
+        }
         let item: Reusable.Content
         if let items = self._items[identificator] {
             if let lastItem = items.last as? Reusable.Content {

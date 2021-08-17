@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public protocol IQDialogContainer : IQContainer, IQContainerParentable {
     
-    var contentContainer: IQContainer & IQContainerParentable { set get }
+    var contentContainer: (IQContainer & IQContainerParentable)? { set get }
     var containers: [IQDialogContentContainer] { get }
     var previousContainer: IQDialogContentContainer? { get }
     var currentContainer: IQDialogContentContainer? { get }

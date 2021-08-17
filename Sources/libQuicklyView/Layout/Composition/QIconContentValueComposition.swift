@@ -16,7 +16,7 @@ public class QIconContentValueComposition< IconView: IQView, ContentView: IQView
         didSet { self.iconItem = QLayoutItem(view: self.iconView) }
     }
     public private(set) var iconItem: QLayoutItem {
-        didSet { self.setNeedForceUpdate() }
+        didSet { self.setNeedForceUpdate(item: self.iconItem) }
     }
     public var contentInset: QInset {
         didSet { self.setNeedForceUpdate() }
@@ -25,7 +25,7 @@ public class QIconContentValueComposition< IconView: IQView, ContentView: IQView
         didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
     public private(set) var contentItem: QLayoutItem {
-        didSet { self.setNeedForceUpdate() }
+        didSet { self.setNeedForceUpdate(item: self.contentItem) }
     }
     public var valueInset: QInset {
         didSet { self.setNeedForceUpdate() }
@@ -34,15 +34,15 @@ public class QIconContentValueComposition< IconView: IQView, ContentView: IQView
         didSet { self.valueItem = QLayoutItem(view: self.valueView) }
     }
     public private(set) var valueItem: QLayoutItem {
-        didSet { self.setNeedForceUpdate() }
+        didSet { self.setNeedForceUpdate(item: self.valueItem) }
     }
     
     public init(
-        iconInset: QInset = QInset(horizontal: 8, vertical: 4),
+        iconInset: QInset,
         iconView: IconView,
-        contentInset: QInset = QInset(horizontal: 8, vertical: 4),
+        contentInset: QInset,
         contentView: ContentView,
-        valueInset: QInset = QInset(horizontal: 8, vertical: 4),
+        valueInset: QInset,
         valueView: ValueView
     ) {
         self.iconInset = iconInset

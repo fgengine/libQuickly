@@ -47,7 +47,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
     public init(
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
         itemSpacing: Float = 4,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -63,6 +63,7 @@ public class QGroupBarView : QBarView, IQGroupBarView {
             contentLayout: self._contentLayout
         )
         super.init(
+            placement: .bottom,
             contentView: self._contentView,
             color: color,
             border: border,
@@ -119,7 +120,10 @@ private extension QGroupBarView {
             didSet { self.setNeedForceUpdate() }
         }
         var items: [QLayoutItem] {
-            didSet { self.setNeedForceUpdate() }
+            didSet {
+                self._cache = Array< QSize? >(repeating: nil, count: self.items.count)
+                self.setNeedForceUpdate()
+            }
         }
         
         private var _cache: [QSize?]
@@ -139,10 +143,6 @@ private extension QGroupBarView {
             if let index = self.items.firstIndex(where: { $0 === item }) {
                 self._cache.remove(at: index)
             }
-        }
-        
-        func invalidate() {
-            self._cache = Array< QSize? >(repeating: nil, count: self.items.count)
         }
         
         func layout(bounds: QRect) -> QSize {

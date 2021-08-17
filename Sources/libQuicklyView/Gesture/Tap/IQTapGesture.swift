@@ -7,8 +7,8 @@ import libQuicklyCore
 
 public protocol IQTapGesture : IQGesture {
     
-    var numberOfTapsRequired: UInt { get }
-    var numberOfTouchesRequired: UInt { get }
+    var numberOfTapsRequired: UInt { set get }
+    var numberOfTouchesRequired: UInt { set get }
     
     @discardableResult
     func numberOfTapsRequired(_ value: UInt) -> Self

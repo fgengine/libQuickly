@@ -12,9 +12,9 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
@@ -45,21 +45,20 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
             self._barView.delegate = nil
             self._barView = value
             self._barView.delegate = self
-            self._layout.barItem = QLayoutItem(view: self._barView)
+            self._view.contentLayout.barItem = QLayoutItem(view: self._barView)
         }
         get { return self._barView }
     }
-    public private(set) var barSize: Float {
-        set(value) { self._layout.barSize = value }
-        get { return self._layout.barSize }
+    public var barSize: Float {
+        get { return self._view.contentLayout.barSize }
     }
     public private(set) var barVisibility: Float {
-        set(value) { self._layout.barVisibility = value }
-        get { return self._layout.barVisibility }
+        set(value) { self._view.contentLayout.barVisibility = value }
+        get { return self._view.contentLayout.barVisibility }
     }
     public private(set) var barHidden: Bool {
-        set(value) { self._layout.barHidden = value }
-        get { return self._layout.barHidden }
+        set(value) { self._view.contentLayout.barHidden = value }
+        get { return self._view.contentLayout.barHidden }
     }
     public var containers: [IQPageContentContainer] {
         return self._items.compactMap({ $0.container })
@@ -83,7 +82,6 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     #endif
     
     private var _barView: IQPageBarView
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: QPanGesture
@@ -98,7 +96,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     
     public init(
         screen: Screen,
-        containers: [IQPageContentContainer],
+        containers: [IQPageContentContainer] = [],
         current: IQPageContentContainer? = nil
     ) {
         self.isPresented = false
@@ -108,22 +106,24 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         self.interactiveLimit = Float(UIScreen.main.bounds.width * 0.33)
         #endif
         self._barView = screen.pageBarView
-        self._layout = Layout(
-            barItem: QLayoutItem(view: self._barView),
-            barInset: 0,
-            barSize: screen.pageBarSize,
-            barVisibility: screen.pageBarVisibility,
-            barHidden: screen.pageBarHidden
-        )
         #if os(iOS)
         self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                barItem: QLayoutItem(view: self._barView),
+                barVisibility: screen.pageBarVisibility,
+                barHidden: screen.pageBarHidden
+            )
         )
         #else
         self._view = QCustomView(
-            contentLayout: self._layout
+            contentLayout: Layout(
+                barItem: QLayoutItem(view: self._barView),
+                barInset: 0,
+                barVisibility: screen.pageBarVisibility,
+                barHidden: screen.pageBarHidden
+            )
         )
         #endif
         self._items = containers.compactMap({ Item(container: $0) })
@@ -143,11 +143,23 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         self.screen.destroy()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        let inheritedInsets = self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        let inheritedInsets = self.inheritedInsets(interactive: interactive)
         if self._items.contains(where: { $0.container === container }) == true {
+            let top: Float
+            if self.barHidden == false {
+                let barSize = self.barSize
+                let barVisibility = self.barVisibility
+                if interactive == true {
+                    top = barSize * barVisibility
+                } else {
+                    top = barSize
+                }
+            } else {
+                top = 0
+            }
             return QInset(
-                top: inheritedInsets.top + self.barSize,
+                top: inheritedInsets.top + top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
                 bottom: inheritedInsets.bottom
@@ -157,9 +169,9 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     }
     
     public func didChangeInsets() {
-        let inheritedInsets = self.inheritedInsets
-        self._barView.safeArea(QInset(top: inheritedInsets.top, left: inheritedInsets.left, right: inheritedInsets.right, bottom: 0))
-        self._layout.barInset = inheritedInsets.top
+        let inheritedInsets = self.inheritedInsets(interactive: true)
+        self._barView.safeArea(QInset(top: 0, left: inheritedInsets.left, right: inheritedInsets.right, bottom: 0))
+        self._view.contentLayout.barOffset = inheritedInsets.top
         for item in self._items {
             item.container.didChangeInsets()
         }
@@ -176,6 +188,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     }
     
     public func prepareShow(interactive: Bool) {
+        self.didChangeInsets()
         self.screen.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
     }
@@ -208,8 +221,10 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
     }
     
     public func updateBar(animated: Bool, completion: (() -> Void)?) {
-        self._barView = self.screen.pageBarView
-        self.barSize = self.screen.pageBarSize
+        self.barView = self.screen.pageBarView
+        self.barVisibility = self.screen.pageBarVisibility
+        self.barHidden = self.screen.pageBarHidden
+        self.didChangeInsets()
         completion?()
     }
     
@@ -230,7 +245,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         for item in removeItems {
             item.container.parent = nil
         }
-        let inheritedInsets = self.inheritedInsets
+        let inheritedInsets = self.inheritedInsets(interactive: true)
         self._items = containers.compactMap({ Item(container: $0, insets: inheritedInsets) })
         for item in self._items {
             item.container.parent = self
@@ -238,11 +253,13 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         self._barView.itemViews(self._items.compactMap({ $0.barView }))
         let newCurrent: Item?
         if current != nil {
-            newCurrent = self._items.first(where: { $0.container === current })
-        } else if oldCurrent == nil {
-            newCurrent = self._items.first
+            if let exist = self._items.first(where: { $0.container === current }) {
+                newCurrent = exist
+            } else {
+                newCurrent = self._items.first
+            }
         } else {
-            newCurrent = oldCurrent
+            newCurrent = self._items.first
         }
         if oldCurrent !== newCurrent {
             self._current = newCurrent
@@ -290,10 +307,6 @@ extension QPageContainer : IQStackContentContainer where Screen : IQScreenStacka
     
     public var stackBarView: IQStackBarView {
         return self.screen.stackBarView
-    }
-    
-    public var stackBarSize: Float {
-        return self.screen.stackBarSize
     }
     
     public var stackBarVisibility: Float {
@@ -363,9 +376,12 @@ private extension QPageContainer {
         self._barView.itemViews(self._items.compactMap({ $0.barView }))
         if let current = self._current {
             self._barView.selectedItemView(current.barView)
-            self._layout.state = .idle(current: current.pageItem)
+            self._view.contentLayout.state = .idle(current: current.pageItem)
         }
         self.screen.setup()
+        if let current = self._current {
+            self.screen.change(current: current.container)
+        }
     }
     
     func _set(
@@ -374,6 +390,12 @@ private extension QPageContainer {
         animated: Bool,
         completion: (() -> Void)?
     ) {
+        let interCompletion: (_ item: Item?) -> Void = { item in
+            if let item = item {
+                self.screen.change(current: item.container)
+            }
+            completion?()
+        }
         if animated == true {
             if let current = current, let forward = forward {
                 if self.isPresented == true {
@@ -387,20 +409,20 @@ private extension QPageContainer {
                     processing: { [weak self] progress in
                         guard let self = self else { return }
                         self._barView.transition(to: forward.barView, progress: progress)
-                        self._layout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
                         self._barView.finishTransition(to: forward.barView)
-                        self._layout.state = .idle(current: forward.pageItem)
+                        self._view.contentLayout.state = .idle(current: forward.pageItem)
                         if self.isPresented == true {
                             current.container.finishHide(interactive: false)
                             forward.container.finishShow(interactive: false)
                         }
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
-                        completion?()
+                        interCompletion(forward)
                     }
                 )
             } else if let forward = forward {
@@ -408,30 +430,30 @@ private extension QPageContainer {
                     forward.container.prepareShow(interactive: false)
                 }
                 self._barView.selectedItemView(forward.barView)
-                self._layout.state = .idle(current: forward.pageItem)
+                self._view.contentLayout.state = .idle(current: forward.pageItem)
                 if self.isPresented == true {
                     forward.container.finishShow(interactive: false)
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(forward)
             } else if let current = current {
                 if self.isPresented == true {
                     current.container.prepareHide(interactive: false)
                 }
                 self._barView.selectedItemView(nil)
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
                 if self.isPresented == true {
                     current.container.finishHide(interactive: false)
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(nil)
             } else {
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(nil)
             }
         } else if let current = current, let forward = forward {
             if self.isPresented == true {
@@ -439,44 +461,44 @@ private extension QPageContainer {
                 forward.container.prepareShow(interactive: false)
             }
             self._barView.selectedItemView(forward.barView)
-            self._layout.state = .idle(current: forward.pageItem)
+            self._view.contentLayout.state = .idle(current: forward.pageItem)
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
                 forward.container.finishShow(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(forward)
         } else if let forward = forward {
             if self.isPresented == true {
                 forward.container.prepareShow(interactive: false)
             }
             self._barView.selectedItemView(forward.barView)
-            self._layout.state = .idle(current: forward.pageItem)
+            self._view.contentLayout.state = .idle(current: forward.pageItem)
             if self.isPresented == true {
                 forward.container.finishShow(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(forward)
         } else if let current = current {
             if self.isPresented == true {
                 current.container.prepareHide(interactive: false)
             }
             self._barView.selectedItemView(nil)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(nil)
         } else {
             self._barView.selectedItemView(nil)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(nil)
         }
     }
     
@@ -486,6 +508,12 @@ private extension QPageContainer {
         animated: Bool,
         completion: (() -> Void)?
     ) {
+        let interCompletion: (_ item: Item?) -> Void = { item in
+            if let item = item {
+                self.screen.change(current: item.container)
+            }
+            completion?()
+        }
         if animated == true {
             if let current = current, let backward = backward {
                 if self.isPresented == true {
@@ -499,20 +527,20 @@ private extension QPageContainer {
                     processing: { [weak self] progress in
                         guard let self = self else { return }
                         self._barView.transition(to: backward.barView, progress: progress)
-                        self._layout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
                         self._barView.finishTransition(to: backward.barView)
-                        self._layout.state = .idle(current: backward.pageItem)
+                        self._view.contentLayout.state = .idle(current: backward.pageItem)
                         if self.isPresented == true {
                             current.container.finishHide(interactive: false)
                             backward.container.finishShow(interactive: false)
                         }
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
-                        completion?()
+                        interCompletion(backward)
                     }
                 )
             } else if let backward = backward {
@@ -520,30 +548,30 @@ private extension QPageContainer {
                     backward.container.prepareShow(interactive: false)
                 }
                 self._barView.selectedItemView(backward.barView)
-                self._layout.state = .idle(current: backward.pageItem)
+                self._view.contentLayout.state = .idle(current: backward.pageItem)
                 if self.isPresented == true {
                     backward.container.finishShow(interactive: false)
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(backward)
             } else if let current = current {
                 if self.isPresented == true {
                     current.container.prepareHide(interactive: false)
                 }
                 self._barView.selectedItemView(nil)
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
                 if self.isPresented == true {
                     current.container.finishHide(interactive: false)
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(nil)
             } else {
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
-                completion?()
+                interCompletion(nil)
             }
         } else if let current = current, let backward = backward {
             if self.isPresented == true {
@@ -551,44 +579,44 @@ private extension QPageContainer {
                 backward.container.prepareShow(interactive: false)
             }
             self._barView.selectedItemView(backward.barView)
-            self._layout.state = .idle(current: backward.pageItem)
+            self._view.contentLayout.state = .idle(current: backward.pageItem)
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
                 backward.container.finishShow(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(backward)
         } else if let backward = backward {
             if self.isPresented == true {
                 backward.container.prepareShow(interactive: false)
             }
             self._barView.selectedItemView(nil)
-            self._layout.state = .idle(current: backward.pageItem)
+            self._view.contentLayout.state = .idle(current: backward.pageItem)
             if self.isPresented == true {
                 backward.container.finishShow(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(backward)
         } else if let current = current {
             if self.isPresented == true {
                 current.container.prepareHide(interactive: false)
             }
             self._barView.selectedItemView(nil)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             if self.isPresented == true {
                 current.container.finishHide(interactive: false)
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(nil)
         } else {
             self._barView.selectedItemView(nil)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
-            completion?()
+            interCompletion(nil)
         }
     }
     
@@ -606,6 +634,7 @@ private extension QPageContainer {
         let current = self._items[index]
         current.container.prepareHide(interactive: true)
         self._interactiveCurrent = current
+        self.screen.beginInteractive()
     }
     
     func _changeInteractiveGesture() {
@@ -624,10 +653,10 @@ private extension QPageContainer {
             if let forward = self._interactiveForward {
                 let progress = max(0, absDeltaLocation / layoutSize.width)
                 self._barView.transition(to: forward.barView, progress: progress)
-                self._layout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
+                self._view.contentLayout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
             } else {
                 self._barView.selectedItemView(current.barView)
-                self._layout.state = .idle(current: current.pageItem)
+                self._view.contentLayout.state = .idle(current: current.pageItem)
             }
         } else if deltaLocation > 0 {
             if let index = self._interactiveCurrentIndex, self._interactiveBackward == nil {
@@ -639,14 +668,14 @@ private extension QPageContainer {
             if let backward = self._interactiveBackward {
                 let progress = max(0, absDeltaLocation / layoutSize.width)
                 self._barView.transition(to: backward.barView, progress: progress)
-                self._layout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
+                self._view.contentLayout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
             } else {
                 self._barView.selectedItemView(current.barView)
-                self._layout.state = .idle(current: current.pageItem)
+                self._view.contentLayout.state = .idle(current: current.pageItem)
             }
         } else {
             self._barView.selectedItemView(current.barView)
-            self._layout.state = .idle(current: current.pageItem)
+            self._view.contentLayout.state = .idle(current: current.pageItem)
         }
     }
 
@@ -663,8 +692,8 @@ private extension QPageContainer {
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: forward.barView, progress: progress)
-                    self._layout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -678,8 +707,8 @@ private extension QPageContainer {
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: backward.barView, progress: progress)
-                    self._layout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -693,8 +722,8 @@ private extension QPageContainer {
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: forward.barView, progress: 1 - progress)
-                    self._layout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: 1 - progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .forward(current: current.pageItem, next: forward.pageItem, progress: 1 - progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -708,8 +737,8 @@ private extension QPageContainer {
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._barView.transition(to: backward.barView, progress: 1 - progress)
-                    self._layout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: 1 - progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .backward(current: current.pageItem, next: backward.pageItem, progress: 1 - progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -724,13 +753,15 @@ private extension QPageContainer {
     func _finishForwardInteractiveAnimation() {
         if let current = self._interactiveForward {
             self._barView.finishTransition(to: current.barView)
-            self._layout.state = .idle(current: current.pageItem)
+            self._view.contentLayout.state = .idle(current: current.pageItem)
             self._current = current
+            self.screen.change(current: current.container)
         }
         self._interactiveForward?.container.finishShow(interactive: true)
         self._interactiveCurrent?.container.finishHide(interactive: true)
         self._interactiveBackward?.container.cancelShow(interactive: true)
         self._resetInteractiveAnimation()
+        self.screen.finishInteractiveToForward()
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
     }
@@ -738,13 +769,15 @@ private extension QPageContainer {
     func _finishBackwardInteractiveAnimation() {
         if let current = self._interactiveBackward {
             self._barView.finishTransition(to: current.barView)
-            self._layout.state = .idle(current: current.pageItem)
+            self._view.contentLayout.state = .idle(current: current.pageItem)
             self._current = current
+            self.screen.change(current: current.container)
         }
         self._interactiveForward?.container.cancelShow(interactive: true)
         self._interactiveCurrent?.container.finishHide(interactive: true)
         self._interactiveBackward?.container.finishShow(interactive: true)
         self._resetInteractiveAnimation()
+        self.screen.finishInteractiveToBackward()
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
     }
@@ -752,12 +785,13 @@ private extension QPageContainer {
     func _cancelInteractiveAnimation() {
         if let current = self._interactiveCurrent {
             self._barView.finishTransition(to: current.barView)
-            self._layout.state = .idle(current: current.pageItem)
+            self._view.contentLayout.state = .idle(current: current.pageItem)
         }
         self._interactiveForward?.container.cancelShow(interactive: true)
         self._interactiveCurrent?.container.cancelHide(interactive: true)
         self._interactiveBackward?.container.cancelShow(interactive: true)
         self._resetInteractiveAnimation()
+        self.screen.cancelInteractive()
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
     }
@@ -811,20 +845,18 @@ private extension QPageContainer {
         
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
-        var barItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+        var barOffset: Float {
+            didSet { self.setNeedUpdate() }
         }
-        var barInset: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var barSize: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
+        var barSize: Float
         var barVisibility: Float {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var barHidden: Bool {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
+        }
+        var barItem: QLayoutItem {
+            didSet { self.setNeedUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -832,29 +864,30 @@ private extension QPageContainer {
 
         init(
             barItem: QLayoutItem,
-            barInset: Float,
-            barSize: Float,
             barVisibility: Float,
             barHidden: Bool,
             state: State = .empty
         ) {
-            self.barItem = barItem
-            self.barInset = barInset
-            self.barSize = barSize
+            self.barOffset = 0
+            self.barSize = 0
             self.barVisibility = barVisibility
             self.barHidden = barHidden
+            self.barItem = barItem
             self.state = state
         }
         
         func layout(bounds: QRect) -> QSize {
-            let barSize = self.barInset + self.barSize
-            let barOffset = barSize * (1 - self.barVisibility)
+            let barSize = self.barItem.size(QSize(
+                width: bounds.width,
+                height: .infinity
+            ))
             self.barItem.frame = QRect(
                 x: bounds.origin.x,
-                y: bounds.origin.y - barOffset,
+                y: bounds.origin.y,
                 width: bounds.size.width,
-                height: barSize
+                height: self.barOffset + (barSize.height * self.barVisibility)
             )
+            self.barSize = barSize.height
             let forwardFrame = QRect(topLeft: bounds.topRight, size: bounds.size)
             let currentFrame = bounds
             let backwardFrame = QRect(topRight: bounds.topLeft, size: bounds.size)

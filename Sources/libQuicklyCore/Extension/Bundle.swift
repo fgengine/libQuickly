@@ -6,12 +6,22 @@ import Foundation
 
 public extension Bundle {
     
+    var isDebug: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+    
     var isTestFlight: Bool {
         return self.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
     }
+    
     var shortVersion: String? {
         return self.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
+    
     var version: String? {
         return self.object(forInfoDictionaryKey: "CFBundleVersion") as? String
     }

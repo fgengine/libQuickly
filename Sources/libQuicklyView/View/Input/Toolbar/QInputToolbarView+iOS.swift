@@ -36,7 +36,7 @@ extension QInputToolbarView.InputToolbarView {
         self.update(items: view.items)
         self.update(size: view.size)
         self.update(translucent: view.isTranslucent)
-        self.update(tintColor: view.tintColor)
+        self.update(barTintColor: view.barTintColor)
         self.update(contentTintColor: view.contentTintColor)
         self.update(color: view.color)
         self.customDelegate = view
@@ -65,8 +65,8 @@ extension QInputToolbarView.InputToolbarView {
         self.isTranslucent = translucent
     }
     
-    func update(tintColor: QColor?) {
-        self.barTintColor = tintColor?.native
+    func update(barTintColor: QColor?) {
+        self.barTintColor = barTintColor?.native
     }
     
     func update(contentTintColor: QColor) {
@@ -111,7 +111,7 @@ extension QInputToolbarView.InputToolbarView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

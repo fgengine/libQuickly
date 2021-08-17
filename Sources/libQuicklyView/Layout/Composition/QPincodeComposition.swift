@@ -131,14 +131,14 @@ public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorV
     }
     
     public init(
-        titleInset: QInset = QInset(horizontal: 8, vertical: 4),
+        titleInset: QInset,
         titleView: TitleView,
-        pincodeInset: QInset = QInset(horizontal: 8, vertical: 4),
+        pincodeInset: QInset,
         pincodeView: PincodeView,
-        errorInset: QInset = QInset(horizontal: 8, vertical: 4),
+        errorInset: QInset,
         errorView: ErrorView? = nil,
-        buttonsInset: QInset = QInset(horizontal: 8, vertical: 12),
-        buttonsSpacing: QPoint = QPoint(x: 8, y: 8),
+        buttonsInset: QInset,
+        buttonsSpacing: QPoint,
         buttonsAspectRatio: Float,
         buttonOneView: ButtonView,
         buttonTwoView: ButtonView,

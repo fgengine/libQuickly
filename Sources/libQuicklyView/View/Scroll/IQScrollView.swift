@@ -17,8 +17,8 @@ public struct QScrollViewDirection : OptionSet {
         self.rawValue = rawValue
     }
     
-    public static var horizontal = QScrollViewDirection(rawValue: 0x01)
-    public static var vertical = QScrollViewDirection(rawValue: 0x02)
+    public static var horizontal = QScrollViewDirection(rawValue: 1 << 0)
+    public static var vertical = QScrollViewDirection(rawValue: 1 << 1)
     
 }
 
@@ -46,6 +46,8 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     var indicatorDirection: QScrollViewDirection { set get }
     
+    var visibleInset: QInset { set get }
+    
     var contentInset: QInset { set get }
     
     var contentOffset: QPoint { set get }
@@ -69,6 +71,9 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     @discardableResult
     func indicatorDirection(_ value: QScrollViewDirection) -> Self
+    
+    @discardableResult
+    func visibleInset(_ value: QInset) -> Self
     
     @discardableResult
     func contentInset(_ value: QInset) -> Self

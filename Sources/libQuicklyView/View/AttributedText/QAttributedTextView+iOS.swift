@@ -13,7 +13,7 @@ extension QAttributedTextView {
         
         typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
         
-        unowned var customDelegate: AttributedTextViewDelegate?
+        unowned var customDelegate: AttributedTextViewDelegate!
         
         override var frame: CGRect {
             set(value) {
@@ -34,6 +34,7 @@ extension QAttributedTextView {
         override init(frame: CGRect) {
             super.init(frame: frame)
             
+            self.isUserInteractionEnabled = true
             self.clipsToBounds = true
             
             self._tapGesture = UITapGestureRecognizer(target: self, action: #selector(self._tapHandle(_:)))
@@ -44,6 +45,14 @@ extension QAttributedTextView {
             fatalError("init(coder:) has not been implemented")
         }
         
+        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+            let shouldTap = self.customDelegate.shouldTap()
+            if shouldTap == true {
+                return super.hitTest(point, with: event)
+            }
+            return nil
+        }
+        
     }
         
 }
@@ -52,8 +61,7 @@ extension QAttributedTextView.AttributedTextView {
     
     func update(view: QAttributedTextView) {
         self._view = view
-        self.update(text: view.text)
-        self.update(alignment: view.alignment)
+        self.update(text: view.text, alignment: view.alignment)
         self.update(lineBreak: view.lineBreak)
         self.update(numberOfLines: view.numberOfLines)
         self.update(color: view.color)
@@ -65,12 +73,17 @@ extension QAttributedTextView.AttributedTextView {
         self.customDelegate = view
     }
     
-    func update(text: NSAttributedString) {
+    func update(text: NSAttributedString, alignment: QTextAlignment?) {
         self.attributedText = text
+        if let alignment = alignment {
+            self.textAlignment = alignment.nsTextAlignment
+        }
     }
     
-    func update(alignment: QTextAlignment) {
-        self.textAlignment = alignment.nsTextAlignment
+    func update(alignment: QTextAlignment?) {
+        if let alignment = alignment {
+            self.textAlignment = alignment.nsTextAlignment
+        }
     }
     
     func update(lineBreak: QTextLineBreak) {
@@ -95,7 +108,6 @@ private extension QAttributedTextView.AttributedTextView {
         guard let attributes = self._tapAttributes() else { return }
         self.customDelegate?.tap(attributes: attributes)
     }
-    
     
     func _tapAttributes() -> [NSAttributedString.Key: Any]? {
         let layoutManager = NSLayoutManager()
@@ -147,7 +159,7 @@ extension QAttributedTextView.AttributedTextView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

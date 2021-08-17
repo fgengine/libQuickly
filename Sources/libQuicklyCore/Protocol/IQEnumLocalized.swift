@@ -12,5 +12,6 @@ public extension IQEnumLocalized {
     var localized: String {
         return NSLocalizedString(self.rawValue, comment: "")
     }
+
     
 }

@@ -66,7 +66,8 @@ public class QPageBarView : QBarView, IQPageBarView {
         indicatorView: IQView,
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
         itemSpacing: Float = 4,
-        color: QColor? = QColor(rgba: 0x00000000),
+        size: Float? = nil,
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -86,6 +87,8 @@ public class QPageBarView : QBarView, IQPageBarView {
             contentLayout: self._contentLayout
         )
         super.init(
+            placement: .top,
+            size: size,
             contentView: self._contentView,
             color: color,
             border: border,
@@ -175,7 +178,7 @@ private extension QPageBarView {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var indicatorItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var indicatorState: IndicatorState {
             didSet { self.setNeedUpdate() }
@@ -187,7 +190,10 @@ private extension QPageBarView {
             didSet { self.setNeedForceUpdate() }
         }
         var items: [QLayoutItem] {
-            didSet { self.setNeedForceUpdate() }
+            didSet {
+                self._cache = Array< QSize? >(repeating: nil, count: self.items.count)
+                self.setNeedForceUpdate()
+            }
         }
         
         private var _cache: [QSize?]
@@ -209,12 +215,8 @@ private extension QPageBarView {
         
         func invalidate(item: QLayoutItem) {
             if let index = self.items.firstIndex(where: { $0 === item }) {
-                self._cache.remove(at: index)
+                self._cache[index] = nil
             }
-        }
-        
-        func invalidate() {
-            self._cache = Array< QSize? >(repeating: nil, count: self.items.count)
         }
         
         func layout(bounds: QRect) -> QSize {

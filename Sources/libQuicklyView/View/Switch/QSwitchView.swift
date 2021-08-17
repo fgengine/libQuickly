@@ -25,16 +25,17 @@ public class QSwitchView : IQSwitchView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var thumbColor: QColor {
@@ -96,27 +97,32 @@ public class QSwitchView : IQSwitchView {
     
     private var _reuse: QReuseItem< SwitchView >
     private var _view: SwitchView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _value: Bool
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     private var _onChangeValue: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
     
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        reuseName: String?,
         width: QDimensionBehaviour = .fill,
         height: QDimensionBehaviour,
         thumbColor: QColor,
         offColor: QColor,
         onColor: QColor,
         value: Bool,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.width = width
         self.height = height
         self.thumbColor = thumbColor
@@ -128,7 +134,16 @@ public class QSwitchView : IQSwitchView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -141,9 +156,23 @@ public class QSwitchView : IQSwitchView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     @discardableResult
@@ -221,6 +250,24 @@ public class QSwitchView : IQSwitchView {
     @discardableResult
     public func onDisappear(_ value: (() -> Void)?) -> Self {
         self._onDisappear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
         return self
     }
     

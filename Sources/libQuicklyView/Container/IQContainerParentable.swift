@@ -16,8 +16,10 @@ public protocol IQContainerParentable : AnyObject {
 
 public extension IQContainerParentable where Self : IQContainer {
     
-    var inheritedInsets: QInset {
-        return self.parent?.insets(of: self) ?? .zero
+    func inheritedInsets(interactive: Bool) -> QInset {
+        guard let parent = self.parent else { return .zero }
+        self.view.layoutIfNeeded()
+        return parent.insets(of: self, interactive: interactive)
     }
     
     #if os(iOS)

@@ -28,8 +28,8 @@ public class QAppTrackingPermission : IQPermission {
         self._observer = QObserver()
     }
     
-    public func add(observer: IQPermissionObserver) {
-        self._observer.add(observer, priority: 0)
+    public func add(observer: IQPermissionObserver, priority: QObserverPriority) {
+        self._observer.add(observer, priority: priority)
     }
     
     public func remove(observer: IQPermissionObserver) {

@@ -31,6 +31,7 @@ extension QEmptyView {
         override init(frame: CGRect) {
             super.init(frame: frame)
             
+            self.isUserInteractionEnabled = false
             self.clipsToBounds = true
         }
         
@@ -77,7 +78,7 @@ extension QEmptyView.EmptyView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

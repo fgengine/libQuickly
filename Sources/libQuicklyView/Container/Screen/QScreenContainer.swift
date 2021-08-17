@@ -8,13 +8,13 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreenContainer {
+public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreenContainer, IQContainerScreenable {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
@@ -40,13 +40,18 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
     #endif
     public private(set) var isPresented: Bool
     public var view: IQView {
-        return self.screen.view
+        return self._view
     }
     public private(set) var screen: Screen
-
+    
+    private var _view: QCustomView< Layout >
+    
     public init(screen: Screen) {
         self.isPresented = false
         self.screen = screen
+        self._view = QCustomView(
+            contentLayout: Layout()
+        )
         self._init()
     }
     
@@ -54,8 +59,8 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
         self.screen.destroy()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        return self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        return self.inheritedInsets(interactive: interactive)
     }
     
     public func didChangeInsets() {
@@ -63,10 +68,15 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
     }
     
     public func activate() -> Bool {
+        guard self.isPresented == true else { return false }
         return self.screen.activate()
     }
     
     public func prepareShow(interactive: Bool) {
+        self.didChangeInsets()
+        if self._view.contentLayout.item == nil {
+            self._view.contentLayout.item = QLayoutItem(view: self.screen.view)
+        }
         self.screen.prepareShow(interactive: interactive)
     }
     
@@ -109,10 +119,6 @@ extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStac
         return self.screen.stackBarView
     }
     
-    public var stackBarSize: Float {
-        return self.screen.stackBarSize
-    }
-    
     public var stackBarVisibility: Float {
         return max(0, min(self.screen.stackBarVisibility, 1))
     }
@@ -135,6 +141,14 @@ extension QScreenContainer : IQPageContentContainer where Screen : IQScreenPagea
     
     public var pageItemView: IQBarItemView {
         return self.screen.pageItemView
+    }
+    
+}
+
+extension QScreenContainer : IQBookContentContainer where Screen : IQScreenBookable {
+    
+    public var bookIdentifier: Any {
+        return self.screen.bookIdentifier
     }
     
 }
@@ -177,6 +191,39 @@ extension QScreenContainer : IQPushContentContainer where Screen : IQScreenPusha
     
     public var pushDuration: TimeInterval? {
         return self.screen.pushDuration
+    }
+    
+}
+
+private extension QScreenContainer {
+    
+    class Layout : IQLayout {
+        
+        unowned var delegate: IQLayoutDelegate?
+        unowned var view: IQView?
+        var item: QLayoutItem? {
+            didSet { self.setNeedUpdate() }
+        }
+        
+        init() {
+        }
+        
+        func layout(bounds: QRect) -> QSize {
+            if let item = self.item {
+                item.frame = bounds
+            }
+            return bounds.size
+        }
+        
+        func size(_ available: QSize) -> QSize {
+            return available
+        }
+        
+        func items(bounds: QRect) -> [QLayoutItem] {
+            guard let item = self.item else { return [] }
+            return [ item ]
+        }
+        
     }
     
 }

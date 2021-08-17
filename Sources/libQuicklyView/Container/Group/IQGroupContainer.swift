@@ -8,7 +8,6 @@ import libQuicklyCore
 public protocol IQGroupContainer : IQContainer, IQContainerParentable {
     
     var barView: IQGroupBarView { get }
-    var barSize: Float { get }
     var barVisibility: Float { get }
     var barHidden: Bool { get }
     var containers: [IQGroupContentContainer] { get }

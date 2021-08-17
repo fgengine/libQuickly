@@ -26,7 +26,7 @@ extension QControlView {
             content.update(view: owner)
         }
         
-        static func cleanupReuse(owner: Owner, content: Content) {
+        static func cleanupReuse(content: Content) {
             content.cleanup()
         }
         
@@ -57,10 +57,19 @@ final class NativeControlView : UIControl {
     
     private unowned var _view: View?
     private var _layoutManager: QLayoutManager!
+    private var _isLayout: Bool
     
     override init(frame: CGRect) {
+        self._isLayout = false
+        
         super.init(frame: frame)
         
+        self.addTarget(self, action: #selector(self._handleHighlighting(_:)), for: .touchDown)
+        self.addTarget(self, action: #selector(self._handleHighlighting(_:)), for: .touchDragEnter)
+        self.addTarget(self, action: #selector(self._handleUnhighlighting(_:)), for: .touchDragExit)
+        self.addTarget(self, action: #selector(self._handleUnhighlighting(_:)), for: .touchUpOutside)
+        self.addTarget(self, action: #selector(self._handleUnhighlighting(_:)), for: .touchCancel)
+        self.addTarget(self, action: #selector(self._handlePressed(_:)), for: .touchUpInside)
         self.clipsToBounds = true
         
         self._layoutManager = QLayoutManager(contentView: self, delegate: self)
@@ -73,9 +82,7 @@ final class NativeControlView : UIControl {
     override func willMove(toSuperview superview: UIView?) {
         super.willMove(toSuperview: superview)
         
-        if superview != nil {
-            self.setNeedsLayout()
-        } else {
+        if superview == nil {
             self._layoutManager.clear()
         }
     }
@@ -83,55 +90,27 @@ final class NativeControlView : UIControl {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let bounds = QRect(self.bounds)
-        self._layoutManager.layout(bounds:bounds)
-        self._layoutManager.visible(bounds: bounds)
+        self._safeLayout({
+            let bounds = QRect(self.bounds)
+            self._layoutManager.layout(bounds:bounds)
+            self._layoutManager.visible(bounds: bounds)
+        })
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if self.customDelegate.shouldHighlighting(view: self) == true || self.customDelegate.shouldPressing(view: self) == true {
+        let shouldHighlighting = self.customDelegate.shouldHighlighting(view: self)
+        let shouldPressing = self.customDelegate.shouldPressing(view: self)
+        if shouldHighlighting == true || shouldPressing == true {
+            if self.bounds.contains(point) == true {
+                return self
+            }
+        } else {
             let hitView = super.hitTest(point, with: event)
-            return hitView
-        }
-        if let hitView = super.hitTest(point, with: event) {
             if hitView != self {
                 return hitView
             }
         }
         return nil
-    }
-    
-    override func sendActions(for controlEvents: UIControl.Event) {
-        super.sendActions(for: controlEvents)
-        
-        switch controlEvents {
-        case .touchDown:
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: true)
-            }
-        case .touchDragEnter:
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: true)
-            }
-        case .touchDragExit:
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: false)
-            }
-        case .touchUpInside:
-            if self.customDelegate.shouldPressing(view: self) == true {
-                self.customDelegate.pressed(view: self)
-            }
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: false)
-            }
-        case .touchUpOutside, .touchCancel:
-            if self.customDelegate.shouldHighlighting(view: self) == true {
-                self.customDelegate.set(view: self, highlighted: false)
-            }
-            
-        default:
-            break
-        }
     }
     
 }
@@ -163,17 +142,50 @@ extension NativeControlView {
     
 }
 
+private extension NativeControlView {
+    
+    func _safeLayout(_ action: () -> Void) {
+        if self._isLayout == false {
+            self._isLayout = true
+            action()
+            self._isLayout = false
+        }
+    }
+    
+    @objc
+    func _handleHighlighting(_ sender: Any) {
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: true)
+        }
+    }
+    
+    @objc
+    func _handleUnhighlighting(_ sender: Any) {
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: false)
+        }
+    }
+    
+    @objc
+    func _handlePressed(_ sender: Any) {
+        if self.customDelegate.shouldPressing(view: self) == true {
+            self.customDelegate.pressed(view: self)
+        }
+        if self.customDelegate.shouldHighlighting(view: self) == true {
+            self.customDelegate.set(view: self, highlighted: false)
+        }
+    }
+    
+}
+
 extension NativeControlView : IQLayoutDelegate {
     
-    func setNeedUpdate(_ layout: IQLayout, force: Bool) {
-        if force == true {
-            layout.view?.layout?.setNeedForceUpdate()
-        }
+    func setNeedUpdate(_ layout: IQLayout) -> Bool {
         self.setNeedsLayout()
+        return true
     }
     
     func updateIfNeeded(_ layout: IQLayout) {
-        layout.view?.layout?.updateIfNeeded()
         self.layoutIfNeeded()
     }
     

@@ -10,54 +10,50 @@ public class QIconContentDetailValueComposition< IconView: IQView, ContentView: 
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
     public var iconInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var iconView: IconView {
-        didSet {
-            self.iconItem = QLayoutItem(view: self.iconView)
-            self.setNeedUpdate()
-        }
+        didSet { self.iconItem = QLayoutItem(view: self.iconView) }
     }
-    public private(set) var iconItem: QLayoutItem
+    public private(set) var iconItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.iconItem) }
+    }
     public var contentInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var contentView: ContentView {
-        didSet {
-            self.contentItem = QLayoutItem(view: self.contentView)
-            self.setNeedUpdate()
-        }
+        didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
-    public private(set) var contentItem: QLayoutItem
+    public private(set) var contentItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.contentItem) }
+    }
     public var detailInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var detailView: DetailView {
-        didSet {
-            self.detailItem = QLayoutItem(view: self.detailView)
-            self.setNeedUpdate()
-        }
+        didSet { self.detailItem = QLayoutItem(view: self.detailView) }
     }
-    public private(set) var detailItem: QLayoutItem
+    public private(set) var detailItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.detailItem) }
+    }
     public var valueInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var valueView: ValueView {
-        didSet {
-            self.valueItem = QLayoutItem(view: self.valueView)
-            self.setNeedUpdate()
-        }
+        didSet { self.valueItem = QLayoutItem(view: self.valueView) }
     }
-    public private(set) var valueItem: QLayoutItem
+    public private(set) var valueItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.valueItem) }
+    }
     
     public init(
-        iconInset: QInset = QInset(horizontal: 8, vertical: 4),
+        iconInset: QInset,
         iconView: IconView,
-        contentInset: QInset = QInset(horizontal: 8, vertical: 4),
+        contentInset: QInset,
         contentView: ContentView,
-        detailInset: QInset = QInset(horizontal: 8, vertical: 4),
+        detailInset: QInset,
         detailView: DetailView,
-        valueInset: QInset = QInset(horizontal: 8, vertical: 4),
+        valueInset: QInset,
         valueView: ValueView
     ) {
         self.iconInset = iconInset

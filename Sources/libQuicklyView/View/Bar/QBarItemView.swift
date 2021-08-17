@@ -23,6 +23,9 @@ public class QBarItemView : IQBarItemView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
     public unowned var delegate: IQBarItemViewDelegate?
     public var contentInset: QInset {
         set(value) { self._layout.contentInset = value }
@@ -103,6 +106,10 @@ public class QBarItemView : IQBarItemView {
         self._init()
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -113,6 +120,18 @@ public class QBarItemView : IQBarItemView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
     }
     
     public func triggeredChangeStyle(_ userIteraction: Bool) {
@@ -186,6 +205,24 @@ public class QBarItemView : IQBarItemView {
     }
     
     @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
+        return self
+    }
+    
+    @discardableResult
     public func onChangeStyle(_ value: ((Bool) -> Void)?) -> Self {
         self._view.onChangeStyle(value)
         return self
@@ -211,10 +248,10 @@ private extension QBarItemView {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var contentInset: QInset {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.contentItem) }
         }
         
         init(

@@ -36,6 +36,14 @@ public struct QFont {
     
 }
 
+public extension QFont {
+    
+    func withSize(_ size: Float) -> QFont {
+        return QFont(self.native.withSize(CGFloat(size)))
+    }
+    
+}
+
 public extension QFontWeight {
     
     var uiFontWeight: UIFont.Weight {

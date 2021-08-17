@@ -12,26 +12,38 @@ public class QPushContainer : IQPushContainer {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
-        return self._contentContainer.shouldInteractive
+        return self.contentContainer?.shouldInteractive ?? false
     }
     #if os(iOS)
     public var statusBarHidden: Bool {
-        return self._contentContainer.statusBarHidden
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarHidden ?? false
+        }
+        return current.container.statusBarHidden
     }
     public var statusBarStyle: UIStatusBarStyle {
-        return self._contentContainer.statusBarStyle
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarStyle ?? .default
+        }
+        return current.container.statusBarStyle
     }
     public var statusBarAnimation: UIStatusBarAnimation {
-        return self._contentContainer.statusBarAnimation
+        guard let current = self._current else {
+            return self.contentContainer?.statusBarAnimation ?? .fade
+        }
+        return current.container.statusBarAnimation
     }
     public var supportedOrientations: UIInterfaceOrientationMask {
-        return self._contentContainer.supportedOrientations
+        guard let current = self._current else {
+            return self.contentContainer?.supportedOrientations ?? .all
+        }
+        return current.container.supportedOrientations
     }
     #endif
     public private(set) var isPresented: Bool
@@ -39,25 +51,27 @@ public class QPushContainer : IQPushContainer {
         return self._view
     }
     public var additionalInset: QInset {
-        set(value) { self._layout.additionalInset = value }
-        get { return self._layout.additionalInset }
+        set(value) { self._view.contentLayout.additionalInset = value }
+        get { return self._view.contentLayout.additionalInset }
     }
-    public var contentContainer: IQContainer & IQContainerParentable {
-        set(value) {
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+    public var contentContainer: (IQContainer & IQContainerParentable)? {
+        didSet(oldValue) {
+            if let contentContainer = self.contentContainer {
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
+                contentContainer.parent = nil
             }
-            self._contentContainer.parent = nil
-            self._contentContainer = value
-            self._layout.contentItem = QLayoutItem(view: value.view)
-            self._contentContainer.parent = self
-            if self.isPresented == true {
-                self._contentContainer.prepareHide(interactive: false)
-                self._contentContainer.finishHide(interactive: false)
+            self._view.contentLayout.contentItem = self.contentContainer.flatMap({ QLayoutItem(view: $0.view) })
+            if let contentContainer = self.contentContainer {
+                contentContainer.parent = self
+                if self.isPresented == true {
+                    contentContainer.prepareHide(interactive: false)
+                    contentContainer.finishHide(interactive: false)
+                }
             }
         }
-        get { return self._contentContainer }
     }
     public var containers: [IQPushContentContainer] {
         return self._items.compactMap({ return $0.container })
@@ -73,43 +87,53 @@ public class QPushContainer : IQPushContainer {
     public var interactiveLimit: Float
     #endif
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: QPanGesture
     private var _interactiveBeginLocation: QPoint?
     #endif
-    private var _contentContainer: IQContainer & IQContainerParentable
     private var _items: [Item]
     private var _previous: Item?
-    private var _current: Item?
+    private var _current: Item? {
+        didSet {
+            #if os(iOS)
+            self._interactiveGesture.isEnabled = self._current != nil
+            #endif
+        }
+    }
     private var _timer: QTimer?
     
     public init(
         additionalInset: QInset = QInset(horizontal: 8, vertical: 8),
-        contentContainer: IQContainer & IQContainerParentable
+        contentContainer: (IQContainer & IQContainerParentable)? = nil
     ) {
         self.isPresented = false
         #if os(iOS)
         self.animationVelocity = 500
         self.interactiveLimit = 20
         #endif
-        self._contentContainer = contentContainer
-        self._layout = Layout(
-            additionalInset: additionalInset,
-            containerInset: .zero,
-            contentItem: QLayoutItem(view: contentContainer.view),
-            state: .empty
-        )
+        self.contentContainer = contentContainer
         #if os(iOS)
-        self._interactiveGesture = QPanGesture()
+        self._interactiveGesture = QPanGesture(
+            isEnabled: false
+        )
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                additionalInset: additionalInset,
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .empty
+            )
         )
         #else
         self._view = QCustomView(
-            contentLayout: self._layout
+            contentLayout: Layout(
+                additionalInset: additionalInset,
+                containerInset: .zero,
+                contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                state: .empty
+            )
         )
         #endif
         self._items = []
@@ -120,13 +144,13 @@ public class QPushContainer : IQPushContainer {
         self._timerReset()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        return self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        return self.inheritedInsets(interactive: interactive)
     }
     
     public func didChangeInsets() {
-        self._layout.containerInset = self.inheritedInsets
-        self._contentContainer.didChangeInsets()
+        self._view.contentLayout.containerInset = self.inheritedInsets(interactive: true)
+        self.contentContainer?.didChangeInsets()
         for container in self.containers {
             container.didChangeInsets()
         }
@@ -138,38 +162,42 @@ public class QPushContainer : IQPushContainer {
                 return true
             }
         }
-        return self._contentContainer.activate()
+        if let contentContainer = self.contentContainer {
+            return contentContainer.activate()
+        }
+        return false
     }
     
     public func prepareShow(interactive: Bool) {
-        self._contentContainer.prepareShow(interactive: interactive)
+        self.didChangeInsets()
+        self.contentContainer?.prepareShow(interactive: interactive)
         self.currentContainer?.prepareShow(interactive: interactive)
     }
     
     public func finishShow(interactive: Bool) {
         self.isPresented = true
-        self._contentContainer.finishShow(interactive: interactive)
+        self.contentContainer?.finishShow(interactive: interactive)
         self.currentContainer?.finishShow(interactive: interactive)
     }
     
     public func cancelShow(interactive: Bool) {
-        self._contentContainer.cancelShow(interactive: interactive)
+        self.contentContainer?.cancelShow(interactive: interactive)
         self.currentContainer?.cancelShow(interactive: interactive)
     }
     
     public func prepareHide(interactive: Bool) {
-        self._contentContainer.prepareHide(interactive: interactive)
+        self.contentContainer?.prepareHide(interactive: interactive)
         self.currentContainer?.prepareHide(interactive: interactive)
     }
     
     public func finishHide(interactive: Bool) {
         self.isPresented = false
-        self._contentContainer.finishHide(interactive: interactive)
+        self.contentContainer?.finishHide(interactive: interactive)
         self.currentContainer?.finishHide(interactive: interactive)
     }
     
     public func cancelHide(interactive: Bool) {
-        self._contentContainer.cancelHide(interactive: interactive)
+        self.contentContainer?.cancelHide(interactive: interactive)
         self.currentContainer?.cancelHide(interactive: interactive)
     }
     
@@ -212,12 +240,13 @@ extension QPushContainer : IQRootContentContainer {
 private extension QPushContainer {
     
     func _init() {
-        self._contentContainer.parent = self
+        self.contentContainer?.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
-            guard self._current != nil else { return false }
             guard let view = gesture.view else { return false }
-            guard self.contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            if let contentContainer = self.contentContainer {
+                guard contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
+            }
             return true
         }).onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -274,14 +303,14 @@ private extension QPushContainer {
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .present(push: push, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .present(push: push, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
                     self._didPresent(push: push)
                     push.container.finishShow(interactive: false)
-                    self._layout.state = .idle(push: push)
+                    self._view.contentLayout.state = .idle(push: push)
                     self.setNeedUpdateOrientations()
                     self.setNeedUpdateStatusBar()
                     completion?()
@@ -290,7 +319,7 @@ private extension QPushContainer {
         } else {
             self._didPresent(push: push)
             push.container.finishShow(interactive: false)
-            self._layout.state = .idle(push: push)
+            self._view.contentLayout.state = .idle(push: push)
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
         }
@@ -325,13 +354,13 @@ private extension QPushContainer {
                 ease: QAnimation.Ease.QuadraticInOut(),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .dismiss(push: push, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(push: push, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
                     push.container.finishHide(interactive: false)
-                    self._layout.state = .empty
+                    self._view.contentLayout.state = .empty
                     self.setNeedUpdateOrientations()
                     self.setNeedUpdateStatusBar()
                     completion?()
@@ -339,7 +368,7 @@ private extension QPushContainer {
             )
         } else {
             push.container.finishHide(interactive: false)
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
         }
@@ -363,15 +392,15 @@ private extension QPushContainer {
         let currentLocation = self._interactiveGesture.location(in: self._view)
         let deltaLocation = currentLocation.y - beginLocation.y
         if deltaLocation < 0 {
-            let height = self._layout.height(item: current)
+            let height = self._view.contentLayout.height(item: current)
             let progress = -deltaLocation / height
-            self._layout.state = .dismiss(push: current, progress: progress)
+            self._view.contentLayout.state = .dismiss(push: current, progress: progress)
         } else if deltaLocation > 0 {
-            let height = self._layout.height(item: current)
+            let height = self._view.contentLayout.height(item: current)
             let progress = deltaLocation / pow(height, 1.5)
-            self._layout.state = .present(push: current, progress: 1 + progress)
+            self._view.contentLayout.state = .present(push: current, progress: 1 + progress)
         } else {
-            self._layout.state = .idle(push: current)
+            self._view.contentLayout.state = .idle(push: current)
         }
     }
 
@@ -380,14 +409,14 @@ private extension QPushContainer {
         let currentLocation = self._interactiveGesture.location(in: self._view)
         let deltaLocation = currentLocation.y - beginLocation.y
         if deltaLocation < -self.interactiveLimit {
-            let height = self._layout.height(item: current)
+            let height = self._view.contentLayout.height(item: current)
             QAnimation.default.run(
                 duration: TimeInterval(height / self.animationVelocity),
                 elapsed: TimeInterval(-deltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .dismiss(push: current, progress: progress)
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .dismiss(push: current, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -395,14 +424,14 @@ private extension QPushContainer {
                 }
             )
         } else if deltaLocation > 0 {
-            let height = self._layout.height(item: current)
+            let height = self._view.contentLayout.height(item: current)
             let baseProgress = deltaLocation / pow(height, 1.5)
             QAnimation.default.run(
                 duration: TimeInterval((height * baseProgress) / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
-                    self._layout.state = .present(push: current, progress: 1 + (baseProgress - (baseProgress * progress)))
-                    self._layout.updateIfNeeded()
+                    self._view.contentLayout.state = .present(push: current, progress: 1 + (baseProgress - (baseProgress * progress)))
+                    self._view.contentLayout.updateIfNeeded()
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -410,7 +439,7 @@ private extension QPushContainer {
                 }
             )
         } else {
-            self._layout.state = .idle(push: current)
+            self._view.contentLayout.state = .idle(push: current)
             self._cancelInteractiveAnimation()
         }
     }
@@ -429,13 +458,13 @@ private extension QPushContainer {
                 self._present(push: previous, animated: true, completion: nil)
             } else {
                 self._current = nil
-                self._layout.state = .empty
+                self._view.contentLayout.state = .empty
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
             }
         } else {
             self._current = nil
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
         }
@@ -446,9 +475,9 @@ private extension QPushContainer {
         self._timer?.resume()
         if let current = self._current {
             current.container.cancelHide(interactive: true)
-            self._layout.state = .idle(push: current)
+            self._view.contentLayout.state = .idle(push: current)
         } else {
-            self._layout.state = .empty
+            self._view.contentLayout.state = .empty
         }
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
@@ -487,13 +516,13 @@ private extension QPushContainer {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var additionalInset: QInset {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var containerInset: QInset {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
-        var contentItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+        var contentItem: QLayoutItem? {
+            didSet { self.setNeedUpdate() }
         }
         var state: State {
             didSet { self.setNeedUpdate() }
@@ -502,7 +531,7 @@ private extension QPushContainer {
         init(
             additionalInset: QInset,
             containerInset: QInset,
-            contentItem: QLayoutItem,
+            contentItem: QLayoutItem?,
             state: State
         ) {
             self.additionalInset = additionalInset
@@ -512,7 +541,9 @@ private extension QPushContainer {
         }
         
         func layout(bounds: QRect) -> QSize {
-            self.contentItem.frame = bounds
+            if let contentItem = self.contentItem {
+                contentItem.frame = bounds
+            }
             switch self.state {
             case .empty:
                 break
@@ -563,12 +594,17 @@ private extension QPushContainer {
         }
         
         func items(bounds: QRect) -> [QLayoutItem] {
-            switch self.state {
-            case .empty: return [ self.contentItem ]
-            case .idle(let push): return [ self.contentItem, push.item ]
-            case .present(let push, _): return [ self.contentItem, push.item ]
-            case .dismiss(let push, _): return [ self.contentItem, push.item ]
+            var items: [QLayoutItem] = []
+            if let contentItem = self.contentItem {
+                items.append(contentItem)
             }
+            switch self.state {
+            case .empty: break
+            case .idle(let push): items.append(push.item)
+            case .present(let push, _): items.append(push.item)
+            case .dismiss(let push, _): items.append(push.item)
+            }
+            return items
         }
         
         func height(item: QPushContainer.Item) -> Float {

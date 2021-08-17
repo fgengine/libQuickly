@@ -73,10 +73,23 @@ public extension QSize {
     }
     
     @inlinable
-    func apply(width: QDimensionBehaviour, height: QDimensionBehaviour) -> QSize {
+    func apply(width: QDimensionBehaviour?, height: QDimensionBehaviour?, aspectRatio: Float? = nil) -> QSize {
+        if let aspectRatio = aspectRatio {
+            if let width = width?.value(self.width) {
+                return QSize(
+                    width: width,
+                    height: width / aspectRatio
+                )
+            } else if let height = height?.value(self.height) {
+                return QSize(
+                    width: height * aspectRatio,
+                    height: height
+                )
+            }
+        }
         return QSize(
-            width: self.width.apply(width),
-            height: self.height.apply(height)
+            width: width?.value(self.width) ?? 0,
+            height: height?.value(self.height) ?? 0
         )
     }
     

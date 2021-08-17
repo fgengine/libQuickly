@@ -12,9 +12,26 @@ public final class QPanGesture : NSObject, IQPanGesture {
     public var native: QNativeGesture {
         return self._native
     }
-    public private(set) var isEnabled: Bool {
+    public var isEnabled: Bool {
         set(value) { self._native.isEnabled = value }
         get { return self._native.isEnabled }
+    }
+    public var cancelsTouchesInView: Bool {
+        set(value) { self._native.cancelsTouchesInView = value }
+        get { return self._native.cancelsTouchesInView }
+    }
+    public var delaysTouchesBegan: Bool {
+        set(value) { self._native.delaysTouchesBegan = value }
+        get { return self._native.delaysTouchesBegan }
+    }
+    public var delaysTouchesEnded: Bool {
+        set(value) { self._native.delaysTouchesEnded = value }
+        get { return self._native.delaysTouchesEnded }
+    }
+    @available(iOS 9.2, *)
+    public var requiresExclusiveTouchType: Bool {
+        set(value) { self._native.requiresExclusiveTouchType = value }
+        get { return self._native.requiresExclusiveTouchType }
     }
     
     private var _native: UIPanGestureRecognizer
@@ -27,9 +44,37 @@ public final class QPanGesture : NSObject, IQPanGesture {
     private var _onCancel: (() -> Void)?
     private var _onEnd: (() -> Void)?
     
-    public override init(
+    public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true
     ) {
         let native = UIPanGestureRecognizer()
+        native.isEnabled = isEnabled
+        native.cancelsTouchesInView = cancelsTouchesInView
+        native.delaysTouchesBegan = delaysTouchesBegan
+        native.delaysTouchesEnded = delaysTouchesEnded
+        self._native = native
+        super.init()
+        self._native.delegate = self
+        self._native.addTarget(self, action: #selector(self._handle))
+    }
+    
+    @available(iOS 9.2, *)
+    public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true,
+        requiresExclusiveTouchType: Bool = true
+    ) {
+        let native = UIPanGestureRecognizer()
+        native.isEnabled = isEnabled
+        native.cancelsTouchesInView = cancelsTouchesInView
+        native.delaysTouchesBegan = delaysTouchesBegan
+        native.delaysTouchesEnded = delaysTouchesEnded
+        native.requiresExclusiveTouchType = requiresExclusiveTouchType
         self._native = native
         super.init()
         self._native.delegate = self
@@ -37,9 +82,44 @@ public final class QPanGesture : NSObject, IQPanGesture {
     }
     
     public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true,
         screenEdge: ScreenEdge
     ) {
         let native = UIScreenEdgePanGestureRecognizer()
+        native.isEnabled = isEnabled
+        native.cancelsTouchesInView = cancelsTouchesInView
+        native.delaysTouchesBegan = delaysTouchesBegan
+        native.delaysTouchesEnded = delaysTouchesEnded
+        switch screenEdge {
+        case .top: native.edges = [ .top ]
+        case .left: native.edges = [ .left ]
+        case .right: native.edges = [ .right ]
+        case .bottom: native.edges = [ .bottom ]
+        }
+        self._native = native
+        super.init()
+        self._native.delegate = self
+        self._native.addTarget(self, action: #selector(self._handle))
+    }
+    
+    @available(iOS 9.2, *)
+    public init(
+        isEnabled: Bool = true,
+        cancelsTouchesInView: Bool = true,
+        delaysTouchesBegan: Bool = false,
+        delaysTouchesEnded: Bool = true,
+        requiresExclusiveTouchType: Bool = true,
+        screenEdge: ScreenEdge
+    ) {
+        let native = UIScreenEdgePanGestureRecognizer()
+        native.isEnabled = isEnabled
+        native.cancelsTouchesInView = cancelsTouchesInView
+        native.delaysTouchesBegan = delaysTouchesBegan
+        native.delaysTouchesEnded = delaysTouchesEnded
+        native.requiresExclusiveTouchType = requiresExclusiveTouchType
         switch screenEdge {
         case .top: native.edges = [ .top ]
         case .left: native.edges = [ .left ]
@@ -152,6 +232,13 @@ private extension QPanGesture {
 }
 
 extension QPanGesture : UIGestureRecognizerDelegate {
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if touch.view is UIControl {
+            return false
+        }
+        return true
+    }
     
     public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         return self._onShouldBegin?() ?? true

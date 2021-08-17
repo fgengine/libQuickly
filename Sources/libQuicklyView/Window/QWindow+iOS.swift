@@ -67,10 +67,16 @@ extension QWindow {
             self.container = container
             super.init(nibName: nil, bundle: nil)
             self.container.delegate = self
+            
+            NotificationCenter.default.addObserver(self, selector: #selector(self._didChangeStatusBarFrame(_:)), name: UIApplication.didChangeStatusBarFrameNotification, object: nil)
         }
         
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
         }
         
         override func loadView() {
@@ -80,19 +86,27 @@ extension QWindow {
         override func viewDidLoad() {
             super.viewDidLoad()
             self.container.safeArea = self._safeArea()
+            self._updateStatusBarHeight()
             self.container.prepareShow(interactive: false)
             self.container.finishShow(interactive: false)
+        }
+        
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            self._updateStatusBarHeight()
         }
         
         override func viewDidLayoutSubviews() {
             super.viewDidLayoutSubviews()
             self.container.safeArea = self._safeArea()
+            self.container.view.layoutIfNeeded()
         }
         
         @available(iOS 11.0, *)
         override func viewSafeAreaInsetsDidChange() {
             super.viewSafeAreaInsetsDidChange()
             self.container.safeArea = self._safeArea()
+            self.container.view.layoutIfNeeded()
         }
         
     }
@@ -119,11 +133,34 @@ extension QWindow.RootViewController : IQRootContainerDelegate {
     
     func updateStatusBar() {
         self.setNeedsStatusBarAppearanceUpdate()
+        self._updateStatusBarHeight()
     }
     
 }
 
 private extension QWindow.RootViewController {
+    
+    @objc
+    func _didChangeStatusBarFrame(_ notification: Any) {
+        self._updateStatusBarHeight()
+    }
+    
+    func _updateStatusBarHeight() {
+        if let statusBarView = self.container.statusBarView {
+            statusBarView.height = self._statusBarHeight()
+        }
+    }
+    
+    func _statusBarHeight() -> Float {
+        let height: Float
+        if #available(iOS 13.0, *) {
+            let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+            height = Float(window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0)
+        } else {
+            height = Float(UIApplication.shared.statusBarFrame.height)
+        }
+        return height
+    }
     
     func _safeArea() -> QInset {
         if #available(iOS 11.0, *) {

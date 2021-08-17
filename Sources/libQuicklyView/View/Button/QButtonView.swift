@@ -23,8 +23,11 @@ public class QButtonView : IQButtonView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
     public var inset: QInset {
-        set(value) { self.setNeedForceUpdate() }
+        set(value) { self.setNeedForceLayout() }
         get { return self._layout.inset }
     }
     public var backgroundView: IQView
@@ -98,7 +101,6 @@ public class QButtonView : IQButtonView {
     private var _isHighlighted: Bool
     private var _isSelected: Bool
     private var _onChangeStyle: ((_ userIteraction: Bool) -> Void)?
-    private var _onPressed: (() -> Void)?
     
     public init(
         inset: QInset = QInset(horizontal: 4, vertical: 4),
@@ -113,7 +115,7 @@ public class QButtonView : IQButtonView {
         textView: IQView? = nil,
         isHighlighted: Bool = false,
         isSelected: Bool = false,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -149,6 +151,10 @@ public class QButtonView : IQButtonView {
         self._isSelected = isSelected
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -159,6 +165,18 @@ public class QButtonView : IQButtonView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
     }
     
     public func triggeredChangeStyle(_ userIteraction: Bool) {
@@ -256,6 +274,24 @@ public class QButtonView : IQButtonView {
     }
     
     @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
+        return self
+    }
+    
+    @discardableResult
     public func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self {
         self._view.onChangeStyle(value)
         return self
@@ -278,16 +314,16 @@ extension QButtonView {
         var inset: QInset {
             didSet { self.setNeedForceUpdate() }
         }
+        var backgroundItem: QLayoutItem {
+            didSet { self.setNeedForceUpdate(item: self.backgroundItem) }
+        }
         var spinnerPosition: QButtonViewSpinnerPosition {
             didSet { self.setNeedForceUpdate() }
         }
         var spinnerItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.spinnerItem) }
         }
         var spinnerAnimating: Bool {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var backgroundItem: QLayoutItem {
             didSet { self.setNeedForceUpdate() }
         }
         var imagePosition: QButtonViewImagePosition {
@@ -297,13 +333,13 @@ extension QButtonView {
             didSet { self.setNeedForceUpdate() }
         }
         var imageItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.imageItem) }
         }
         var textInset: QInset {
             didSet { self.setNeedForceUpdate() }
         }
         var textItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.textItem) }
         }
         private var _cacheSpinnerSize: QSize?
         private var _cacheImageSize: QSize?
@@ -341,12 +377,6 @@ extension QButtonView {
             } else if self.textItem === item {
                 self._cacheTextSize = nil
             }
-        }
-        
-        public func invalidate() {
-            self._cacheSpinnerSize = nil
-            self._cacheImageSize = nil
-            self._cacheTextSize = nil
         }
         
         func layout(bounds: QRect) -> QSize {
@@ -505,20 +535,63 @@ private extension QButtonView.Layout {
         switch position {
         case .top:
             let offest = primaryInset.top + primarySize.height + secondaryInset.top
-            primary = QRect(x: 0, y: 0, width: primarySize.width, height: primarySize.height)
-            secondary = QRect(x: 0, y: offest, width: secondarySize.width, height: secondarySize.height)
+            let baseline = max(primarySize.width, secondarySize.width) / 2
+            primary = QRect(
+                x: baseline - (primarySize.width / 2),
+                y: 0,
+                width: primarySize.width,
+                height: primarySize.height
+            )
+            secondary = QRect(
+                x: baseline - (secondarySize.width / 2),
+                y: offest,
+                width: secondarySize.width,
+                height: secondarySize.height
+            )
         case .left:
             let offest = primaryInset.left + primarySize.width + secondaryInset.left
-            primary = QRect(x: 0, y: 0, width: primarySize.width, height: primarySize.height)
-            secondary = QRect(x: offest, y: 0, width: secondarySize.width, height: secondarySize.height)
+            let baseline = max(primarySize.height, secondarySize.height) / 2
+            primary = QRect(
+                x: 0,
+                y: baseline - (primarySize.height / 2),
+                width: primarySize.width,
+                height: primarySize.height
+            )
+            secondary = QRect(
+                x: offest,
+                y: baseline - (secondarySize.height / 2),
+                width: secondarySize.width,
+                height: secondarySize.height
+            )
         case .right:
             let offest = primaryInset.left + secondarySize.width + secondaryInset.right
-            primary = QRect(x: offest, y: 0, width: primarySize.width, height: primarySize.height)
-            secondary = QRect(x: 0, y: 0, width: secondarySize.width, height: secondarySize.height)
+            let baseline = max(primarySize.width, secondarySize.width) / 2
+            primary = QRect(
+                x: offest,
+                y: baseline - (primarySize.height / 2),
+                width: primarySize.width,
+                height: primarySize.height)
+            secondary = QRect(
+                x: 0,
+                y: baseline - (secondarySize.height / 2),
+                width: secondarySize.width,
+                height: secondarySize.height
+            )
         case .bottom:
             let offest = primaryInset.top + secondarySize.height + secondaryInset.bottom
-            primary = QRect(x: 0, y: offest, width: primarySize.width, height: primarySize.height)
-            secondary = QRect(x: 0, y: 0, width: secondarySize.width, height: secondarySize.height)
+            let baseline = max(primarySize.height, secondarySize.height) / 2
+            primary = QRect(
+                x: baseline - (primarySize.width / 2),
+                y: offest,
+                width: primarySize.width,
+                height: primarySize.height
+            )
+            secondary = QRect(
+                x: baseline - (secondarySize.width / 2),
+                y: 0,
+                width: secondarySize.width,
+                height: secondarySize.height
+            )
         }
         let union = primary.union(secondary)
         let center = bounds.center

@@ -65,12 +65,12 @@ public struct QColor {
     }
     
     @inlinable
-    init(_ native: NSColor) {
+    public init(_ native: NSColor) {
         self.native = native
     }
     
     @inlinable
-    init(_ cgColor: CGColor) {
+    public init(_ cgColor: CGColor) {
         self.init(NSColor(cgColor: cgColor) ?? NSColor.black)
     }
     

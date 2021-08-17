@@ -45,6 +45,12 @@ extension QWebView {
             fatalError("init(coder:) has not been implemented")
         }
         
+        override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            if keyPath == "contentSize" {
+                self.customDelegate?._update(contentSize: QSize(self.scrollView.contentSize))
+            }
+        }
+        
     }
         
 }
@@ -54,7 +60,6 @@ extension QWebView.WebView {
     func update(view: QWebView) {
         self._view = view
         self.update(contentInset: view.contentInset)
-        self.update(request: view.request)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
@@ -62,6 +67,8 @@ extension QWebView.WebView {
         self.update(alpha: view.alpha)
         self.updateShadowPath()
         self.customDelegate = view
+        self.scrollView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
+        self.update(request: view.request)
     }
     
     func update(contentInset: QInset) {
@@ -69,19 +76,46 @@ extension QWebView.WebView {
         self.scrollView.scrollIndicatorInsets = contentInset.uiEdgeInsets
     }
     
-    func update(request: URLRequest?) {
+    func update(request: QWebViewRequest?) {
         if let request = request {
-            self.load(request)
-            self.customDelegate?.beginLoading()
+            switch request {
+            case .request(let request):
+                self.load(request)
+            case .file(let url, let readAccess):
+                self.loadFileURL(url, allowingReadAccessTo: readAccess)
+            case .html(let string, let baseUrl):
+                self.loadHTMLString(string, baseURL: baseUrl)
+            case .data(let data, let mimeType, let encoding, let baseUrl):
+                self.load(data, mimeType: mimeType, characterEncodingName: encoding, baseURL: baseUrl)
+            }
+            self.customDelegate?._beginLoading()
         } else {
             self.stopLoading()
         }
+    }
+    
+    func evaluate< Result >(
+        javaScript: String,
+        success: @escaping (Result) -> Void,
+        failure: @escaping (Error) -> Void
+    ) {
+        self.evaluateJavaScript(javaScript, completionHandler: { result, error in
+            if let result = result as? Result {
+                success(result)
+            } else if let error = error {
+                failure(error)
+            } else {
+                failure(WKError(WKError.javaScriptResultTypeIsUnsupported))
+            }
+        })
     }
     
     func cleanup() {
         self.customDelegate = nil
         self._view = nil
         self.load(URLRequest(url: URL(string: "about:blank")!))
+        self.frame = .zero
+        self.scrollView.removeObserver(self, forKeyPath: "contentSize")
     }
     
 }
@@ -92,11 +126,11 @@ extension QWebView.WebView : UIScrollViewDelegate {
 extension QWebView.WebView : WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        self.customDelegate?.endLoading()
+        self.customDelegate?._endLoading(error: nil)
     }
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        self.customDelegate?.endLoading()
+        self.customDelegate?._endLoading(error: error)
     }
     
 }
@@ -121,7 +155,7 @@ extension QWebView.WebView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

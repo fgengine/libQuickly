@@ -13,7 +13,7 @@ public protocol IQAttributedTextView : IQView, IQViewColorable, IQViewBorderable
     
     var text: NSAttributedString { set get }
     
-    var alignment: QTextAlignment { set get }
+    var alignment: QTextAlignment? { set get }
     
     var lineBreak: QTextLineBreak { set get }
     
@@ -29,7 +29,7 @@ public protocol IQAttributedTextView : IQView, IQViewColorable, IQViewBorderable
     func text(_ value: NSAttributedString) -> Self
     
     @discardableResult
-    func alignment(_ value: QTextAlignment) -> Self
+    func alignment(_ value: QTextAlignment?) -> Self
     
     @discardableResult
     func lineBreak(_ value: QTextLineBreak) -> Self

@@ -8,7 +8,7 @@ import libQuicklyCore
 public protocol IQPushContainer : IQContainer, IQContainerParentable {
     
     var additionalInset: QInset { set get }
-    var contentContainer: IQContainer & IQContainerParentable { set get }
+    var contentContainer: (IQContainer & IQContainerParentable)? { set get }
     var containers: [IQPushContentContainer] { get }
     var previousContainer: IQPushContentContainer? { get }
     var currentContainer: IQPushContentContainer? { get }

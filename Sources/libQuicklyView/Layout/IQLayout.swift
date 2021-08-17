@@ -7,7 +7,9 @@ import libQuicklyCore
 
 public protocol IQLayoutDelegate : AnyObject {
     
-    func setNeedUpdate(_ layout: IQLayout, force: Bool)
+    @discardableResult
+    func setNeedUpdate(_ layout: IQLayout) -> Bool
+    
     func updateIfNeeded(_ layout: IQLayout)
     
 }
@@ -21,7 +23,6 @@ public protocol IQLayout : AnyObject {
     func updateIfNeeded()
     
     func invalidate(item: QLayoutItem)
-    func invalidate()
 
     func layout(bounds: QRect) -> QSize
     
@@ -34,20 +35,30 @@ public protocol IQLayout : AnyObject {
 public extension IQLayout {
     
     @inlinable
-    func setNeedForceUpdate(item: QLayoutItem) {
-        self.invalidate(item: item)
-        self.delegate?.setNeedUpdate(self, force: true)
-    }
-    
-    @inlinable
-    func setNeedForceUpdate() {
-        self.invalidate()
-        self.delegate?.setNeedUpdate(self, force: true)
+    func setNeedForceUpdate(item: QLayoutItem? = nil) {
+        if let item = item {
+            self.invalidate(item: item)
+        }
+        let forceParent: Bool
+        if let delegate = self.delegate {
+            forceParent = delegate.setNeedUpdate(self)
+        } else {
+            forceParent = true
+        }
+        if forceParent == true {
+            if let view = self.view, let item = view.item {
+                if let layout = view.layout {
+                    layout.setNeedForceUpdate(item: item)
+                } else {
+                    item.setNeedForceUpdate()
+                }
+            }
+        }
     }
     
     @inlinable
     func setNeedUpdate() {
-        self.delegate?.setNeedUpdate(self, force: false)
+        self.delegate?.setNeedUpdate(self)
     }
     
     @inlinable
@@ -57,10 +68,6 @@ public extension IQLayout {
     
     @inlinable
     func invalidate(item: QLayoutItem) {
-    }
-    
-    @inlinable
-    func invalidate() {
     }
     
     @inlinable

@@ -26,7 +26,7 @@ extension QCustomView {
             content.update(view: owner)
         }
         
-        static func cleanupReuse(owner: Owner, content: Content) {
+        static func cleanupReuse(content: Content) {
             content.cleanup()
         }
         
@@ -58,9 +58,11 @@ final class NativeCustomView : UIView {
     private unowned var _view: View?
     private var _layoutManager: QLayoutManager!
     private var _gestures: [IQGesture]
+    private var _isLayout: Bool
     
     override init(frame: CGRect) {
         self._gestures = []
+        self._isLayout = false
         
         super.init(frame: frame)
         
@@ -76,9 +78,7 @@ final class NativeCustomView : UIView {
     override func willMove(toSuperview superview: UIView?) {
         super.willMove(toSuperview: superview)
         
-        if superview != nil {
-            self.setNeedsLayout()
-        } else {
+        if superview == nil {
             self._layoutManager.clear()
         }
     }
@@ -86,20 +86,21 @@ final class NativeCustomView : UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let bounds = QRect(self.bounds)
-        self._layoutManager.layout(bounds:bounds)
-        self._layoutManager.visible(bounds: bounds)
+        self._safeLayout({
+            let bounds = QRect(self.bounds)
+            self._layoutManager.layout(bounds:bounds)
+            self._layoutManager.visible(bounds: bounds)
+        })
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if self.customDelegate.shouldHighlighting(view: self) == true || self._gestures.count > 0 {
-            let hitView = super.hitTest(point, with: event)
+        let hitView = super.hitTest(point, with: event)
+        let shouldHighlighting = self.customDelegate.shouldHighlighting(view: self)
+        let shouldGestures = self._gestures.contains(where: { $0.isEnabled == true })
+        if shouldHighlighting == true || shouldGestures == true {
             return hitView
-        }
-        if let hitView = super.hitTest(point, with: event) {
-            if hitView != self {
-                return hitView
-            }
+        } else if hitView != self {
+            return hitView
         }
         return nil
     }
@@ -124,7 +125,7 @@ final class NativeCustomView : UIView {
             self.customDelegate.set(view: self, highlighted: false)
         }
     }
-    
+
 }
 
 extension NativeCustomView {
@@ -183,17 +184,26 @@ extension NativeCustomView {
     
 }
 
+private extension NativeCustomView {
+    
+    func _safeLayout(_ action: () -> Void) {
+        if self._isLayout == false {
+            self._isLayout = true
+            action()
+            self._isLayout = false
+        }
+    }
+    
+}
+
 extension NativeCustomView : IQLayoutDelegate {
     
-    func setNeedUpdate(_ layout: IQLayout, force: Bool) {
-        if force == true {
-            layout.view?.layout?.setNeedForceUpdate()
-        }
+    func setNeedUpdate(_ layout: IQLayout) -> Bool {
         self.setNeedsLayout()
+        return true
     }
     
     func updateIfNeeded(_ layout: IQLayout) {
-        layout.view?.layout?.updateIfNeeded()
         self.layoutIfNeeded()
     }
     

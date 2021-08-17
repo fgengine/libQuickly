@@ -10,42 +10,39 @@ public class QIconContentDetailComposition< IconView: IQView, ContentView: IQVie
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
     public var iconInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var iconView: IconView {
-        didSet {
-            self.iconItem = QLayoutItem(view: self.iconView)
-            self.setNeedUpdate()
-        }
+        didSet { self.iconItem = QLayoutItem(view: self.iconView) }
     }
-    public private(set) var iconItem: QLayoutItem
+    public private(set) var iconItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.iconItem) }
+    }
     public var contentInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var contentView: ContentView {
-        didSet {
-            self.contentItem = QLayoutItem(view: self.contentView)
-            self.setNeedUpdate()
-        }
+        didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
-    public private(set) var contentItem: QLayoutItem
+    public private(set) var contentItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.contentItem) }
+    }
     public var detailInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var detailView: DetailView {
-        didSet {
-            self.detailItem = QLayoutItem(view: self.detailView)
-            self.setNeedUpdate()
-        }
+        didSet { self.detailItem = QLayoutItem(view: self.detailView) }
     }
-    public private(set) var detailItem: QLayoutItem
+    public private(set) var detailItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.detailItem) }
+    }
     
     public init(
-        iconInset: QInset = QInset(horizontal: 8, vertical: 4),
+        iconInset: QInset,
         iconView: IconView,
-        contentInset: QInset = QInset(horizontal: 8, vertical: 4),
+        contentInset: QInset,
         contentView: ContentView,
-        detailInset: QInset = QInset(horizontal: 8, vertical: 4),
+        detailInset: QInset,
         detailView: DetailView
     ) {
         self.iconInset = iconInset
@@ -60,34 +57,74 @@ public class QIconContentDetailComposition< IconView: IQView, ContentView: IQVie
     }
     
     public func layout(bounds: QRect) -> QSize {
-        let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
-        let contentDetailValue = bounds.split(
-            left: self.iconInset.left + iconSize.width + self.iconInset.right
+        let size = QSize(
+            width: bounds.width,
+            height: .infinity
         )
-        let contentSize = self.contentItem.size(contentDetailValue.right.size.apply(inset: self.contentInset))
-        let contentDetail = contentDetailValue.right.split(
-            top: self.contentInset.top + contentSize.height + self.contentInset.bottom
+        let iconSize = self.iconItem.size(QSize(
+            width: size.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
+        let contentSize = self.contentItem.size(QSize(
+            width: size.width - self.contentInset.horizontal - iconSize.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
+        let detailSize = self.detailItem.size(QSize(
+            width: size.width - self.detailInset.horizontal - iconSize.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
+        let splitFrames = QRect(
+            x: bounds.x,
+            y: bounds.y,
+            width: size.width,
+            height: max(iconSize.height + self.iconInset.vertical, contentSize.height + self.contentInset.vertical + detailSize.height + self.detailInset.vertical)
+        ).split(
+            left: iconSize.width + self.iconInset.left
         )
-        self.iconItem.frame = contentDetailValue.left.apply(inset: self.iconInset)
-        self.contentItem.frame = contentDetail.top.apply(inset: self.contentInset)
-        self.detailItem.frame = contentDetail.bottom.apply(inset: self.detailInset)
-        return bounds.size
+        self.iconItem.frame = QRect(
+            x: splitFrames.left.x + self.iconInset.left,
+            y: splitFrames.left.y + self.iconInset.top + (splitFrames.left.height / 2) - (contentSize.height / 2),
+            width: iconSize.width,
+            height: iconSize.height
+        )
+        self.contentItem.frame = QRect(
+            x: splitFrames.right.x + self.contentInset.left,
+            y: splitFrames.right.y + self.contentInset.top,
+            width: contentSize.width,
+            height: contentSize.height
+        )
+        self.detailItem.frame = QRect(
+            x: splitFrames.right.x + self.detailInset.left,
+            y: splitFrames.right.y + self.contentInset.vertical + contentSize.height + self.detailInset.top,
+            width: detailSize.width,
+            height: detailSize.height
+        )
+        return QSize(
+            width: bounds.width,
+            height: max(iconSize.height + self.iconInset.vertical, contentSize.height + self.contentInset.vertical + detailSize.height + self.detailInset.vertical)
+        )
     }
     
     public func size(_ available: QSize) -> QSize {
-        let iconSize = self.iconItem.size(available.apply(inset: self.iconInset))
-        let iconBounds = iconSize.apply(inset: -self.iconInset)
-        let contentAvailable = QSize(
-            width: available.width - iconBounds.width,
-            height: available.height
+        let size = QSize(
+            width: available.width,
+            height: .infinity
         )
-        let contentSize = self.contentItem.size(contentAvailable.apply(inset: self.contentInset))
-        let contentBounds = contentSize.apply(inset: -self.contentInset)
-        let detailSize = self.detailItem.size(contentAvailable.apply(inset: self.detailInset))
-        let detailBounds = detailSize.apply(inset: -self.detailInset)
+        let iconSize = self.iconItem.size(QSize(
+            width: size.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
+        let contentSize = self.contentItem.size(QSize(
+            width: size.width - self.contentInset.horizontal - iconSize.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
+        let detailSize = self.detailItem.size(QSize(
+            width: size.width - self.detailInset.horizontal - iconSize.width - self.iconInset.horizontal,
+            height: .infinity
+        ))
         return QSize(
-            width: iconBounds.width + max(contentBounds.width, detailBounds.width),
-            height: max(iconBounds.height, contentBounds.height + detailBounds.height)
+            width: available.width,
+            height: max(iconSize.height + self.iconInset.vertical, contentSize.height + self.contentInset.vertical + detailSize.height + self.detailInset.vertical)
         )
     }
     

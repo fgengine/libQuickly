@@ -23,6 +23,17 @@ public class QBarView : IQBarView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
+    public var placement: QBarViewPlacement {
+        set(value) { self._layout.placement = value }
+        get { return self._layout.placement }
+    }
+    public var size: Float? {
+        set(value) { self._layout.size = value }
+        get { return self._layout.size }
+    }
     public var safeArea: QInset {
         set(value) { self._layout.safeArea = value }
         get { return self._layout.safeArea }
@@ -58,8 +69,10 @@ public class QBarView : IQBarView {
     private var _view: QCustomView< Layout >
     
     public init(
+        placement: QBarViewPlacement,
+        size: Float? = nil,
         contentView: IQView? = nil,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -67,6 +80,8 @@ public class QBarView : IQBarView {
     ) {
         self.contentView = contentView
         self._layout = Layout(
+            placement: placement,
+            size: size,
             safeArea: .zero,
             contentItem: contentView.flatMap({ QLayoutItem(view: $0) })
         )
@@ -80,6 +95,10 @@ public class QBarView : IQBarView {
         )
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -90,6 +109,30 @@ public class QBarView : IQBarView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
+    }
+    
+    @discardableResult
+    public func placement(_ value: QBarViewPlacement) -> Self {
+        self.placement = value
+        return self
+    }
+    
+    @discardableResult
+    public func size(_ value: Float?) -> Self {
+        self.size = value
+        return self
     }
     
     @discardableResult
@@ -146,6 +189,24 @@ public class QBarView : IQBarView {
         return self
     }
     
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
+        return self
+    }
+    
 }
 
 extension QBarView {
@@ -154,39 +215,157 @@ extension QBarView {
         
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
+        var placement: QBarViewPlacement {
+            didSet { self.setNeedForceUpdate() }
+        }
+        var size: Float? {
+            didSet { self.setNeedForceUpdate() }
+        }
         var safeArea: QInset {
             didSet { self.setNeedForceUpdate() }
         }
         var contentItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.contentItem) }
         }
         
         init(
+            placement: QBarViewPlacement,
+            size: Float?,
             safeArea: QInset,
             contentItem: QLayoutItem?
         ) {
+            self.placement = placement
+            self.size = size
             self.safeArea = safeArea
             self.contentItem = contentItem
         }
         
         func layout(bounds: QRect) -> QSize {
             guard let contentItem = self.contentItem else { return .zero }
-            contentItem.frame = bounds.apply(inset: self.safeArea)
-            return bounds.size
+            let safeBounds = bounds.apply(inset: self.safeArea)
+            switch self.placement {
+            case .top:
+                let height: Float
+                if let size = self.size {
+                    height = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: bounds.width - self.safeArea.horizontal,
+                        height: .infinity
+                    ))
+                    height = contentSize.height
+                }
+                contentItem.frame = QRect(
+                    bottom: safeBounds.bottom,
+                    width: safeBounds.width,
+                    height: height
+                )
+                return QSize(
+                    width: bounds.width,
+                    height: height + self.safeArea.vertical
+                )
+            case .left:
+                let width: Float
+                if let size = self.size {
+                    width = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: .infinity,
+                        height: bounds.height - self.safeArea.vertical
+                    ))
+                    width = contentSize.width
+                }
+                contentItem.frame = QRect(
+                    right: safeBounds.right,
+                    width: width,
+                    height: safeBounds.height
+                )
+                return QSize(
+                    width: width + self.safeArea.horizontal,
+                    height: bounds.height
+                )
+            case .right:
+                let width: Float
+                if let size = self.size {
+                    width = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: .infinity,
+                        height: bounds.height - self.safeArea.vertical
+                    ))
+                    width = contentSize.width
+                }
+                contentItem.frame = QRect(
+                    left: safeBounds.left,
+                    width: width,
+                    height: safeBounds.height
+                )
+                return QSize(
+                    width: width + self.safeArea.horizontal,
+                    height: bounds.height
+                )
+            case .bottom:
+                let height: Float
+                if let size = self.size {
+                    height = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: bounds.width - self.safeArea.horizontal,
+                        height: .infinity
+                    ))
+                    height = contentSize.height
+                }
+                contentItem.frame = QRect(
+                    top: safeBounds.top,
+                    width: safeBounds.width,
+                    height: height
+                )
+                return QSize(
+                    width: bounds.width,
+                    height: height + self.safeArea.vertical
+                )
+            }
         }
         
         func size(_ available: QSize) -> QSize {
             guard let contentItem = self.contentItem else { return .zero }
-            let contentSize = contentItem.size(available.apply(inset: self.safeArea))
-            return QSize(
-                width: contentSize.width + (self.safeArea.left + self.safeArea.right),
-                height: contentSize.height + (self.safeArea.top + self.safeArea.bottom)
-            )
+            switch self.placement {
+            case .top, .bottom:
+                let height: Float
+                if let size = self.size {
+                    height = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: available.width - self.safeArea.horizontal,
+                        height: .infinity
+                    ))
+                    height = contentSize.height
+                }
+                return QSize(
+                    width: available.width,
+                    height: height + self.safeArea.vertical
+                )
+            case .left, .right:
+                let width: Float
+                if let size = self.size {
+                    width = size
+                } else {
+                    let contentSize = contentItem.size(QSize(
+                        width: .infinity,
+                        height: available.height - self.safeArea.vertical
+                    ))
+                    width = contentSize.width
+                }
+                return QSize(
+                    width: width + self.safeArea.horizontal,
+                    height: available.height
+                )
+            }
         }
         
         func items(bounds: QRect) -> [QLayoutItem] {
             guard let contentItem = self.contentItem else { return [] }
-            return self.visible(items: [ contentItem ], for: bounds)
+            return [ contentItem ]
         }
         
     }

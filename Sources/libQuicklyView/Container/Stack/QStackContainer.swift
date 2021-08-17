@@ -8,13 +8,13 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContainerScreenable {
+public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQContainerScreenable {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
@@ -55,7 +55,6 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     
     private var _rootItem: Item
     private var _items: [Item]
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _interactiveGesture: IQPanGesture
@@ -82,26 +81,31 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             container: rootContainer,
             insets: .zero
         )
-        self._layout = Layout(
-            state: .idle(current: self._rootItem.item)
-        )
         #if os(iOS)
         self._interactiveGesture = QPanGesture(screenEdge: .left)
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                state: .idle(current: self._rootItem.item)
+            )
         )
         #else
         self._view = QCustomView(
-            layout: self._layout
+            layout: Layout(
+                state: .idle(current: self._rootItem.item)
+            )
         )
         #endif
         self._items = []
         self._init()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        let inheritedInsets = self.inheritedInsets
+    deinit {
+        self.screen.destroy()
+    }
+    
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        let inheritedInsets = self.inheritedInsets(interactive: interactive)
         let item: Item?
         if self._rootItem.container === container {
             item = self._rootItem
@@ -109,14 +113,18 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             item = self._items.first(where: { $0.container === container })
         }
         if let item = item {
-            let stackItemSize: Float
-            if item.container.stackBarHidden == false {
-                stackItemSize = item.container.stackBarSize
+            let top: Float
+            if item.barHidden == false {
+                if interactive == true {
+                    top = item.barSize * item.barVisibility
+                } else {
+                    top = item.barSize
+                }
             } else {
-                stackItemSize = 0
+                top = 0
             }
             return QInset(
-                top: inheritedInsets.top + stackItemSize,
+                top: inheritedInsets.top + top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
                 bottom: inheritedInsets.bottom
@@ -126,7 +134,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     }
     
     public func didChangeInsets() {
-        let inheritedInsets = self.inheritedInsets
+        let inheritedInsets = self.inheritedInsets(interactive: true)
         self._rootItem.set(insets: inheritedInsets)
         self._rootItem.container.didChangeInsets()
         for item in self._items {
@@ -147,6 +155,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
     }
     
     public func prepareShow(interactive: Bool) {
+        self.didChangeInsets()
         self.screen.prepareShow(interactive: interactive)
         self._currentItem.container.prepareShow(interactive: interactive)
     }
@@ -187,14 +196,13 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         }
         if let item = item {
             item.update()
-            completion?()
-        } else {
-            completion?()
         }
+        self.didChangeInsets()
+        completion?()
     }
     
     public func set(rootContainer: IQStackContentContainer, animated: Bool, completion: (() -> Void)?) {
-        let inheritedInsets = self.inheritedInsets
+        let inheritedInsets = self.inheritedInsets(interactive: true)
         let newRootItem = Item(container: rootContainer, insets: inheritedInsets)
         newRootItem.container.parent = self
         let oldRootItem = self._rootItem
@@ -215,8 +223,13 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         let removeItems = self._items.filter({ item in
             return containers.contains(where: { item.container === $0 }) == false
         })
-        let inheritedInsets = self.inheritedInsets
-        self._items = containers.compactMap({ Item(container: $0, insets: inheritedInsets) })
+        let inheritedInsets = self.inheritedInsets(interactive: true)
+        self._items = containers.compactMap({ container in
+            if let item = self._items.first(where: { $0.container === container }) {
+                return item
+            }
+            return Item(container: container, insets: inheritedInsets)
+        })
         for item in self._items {
             item.container.parent = self
         }
@@ -241,7 +254,8 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             completion?()
             return
         }
-        let forward = Item(container: container, insets: self.inheritedInsets)
+        let inheritedInsets = self.inheritedInsets(interactive: true)
+        let forward = Item(container: container, insets: inheritedInsets)
         let current = self._currentItem
         self._items.append(forward)
         container.parent = self
@@ -254,7 +268,7 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
         })
         if newContainers.count > 0 {
             let current = self._currentItem
-            let inheritedInsets = self.inheritedInsets
+            let inheritedInsets = self.inheritedInsets(interactive: true)
             let items: [Item] = newContainers.compactMap({ Item(container: $0, insets: inheritedInsets) })
             for item in items {
                 item.container.parent = self
@@ -271,7 +285,8 @@ public class QStackContainer< Screen : IQScreen > : IQStackContainer, IQContaine
             completion?()
             return
         }
-        let forward = Item(container: wireframe.container, owner: wireframe, insets: self.inheritedInsets)
+        let inheritedInsets = self.inheritedInsets(interactive: true)
+        let forward = Item(container: wireframe.container, owner: wireframe, insets: inheritedInsets)
         let current = self._currentItem
         self._items.append(forward)
         wireframe.container.parent = self
@@ -364,6 +379,320 @@ extension QStackContainer : IQDialogContentContainer where Screen : IQScreenDial
 
 private extension QStackContainer {
     
+    func _init() {
+        self._rootItem.container.parent = self
+        #if os(iOS)
+        self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture in
+            guard let gestureView = gesture.view else { return false }
+            guard self._view.native.isChild(of: gestureView, recursive: true) == true else { return false }
+            return true
+        }).onShouldBegin({ [unowned self] in
+            guard self._items.count > 0 else { return false }
+            guard self.shouldInteractive == true else { return false }
+            return true
+        }).onBegin({ [unowned self] in
+            self._beginInteractiveGesture()
+        }) .onChange({ [unowned self] in
+            self._changeInteractiveGesture()
+        }).onCancel({ [unowned self] in
+            self._endInteractiveGesture(true)
+        }).onEnd({ [unowned self] in
+            self._endInteractiveGesture(false)
+        })
+        #else
+        #endif
+        self.screen.setup()
+    }
+    
+    func _push(
+        current: Item?,
+        forward: Item?,
+        animated: Bool,
+        completion: (() -> Void)?
+    ) {
+        if animated == true {
+            if let current = current, let forward = forward {
+                QAnimation.default.run(
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
+                    ease: QAnimation.Ease.QuadraticInOut(),
+                    preparing: { [weak self] in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .push(current: current.item, forward: forward.item, progress: 0)
+                        if self.isPresented == true {
+                            current.container.prepareHide(interactive: false)
+                            forward.container.prepareShow(interactive: false)
+                        }
+                    },
+                    processing: { [weak self] progress in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .push(current: current.item, forward: forward.item, progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
+                    },
+                    completion: { [weak self] in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .idle(current: forward.item)
+                        if self.isPresented == true {
+                            current.container.finishHide(interactive: false)
+                            forward.container.finishShow(interactive: false)
+                        }
+                        self.setNeedUpdateOrientations()
+                        self.setNeedUpdateStatusBar()
+                        completion?()
+                    }
+                )
+            } else if let forward = forward {
+                self._view.contentLayout.state = .idle(current: forward.item)
+                if self.isPresented == true {
+                    forward.container.prepareShow(interactive: false)
+                    forward.container.finishShow(interactive: false)
+                }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            } else if let current = current {
+                self._view.contentLayout.state = .empty
+                if self.isPresented == true {
+                    current.container.prepareHide(interactive: false)
+                    current.container.finishHide(interactive: false)
+                }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            } else {
+                self._view.contentLayout.state = .empty
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            }
+        } else if let current = current, let forward = forward {
+            self._view.contentLayout.state = .idle(current: forward.item)
+            if self.isPresented == true {
+                current.container.prepareHide(interactive: false)
+                forward.container.prepareShow(interactive: false)
+                current.container.finishHide(interactive: false)
+                forward.container.finishShow(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else if let forward = forward {
+            self._view.contentLayout.state = .idle(current: forward.item)
+            if self.isPresented == true {
+                forward.container.prepareShow(interactive: false)
+                forward.container.finishShow(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else if let current = current {
+            self._view.contentLayout.state = .empty
+            if self.isPresented == true {
+                current.container.prepareHide(interactive: false)
+                current.container.finishHide(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else {
+            self._view.contentLayout.state = .empty
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        }
+    }
+    
+    func _pop(
+        current: Item?,
+        backward: Item?,
+        animated: Bool,
+        completion: (() -> Void)?
+    ) {
+        if animated == true {
+            if let current = current, let backward = backward {
+                QAnimation.default.run(
+                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
+                    ease: QAnimation.Ease.QuadraticInOut(),
+                    preparing: { [weak self] in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: 0)
+                        if self.isPresented == true {
+                            current.container.prepareHide(interactive: false)
+                            backward.container.prepareShow(interactive: false)
+                        }
+                    },
+                    processing: { [weak self] progress in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
+                    },
+                    completion: { [weak self] in
+                        guard let self = self else { return }
+                        self._view.contentLayout.state = .idle(current: backward.item)
+                        if self.isPresented == true {
+                            current.container.finishHide(interactive: false)
+                            backward.container.finishShow(interactive: false)
+                        }
+                        self.setNeedUpdateOrientations()
+                        self.setNeedUpdateStatusBar()
+                        completion?()
+                    }
+                )
+            } else if let backward = backward {
+                self._view.contentLayout.state = .idle(current: backward.item)
+                if self.isPresented == true {
+                    backward.container.prepareShow(interactive: false)
+                    backward.container.finishShow(interactive: false)
+                }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            } else if let current = current {
+                self._view.contentLayout.state = .empty
+                if self.isPresented == true {
+                    current.container.prepareHide(interactive: false)
+                    current.container.finishHide(interactive: false)
+                }
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            } else {
+                self._view.contentLayout.state = .empty
+                self.setNeedUpdateOrientations()
+                self.setNeedUpdateStatusBar()
+                completion?()
+            }
+        } else if let current = current, let backward = backward {
+            self._view.contentLayout.state = .idle(current: backward.item)
+            if self.isPresented == true {
+                current.container.prepareHide(interactive: false)
+                backward.container.prepareShow(interactive: false)
+                current.container.finishHide(interactive: false)
+                backward.container.finishShow(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else if let backward = backward {
+            self._view.contentLayout.state = .idle(current: backward.item)
+            if self.isPresented == true {
+                backward.container.prepareShow(interactive: false)
+                backward.container.finishShow(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else if let current = current {
+            self._view.contentLayout.state = .empty
+            if self.isPresented == true {
+                current.container.prepareHide(interactive: false)
+                current.container.finishHide(interactive: false)
+            }
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        } else {
+            self._view.contentLayout.state = .empty
+            self.setNeedUpdateOrientations()
+            self.setNeedUpdateStatusBar()
+            completion?()
+        }
+    }
+    
+}
+    
+#if os(iOS)
+
+private extension QStackContainer {
+    
+    func _beginInteractiveGesture() {
+        self._interactiveBeginLocation = self._interactiveGesture.location(in: self._view)
+        let backward = self._items.count > 1 ? self._items[self._items.count - 2] : self._rootItem
+        backward.container.prepareShow(interactive: true)
+        self._interactiveBackward = backward
+        let current = self._items[self._items.count - 1]
+        current.container.prepareHide(interactive: true)
+        self._interactiveCurrent = current
+    }
+    
+    func _changeInteractiveGesture() {
+        guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
+        let currentLocation = self._interactiveGesture.location(in: self._view)
+        let deltaLocation = currentLocation - beginLocation
+        let layoutSize = self._view.contentSize
+        let progress = max(0, deltaLocation.x / layoutSize.width)
+        self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
+    }
+
+    func _endInteractiveGesture(_ canceled: Bool) {
+        guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
+        let currentLocation = self._interactiveGesture.location(in: self._view)
+        let deltaLocation = currentLocation - beginLocation
+        let layoutSize = self._view.contentSize
+        if deltaLocation.x >= self.interactiveLimit && canceled == false {
+            QAnimation.default.run(
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval(deltaLocation.x / self.animationVelocity),
+                processing: { [weak self] progress in
+                    guard let self = self else { return }
+                    self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
+                    self._view.contentLayout.updateIfNeeded()
+                },
+                completion: { [weak self] in
+                    guard let self = self else { return }
+                    self._finishInteractiveAnimation()
+                }
+            )
+        } else {
+            QAnimation.default.run(
+                duration: TimeInterval(layoutSize.width / self.animationVelocity),
+                elapsed: TimeInterval((layoutSize.width - deltaLocation.x) / self.animationVelocity),
+                processing: { [weak self] progress in
+                    guard let self = self else { return }
+                    self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: 1 - progress)
+                    self._view.contentLayout.updateIfNeeded()
+                },
+                completion: { [weak self] in
+                    guard let self = self else { return }
+                    self._cancelInteractiveAnimation()
+                }
+            )
+        }
+    }
+    
+    func _finishInteractiveAnimation() {
+        guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
+        self._items.remove(at: self._items.count - 1)
+        self._view.contentLayout.state = .idle(current: backward.item)
+        current.container.finishHide(interactive: true)
+        backward.container.finishShow(interactive: true)
+        current.container.parent = nil
+        self._resetInteractiveAnimation()
+        self.setNeedUpdateOrientations()
+        self.setNeedUpdateStatusBar()
+    }
+    
+    func _cancelInteractiveAnimation() {
+        guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
+        self._view.contentLayout.state = .idle(current: current.item)
+        current.container.cancelHide(interactive: true)
+        backward.container.cancelShow(interactive: true)
+        self._resetInteractiveAnimation()
+        self.setNeedUpdateOrientations()
+        self.setNeedUpdateStatusBar()
+    }
+    
+    func _resetInteractiveAnimation() {
+        self._interactiveBeginLocation = nil
+        self._interactiveBackward = nil
+        self._interactiveCurrent = nil
+    }
+    
+}
+    
+#endif
+
+private extension QStackContainer {
+    
     class Item {
         
         var container: IQStackContentContainer
@@ -372,6 +701,21 @@ private extension QStackContainer {
             return self.item.view
         }
         var item: QLayoutItem
+        var barSize: Float {
+            return self._layout.barSize
+        }
+        var barVisibility: Float {
+            set(value) { self._layout.barVisibility = value }
+            get { return self._layout.barVisibility }
+        }
+        var barHidden: Bool {
+            set(value) { self._layout.barHidden = value }
+            get { return self._layout.barHidden }
+        }
+        var barItem: QLayoutItem {
+            set(value) { self._layout.barItem = value }
+            get { return self._layout.barItem }
+        }
 
         private var _layout: Layout
         
@@ -380,10 +724,9 @@ private extension QStackContainer {
             owner: AnyObject? = nil,
             insets: QInset
         ) {
-            container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right, bottom: 0))
+            container.stackBarView.safeArea(QInset(top: 0, left: insets.left, right: insets.right, bottom: 0))
             self._layout = Layout(
-                barInset: insets.top,
-                barSize: container.stackBarSize,
+                barOffset: insets.top,
                 barVisibility: container.stackBarVisibility,
                 barHidden: container.stackBarHidden,
                 barItem: QLayoutItem(view: container.stackBarView),
@@ -399,12 +742,11 @@ private extension QStackContainer {
         }
         
         func set(insets: QInset) {
-            self.container.stackBarView.safeArea(QInset(top: insets.top, left: insets.left, right: insets.right, bottom: 0))
-            self._layout.barInset = insets.top
+            self.container.stackBarView.safeArea(QInset(top: 0, left: insets.left, right: insets.right, bottom: 0))
+            self._layout.barOffset = insets.top
         }
         
         func update() {
-            self._layout.barSize = self.container.stackBarSize
             self._layout.barVisibility = self.container.stackBarVisibility
             self._layout.barHidden = self.container.stackBarHidden
         }
@@ -419,33 +761,30 @@ private extension QStackContainer.Item {
         
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
-        var barInset: Float {
-            didSet { self.setNeedForceUpdate() }
+        var barOffset: Float {
+            didSet { self.setNeedUpdate() }
         }
-        var barSize: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
+        var barSize: Float
         var barVisibility: Float {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var barHidden: Bool {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var barItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var contentItem: QLayoutItem
 
         init(
-            barInset: Float,
-            barSize: Float,
+            barOffset: Float,
             barVisibility: Float,
             barHidden: Bool,
             barItem: QLayoutItem,
             contentItem: QLayoutItem
         ) {
-            self.barInset = barInset
-            self.barSize = barSize
+            self.barOffset = barOffset
+            self.barSize = 0
             self.barVisibility = barVisibility
             self.barHidden = barHidden
             self.barItem = barItem
@@ -453,14 +792,19 @@ private extension QStackContainer.Item {
         }
         
         func layout(bounds: QRect) -> QSize {
-            let barSize = self.barInset + self.barSize
-            let barOffset = barSize * (1 - self.barVisibility)
-            self.barItem.frame = QRect(
-                x: bounds.origin.x,
-                y: bounds.origin.y - barOffset,
-                width: bounds.size.width,
-                height: barSize
-            )
+            if self.barHidden == false {
+                let barSize = self.barItem.size(QSize(
+                    width: bounds.width,
+                    height: .infinity
+                ))
+                self.barItem.frame = QRect(
+                    x: bounds.x,
+                    y: bounds.y,
+                    width: bounds.width,
+                    height: self.barOffset + (barSize.height * self.barVisibility)
+                )
+                self.barSize = barSize.height
+            }
             self.contentItem.frame = bounds
             return bounds.size
         }
@@ -537,328 +881,3 @@ private extension QStackContainer {
     }
     
 }
-
-private extension QStackContainer {
-    
-    func _init() {
-        self._rootItem.container.parent = self
-        #if os(iOS)
-        self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture in
-            guard let gestureView = gesture.view else { return false }
-            guard self._view.native.isChild(of: gestureView, recursive: true) == true else { return false }
-            return true
-        }).onShouldBegin({ [unowned self] in
-            guard self._items.count > 0 else { return false }
-            guard self.shouldInteractive == true else { return false }
-            return true
-        }).onBegin({ [unowned self] in
-            self._beginInteractiveGesture()
-        }) .onChange({ [unowned self] in
-            self._changeInteractiveGesture()
-        }).onCancel({ [unowned self] in
-            self._endInteractiveGesture(true)
-        }).onEnd({ [unowned self] in
-            self._endInteractiveGesture(false)
-        })
-        #else
-        #endif
-    }
-    
-    func _push(
-        current: Item?,
-        forward: Item?,
-        animated: Bool,
-        completion: (() -> Void)?
-    ) {
-        if animated == true {
-            if let current = current, let forward = forward {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                    forward.container.prepareShow(interactive: false)
-                }
-                QAnimation.default.run(
-                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
-                    ease: QAnimation.Ease.QuadraticInOut(),
-                    processing: { [weak self] progress in
-                        guard let self = self else { return }
-                        self._layout.state = .push(current: current.item, forward: forward.item, progress: progress)
-                        self._layout.updateIfNeeded()
-                    },
-                    completion: { [weak self] in
-                        guard let self = self else { return }
-                        self._layout.state = .idle(current: forward.item)
-                        if self.isPresented == true {
-                            current.container.finishHide(interactive: false)
-                            forward.container.finishShow(interactive: false)
-                        }
-                        self.setNeedUpdateOrientations()
-                        self.setNeedUpdateStatusBar()
-                        completion?()
-                    }
-                )
-            } else if let forward = forward {
-                if self.isPresented == true {
-                    forward.container.prepareShow(interactive: false)
-                }
-                self._layout.state = .idle(current: forward.item)
-                if self.isPresented == true {
-                    forward.container.finishShow(interactive: false)
-                }
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            } else if let current = current {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                }
-                self._layout.state = .empty
-                if self.isPresented == true {
-                    current.container.finishHide(interactive: false)
-                }
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            } else {
-                self._layout.state = .empty
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            }
-        } else if let current = current, let forward = forward {
-            if self.isPresented == true {
-                current.container.prepareHide(interactive: false)
-                forward.container.prepareShow(interactive: false)
-            }
-            self._layout.state = .idle(current: forward.item)
-            if self.isPresented == true {
-                current.container.finishHide(interactive: false)
-                forward.container.finishShow(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else if let forward = forward {
-            if self.isPresented == true {
-                forward.container.prepareShow(interactive: false)
-            }
-            self._layout.state = .idle(current: forward.item)
-            if self.isPresented == true {
-                forward.container.finishShow(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else if let current = current {
-            if self.isPresented == true {
-                current.container.prepareHide(interactive: false)
-            }
-            self._layout.state = .empty
-            if self.isPresented == true {
-                current.container.finishHide(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else {
-            self._layout.state = .empty
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        }
-    }
-    
-    func _pop(
-        current: Item?,
-        backward: Item?,
-        animated: Bool,
-        completion: (() -> Void)?
-    ) {
-        if animated == true {
-            if let current = current, let backward = backward {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                    backward.container.prepareShow(interactive: false)
-                }
-                QAnimation.default.run(
-                    duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
-                    ease: QAnimation.Ease.QuadraticInOut(),
-                    processing: { [weak self] progress in
-                        guard let self = self else { return }
-                        self._layout.state = .pop(backward: backward.item, current: current.item, progress: progress)
-                        self._layout.updateIfNeeded()
-                    },
-                    completion: { [weak self] in
-                        guard let self = self else { return }
-                        self._layout.state = .idle(current: backward.item)
-                        if self.isPresented == true {
-                            current.container.finishHide(interactive: false)
-                            backward.container.finishShow(interactive: false)
-                        }
-                        self.setNeedUpdateOrientations()
-                        self.setNeedUpdateStatusBar()
-                        completion?()
-                    }
-                )
-            } else if let backward = backward {
-                if self.isPresented == true {
-                    backward.container.prepareShow(interactive: false)
-                }
-                self._layout.state = .idle(current: backward.item)
-                if self.isPresented == true {
-                    backward.container.finishShow(interactive: false)
-                }
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            } else if let current = current {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                }
-                self._layout.state = .empty
-                if self.isPresented == true {
-                    current.container.finishHide(interactive: false)
-                }
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            } else {
-                self._layout.state = .empty
-                self.setNeedUpdateOrientations()
-                self.setNeedUpdateStatusBar()
-                completion?()
-            }
-        } else if let current = current, let backward = backward {
-            if self.isPresented == true {
-                current.container.prepareHide(interactive: false)
-                backward.container.prepareShow(interactive: false)
-            }
-            self._layout.state = .idle(current: backward.item)
-            if self.isPresented == true {
-                current.container.finishHide(interactive: false)
-                backward.container.finishShow(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else if let backward = backward {
-            if self.isPresented == true {
-                backward.container.prepareShow(interactive: false)
-            }
-            self._layout.state = .idle(current: backward.item)
-            if self.isPresented == true {
-                backward.container.finishShow(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else if let current = current {
-            if self.isPresented == true {
-                current.container.prepareHide(interactive: false)
-            }
-            self._layout.state = .empty
-            if self.isPresented == true {
-                current.container.finishHide(interactive: false)
-            }
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        } else {
-            self._layout.state = .empty
-            self.setNeedUpdateOrientations()
-            self.setNeedUpdateStatusBar()
-            completion?()
-        }
-    }
-    
-}
-    
-#if os(iOS)
-
-private extension QStackContainer {
-    
-    func _beginInteractiveGesture() {
-        self._interactiveBeginLocation = self._interactiveGesture.location(in: self._view)
-        let backward = self._items.count > 1 ? self._items[self._items.count - 2] : self._rootItem
-        backward.container.prepareShow(interactive: true)
-        self._interactiveBackward = backward
-        let current = self._items[self._items.count - 1]
-        current.container.prepareHide(interactive: true)
-        self._interactiveCurrent = current
-    }
-    
-    func _changeInteractiveGesture() {
-        guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
-        let currentLocation = self._interactiveGesture.location(in: self._view)
-        let deltaLocation = currentLocation - beginLocation
-        let layoutSize = self._view.contentSize
-        let progress = max(0, deltaLocation.x / layoutSize.width)
-        self._layout.state = .pop(backward: backward.item, current: current.item, progress: progress)
-    }
-
-    func _endInteractiveGesture(_ canceled: Bool) {
-        guard let beginLocation = self._interactiveBeginLocation, let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
-        let currentLocation = self._interactiveGesture.location(in: self._view)
-        let deltaLocation = currentLocation - beginLocation
-        let layoutSize = self._view.contentSize
-        if deltaLocation.x >= self.interactiveLimit && canceled == false {
-            QAnimation.default.run(
-                duration: TimeInterval(layoutSize.width / self.animationVelocity),
-                elapsed: TimeInterval(deltaLocation.x / self.animationVelocity),
-                processing: { [weak self] progress in
-                    guard let self = self else { return }
-                    self._layout.state = .pop(backward: backward.item, current: current.item, progress: progress)
-                    self._layout.updateIfNeeded()
-                },
-                completion: { [weak self] in
-                    guard let self = self else { return }
-                    self._finishInteractiveAnimation()
-                }
-            )
-        } else {
-            QAnimation.default.run(
-                duration: TimeInterval(layoutSize.width / self.animationVelocity),
-                elapsed: TimeInterval((layoutSize.width - deltaLocation.x) / self.animationVelocity),
-                processing: { [weak self] progress in
-                    guard let self = self else { return }
-                    self._layout.state = .pop(backward: backward.item, current: current.item, progress: 1 - progress)
-                    self._layout.updateIfNeeded()
-                },
-                completion: { [weak self] in
-                    guard let self = self else { return }
-                    self._cancelInteractiveAnimation()
-                }
-            )
-        }
-    }
-    
-    func _finishInteractiveAnimation() {
-        guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
-        self._items.remove(at: self._items.count - 1)
-        self._layout.state = .idle(current: backward.item)
-        current.container.finishHide(interactive: true)
-        backward.container.finishShow(interactive: true)
-        current.container.parent = nil
-        self._resetInteractiveAnimation()
-        self.setNeedUpdateOrientations()
-        self.setNeedUpdateStatusBar()
-    }
-    
-    func _cancelInteractiveAnimation() {
-        guard let backward = self._interactiveBackward, let current = self._interactiveCurrent else { return }
-        self._layout.state = .idle(current: current.item)
-        current.container.cancelHide(interactive: true)
-        backward.container.cancelShow(interactive: true)
-        self._resetInteractiveAnimation()
-        self.setNeedUpdateOrientations()
-        self.setNeedUpdateStatusBar()
-    }
-    
-    func _resetInteractiveAnimation() {
-        self._interactiveBeginLocation = nil
-        self._interactiveBackward = nil
-        self._interactiveCurrent = nil
-    }
-    
-}
-    
-#endif

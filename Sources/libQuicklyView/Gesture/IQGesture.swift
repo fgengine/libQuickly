@@ -8,7 +8,17 @@ import libQuicklyCore
 public protocol IQGesture : AnyObject {
     
     var native: QNativeGesture { get }
-    var isEnabled: Bool { get }
+    
+    var isEnabled: Bool { set get }
+    
+    var cancelsTouchesInView: Bool { set get }
+    
+    var delaysTouchesBegan: Bool { set get }
+    
+    var delaysTouchesEnded: Bool { set get }
+    
+    @available(iOS 9.2, *)
+    var requiresExclusiveTouchType: Bool { set get }
     
     func require(toFail gesture: QNativeGesture)
     

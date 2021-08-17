@@ -12,9 +12,9 @@ public class QHamburgerContainer : IQHamburgerContainer {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
-            if self.parent !== oldValue {
-                self.didChangeInsets()
-            }
+            guard self.parent !== oldValue else { return }
+            guard self.isPresented == true else { return }
+            self.didChangeInsets()
         }
     }
     public var shouldInteractive: Bool {
@@ -48,7 +48,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
             self._contentContainer.parent = nil
             self._contentContainer = value
             self._contentContainer.parent = self
-            self._layout.contentItem = QLayoutItem(view: self._contentContainer.view)
+            self._view.contentLayout.contentItem = QLayoutItem(view: self._contentContainer.view)
             if self.isPresented == true {
                 self._contentContainer.prepareShow(interactive: false)
                 self._contentContainer.finishShow(interactive: false)
@@ -58,7 +58,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
         get { return self._contentContainer }
     }
     public var isShowedLeadingContainer: Bool {
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .leading: return true
         default: return false
         }
@@ -68,7 +68,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
             guard self._leadingContainer !== value else { return }
             if let leadingContainer = self._leadingContainer {
                 if self.isPresented == true {
-                    switch self._layout.state {
+                    switch self._view.contentLayout.state {
                     case .leading:
                         leadingContainer.prepareHide(interactive: false)
                         leadingContainer.finishHide(interactive: false)
@@ -81,10 +81,10 @@ public class QHamburgerContainer : IQHamburgerContainer {
             self._leadingContainer = value
             if let leadingContainer = self._leadingContainer {
                 leadingContainer.parent = self
-                self._layout.leadingItem = QLayoutItem(view: leadingContainer.view)
-                self._layout.leadingSize = leadingContainer.hamburgerSize
+                self._view.contentLayout.leadingItem = QLayoutItem(view: leadingContainer.view)
+                self._view.contentLayout.leadingSize = leadingContainer.hamburgerSize
                 if self.isPresented == true {
-                    switch self._layout.state {
+                    switch self._view.contentLayout.state {
                     case .leading:
                         leadingContainer.prepareShow(interactive: false)
                         leadingContainer.finishShow(interactive: false)
@@ -98,7 +98,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
         get { return self._leadingContainer }
     }
     public var isShowedTrailingContainer: Bool {
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .trailing: return true
         default: return false
         }
@@ -108,7 +108,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
             guard self._trailingContainer !== value else { return }
             if let trailingContainer = self._trailingContainer {
                 if self.isPresented == true {
-                    switch self._layout.state {
+                    switch self._view.contentLayout.state {
                     case .trailing:
                         trailingContainer.prepareHide(interactive: false)
                         trailingContainer.finishHide(interactive: false)
@@ -121,10 +121,10 @@ public class QHamburgerContainer : IQHamburgerContainer {
             self._trailingContainer = value
             if let trailingContainer = self._trailingContainer {
                 trailingContainer.parent = self
-                self._layout.trailingItem = QLayoutItem(view: trailingContainer.view)
-                self._layout.trailingSize = trailingContainer.hamburgerSize
+                self._view.contentLayout.trailingItem = QLayoutItem(view: trailingContainer.view)
+                self._view.contentLayout.trailingSize = trailingContainer.hamburgerSize
                 if self.isPresented == true {
-                    switch self._layout.state {
+                    switch self._view.contentLayout.state {
                     case .trailing:
                         trailingContainer.prepareShow(interactive: false)
                         trailingContainer.finishShow(interactive: false)
@@ -139,7 +139,6 @@ public class QHamburgerContainer : IQHamburgerContainer {
     }
     public var animationVelocity: Float
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
     #if os(iOS)
     private var _pressedGesture: IQTapGesture
@@ -162,24 +161,30 @@ public class QHamburgerContainer : IQHamburgerContainer {
         #if os(iOS)
         self.animationVelocity = UIScreen.main.animationVelocity
         #endif
-        self._layout = Layout(
-            state: .idle,
-            contentItem: QLayoutItem(view: contentContainer.view),
-            leadingItem: leadingContainer.flatMap({ QLayoutItem(view: $0.view) }),
-            leadingSize: leadingContainer?.hamburgerSize ?? 0,
-            trailingItem: trailingContainer.flatMap({ QLayoutItem(view: $0.view) }),
-            trailingSize: trailingContainer?.hamburgerSize ?? 0
-        )
         #if os(iOS)
         self._pressedGesture = QTapGesture()
         self._interactiveGesture = QPanGesture()
         self._view = QCustomView(
             gestures: [ self._pressedGesture, self._interactiveGesture ],
-            contentLayout: self._layout
+            contentLayout: Layout(
+                state: .idle,
+                contentItem: QLayoutItem(view: contentContainer.view),
+                leadingItem: leadingContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                leadingSize: leadingContainer?.hamburgerSize ?? 0,
+                trailingItem: trailingContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                trailingSize: trailingContainer?.hamburgerSize ?? 0
+            )
         )
         #else
         self._view = QCustomView(
-            contentLayout: self._layout
+            contentLayout: Layout(
+                state: .idle,
+                contentItem: QLayoutItem(view: contentContainer.view),
+                leadingItem: leadingContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                leadingSize: leadingContainer?.hamburgerSize ?? 0,
+                trailingItem: trailingContainer.flatMap({ QLayoutItem(view: $0.view) }),
+                trailingSize: trailingContainer?.hamburgerSize ?? 0
+            )
         )
         #endif
         self._contentContainer = contentContainer
@@ -188,8 +193,8 @@ public class QHamburgerContainer : IQHamburgerContainer {
         self._init()
     }
     
-    public func insets(of container: IQContainer) -> QInset {
-        return self.inheritedInsets
+    public func insets(of container: IQContainer, interactive: Bool) -> QInset {
+        return self.inheritedInsets(interactive: interactive)
     }
     
     public func didChangeInsets() {
@@ -199,7 +204,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     }
     
     public func activate() -> Bool {
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle:
             return self._contentContainer.activate()
         case .leading:
@@ -222,8 +227,9 @@ public class QHamburgerContainer : IQHamburgerContainer {
     }
     
     public func prepareShow(interactive: Bool) {
+        self.didChangeInsets()
         self._contentContainer.prepareShow(interactive: interactive)
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.prepareShow(interactive: interactive)
         case .trailing: self._trailingContainer?.prepareShow(interactive: interactive)
@@ -231,9 +237,9 @@ public class QHamburgerContainer : IQHamburgerContainer {
     }
     
     public func finishShow(interactive: Bool) {
-        self._contentContainer.finishShow(interactive: interactive)
         self.isPresented = true
-        switch self._layout.state {
+        self._contentContainer.finishShow(interactive: interactive)
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.finishShow(interactive: interactive)
         case .trailing: self._trailingContainer?.finishShow(interactive: interactive)
@@ -242,7 +248,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     
     public func cancelShow(interactive: Bool) {
         self._contentContainer.cancelShow(interactive: interactive)
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.cancelShow(interactive: interactive)
         case .trailing: self._trailingContainer?.cancelShow(interactive: interactive)
@@ -251,7 +257,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     
     public func prepareHide(interactive: Bool) {
         self._contentContainer.prepareHide(interactive: interactive)
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.prepareHide(interactive: interactive)
         case .trailing: self._trailingContainer?.prepareHide(interactive: interactive)
@@ -261,7 +267,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     public func finishHide(interactive: Bool) {
         self.isPresented = false
         self._contentContainer.finishHide(interactive: interactive)
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.finishHide(interactive: interactive)
         case .trailing: self._trailingContainer?.finishHide(interactive: interactive)
@@ -270,7 +276,7 @@ public class QHamburgerContainer : IQHamburgerContainer {
     
     public func cancelHide(interactive: Bool) {
         self._contentContainer.cancelHide(interactive: interactive)
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._leadingContainer?.cancelHide(interactive: interactive)
         case .trailing: self._trailingContainer?.cancelHide(interactive: interactive)
@@ -305,22 +311,22 @@ private extension QHamburgerContainer {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var state: State {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var contentItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var leadingItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var leadingSize: Float {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var trailingItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         var trailingSize: Float {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedUpdate() }
         }
         
         init(
@@ -441,7 +447,7 @@ private extension QHamburgerContainer {
             guard let view = gesture.view else { return false }
             return self._view.native.isChild(of: view, recursive: true)
         }).onShouldBegin({ [unowned self] in
-            switch self._layout.state {
+            switch self._view.contentLayout.state {
             case .idle: return false
             case .leading, .trailing: return self._pressedGesture.contains(in: self._contentContainer.view)
             }
@@ -469,27 +475,27 @@ private extension QHamburgerContainer {
             completion?()
             return
         }
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle:
             leadingContainer.prepareShow(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                    duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .leading(progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .leading(progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self._layout.state = .leading(progress: 1)
+                        self._view.contentLayout.state = .leading(progress: 1)
                         leadingContainer.finishShow(interactive: interactive)
                         completion?()
                     }
                 )
             } else {
-                self._layout.state = .leading(progress: 1)
+                self._view.contentLayout.state = .leading(progress: 1)
                 leadingContainer.finishShow(interactive: interactive)
                 completion?()
             }
@@ -508,27 +514,27 @@ private extension QHamburgerContainer {
             completion?()
             return
         }
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .leading:
             leadingContainer.prepareHide(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                    duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .leading(progress: 1 - progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .leading(progress: 1 - progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self._layout.state = .idle
+                        self._view.contentLayout.state = .idle
                         leadingContainer.finishHide(interactive: interactive)
                         completion?()
                     }
                 )
             } else {
-                self._layout.state = .idle
+                self._view.contentLayout.state = .idle
                 leadingContainer.finishHide(interactive: interactive)
                 completion?()
             }
@@ -543,27 +549,27 @@ private extension QHamburgerContainer {
             completion?()
             return
         }
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle:
             trailingContainer.prepareShow(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                    duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .trailing(progress: progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .trailing(progress: progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self._layout.state = .trailing(progress: 1)
+                        self._view.contentLayout.state = .trailing(progress: 1)
                         trailingContainer.finishShow(interactive: interactive)
                         completion?()
                     }
                 )
             } else {
-                self._layout.state = .trailing(progress: 1)
+                self._view.contentLayout.state = .trailing(progress: 1)
                 trailingContainer.finishShow(interactive: interactive)
                 completion?()
             }
@@ -582,27 +588,27 @@ private extension QHamburgerContainer {
             completion?()
             return
         }
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .trailing:
             trailingContainer.prepareHide(interactive: interactive)
             if animated == true {
                 QAnimation.default.run(
-                    duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                    duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
-                        self._layout.state = .trailing(progress: 1 - progress)
-                        self._layout.updateIfNeeded()
+                        self._view.contentLayout.state = .trailing(progress: 1 - progress)
+                        self._view.contentLayout.updateIfNeeded()
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self._layout.state = .idle
+                        self._view.contentLayout.state = .idle
                         trailingContainer.finishHide(interactive: interactive)
                         completion?()
                     }
                 )
             } else {
-                self._layout.state = .idle
+                self._view.contentLayout.state = .idle
                 trailingContainer.finishHide(interactive: interactive)
                 completion?()
             }
@@ -619,7 +625,7 @@ private extension QHamburgerContainer {
 private extension QHamburgerContainer {
     
     func _pressed() {
-        switch self._layout.state {
+        switch self._view.contentLayout.state {
         case .idle: break
         case .leading: self._hideLeadingContainer(interactive: true, animated: true, completion: nil)
         case .trailing: self._hideTrailingContainer(interactive: true, animated: true, completion: nil)
@@ -628,7 +634,7 @@ private extension QHamburgerContainer {
     
     func _beginInteractiveGesture() {
         self._interactiveBeginLocation = self._interactiveGesture.location(in: self.view)
-        self._interactiveBeginState = self._layout.state
+        self._interactiveBeginState = self._view.contentLayout.state
     }
     
     func _changeInteractiveGesture() {
@@ -642,19 +648,19 @@ private extension QHamburgerContainer {
                     self._leadingContainer!.prepareShow(interactive: true)
                     self._interactiveLeadingContainer = self._leadingContainer
                 }
-                let delta = min(deltaLocation.x, self._layout.leadingSize)
-                let progress = delta / self._layout.leadingSize
-                self._layout.state = .leading(progress: progress)
+                let delta = min(deltaLocation.x, self._view.contentLayout.leadingSize)
+                let progress = delta / self._view.contentLayout.leadingSize
+                self._view.contentLayout.state = .leading(progress: progress)
             } else if deltaLocation.x < 0 && self._trailingContainer != nil {
                 if self._interactiveTrailingContainer == nil {
                     self._trailingContainer!.prepareShow(interactive: true)
                     self._interactiveTrailingContainer = self._trailingContainer
                 }
-                let delta = min(-deltaLocation.x, self._layout.trailingSize)
-                let progress = delta / self._layout.trailingSize
-                self._layout.state = .trailing(progress: progress)
+                let delta = min(-deltaLocation.x, self._view.contentLayout.trailingSize)
+                let progress = delta / self._view.contentLayout.trailingSize
+                self._view.contentLayout.state = .trailing(progress: progress)
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
             }
         case .leading:
             if deltaLocation.x < 0 {
@@ -662,11 +668,11 @@ private extension QHamburgerContainer {
                     self._leadingContainer!.prepareHide(interactive: true)
                     self._interactiveLeadingContainer = self._leadingContainer
                 }
-                let delta = min(-deltaLocation.x, self._layout.leadingSize)
-                let progress = delta / self._layout.leadingSize
-                self._layout.state = .leading(progress: 1 - progress)
+                let delta = min(-deltaLocation.x, self._view.contentLayout.leadingSize)
+                let progress = delta / self._view.contentLayout.leadingSize
+                self._view.contentLayout.state = .leading(progress: 1 - progress)
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
             }
         case .trailing:
             if deltaLocation.x > 0 {
@@ -674,11 +680,11 @@ private extension QHamburgerContainer {
                     self._trailingContainer!.prepareHide(interactive: true)
                     self._interactiveTrailingContainer = self._trailingContainer
                 }
-                let delta = min(deltaLocation.x, self._layout.trailingSize)
-                let progress = delta / self._layout.trailingSize
-                self._layout.state = .trailing(progress: 1 - progress)
+                let delta = min(deltaLocation.x, self._view.contentLayout.trailingSize)
+                let progress = delta / self._view.contentLayout.trailingSize
+                self._view.contentLayout.state = .trailing(progress: 1 - progress)
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
             }
         }
     }
@@ -690,157 +696,157 @@ private extension QHamburgerContainer {
         switch beginState {
         case .idle:
             if let leadingContainer = self._interactiveLeadingContainer, deltaLocation.x > 0 {
-                let delta = min(deltaLocation.x, self._layout.leadingSize)
+                let delta = min(deltaLocation.x, self._view.contentLayout.leadingSize)
                 if delta >= leadingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
                         elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .leading(progress: progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: 1)
+                            self._view.contentLayout.state = .leading(progress: 1)
                             leadingContainer.finishShow(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
-                        elapsed: TimeInterval((self._layout.leadingSize - delta) / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._view.contentLayout.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: 1 - progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .leading(progress: 1 - progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .idle
+                            self._view.contentLayout.state = .idle
                             leadingContainer.cancelShow(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 }
             } else if let trailingContainer = self._interactiveTrailingContainer, deltaLocation.x < 0 {
-                let delta = min(-deltaLocation.x, self._layout.trailingSize)
+                let delta = min(-deltaLocation.x, self._view.contentLayout.trailingSize)
                 if delta >= trailingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
                         elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .trailing(progress: progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: 1)
+                            self._view.contentLayout.state = .trailing(progress: 1)
                             trailingContainer.finishShow(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
-                        elapsed: TimeInterval((self._layout.trailingSize - delta) / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._view.contentLayout.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: 1 - progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .trailing(progress: 1 - progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .idle
+                            self._view.contentLayout.state = .idle
                             trailingContainer.cancelShow(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 }
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
                 self._resetInteractiveAnimation()
             }
         case .leading:
             if let leadingContainer = self._interactiveLeadingContainer, deltaLocation.x < 0 {
-                let delta = min(-deltaLocation.x, self._layout.leadingSize)
+                let delta = min(-deltaLocation.x, self._view.contentLayout.leadingSize)
                 if delta >= leadingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
                         elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: 1 - progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .leading(progress: 1 - progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .idle
+                            self._view.contentLayout.state = .idle
                             leadingContainer.finishHide(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.leadingSize / self.animationVelocity),
-                        elapsed: TimeInterval((self._layout.leadingSize - delta) / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.leadingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._view.contentLayout.leadingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .leading(progress: progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .leading(progress: 1)
+                            self._view.contentLayout.state = .leading(progress: 1)
                             leadingContainer.cancelHide(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 }
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
                 self._resetInteractiveAnimation()
             }
         case .trailing:
             if let trailingContainer = self._interactiveTrailingContainer, deltaLocation.x > 0 {
-                let delta = min(deltaLocation.x, self._layout.trailingSize)
+                let delta = min(deltaLocation.x, self._view.contentLayout.trailingSize)
                 if delta >= trailingContainer.hamburgerLimit && canceled == false {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
                         elapsed: TimeInterval(delta / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: 1 - progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .trailing(progress: 1 - progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .idle
+                            self._view.contentLayout.state = .idle
                             trailingContainer.finishHide(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 } else {
                     QAnimation.default.run(
-                        duration: TimeInterval(self._layout.trailingSize / self.animationVelocity),
-                        elapsed: TimeInterval((self._layout.trailingSize - delta) / self.animationVelocity),
+                        duration: TimeInterval(self._view.contentLayout.trailingSize / self.animationVelocity),
+                        elapsed: TimeInterval((self._view.contentLayout.trailingSize - delta) / self.animationVelocity),
                         processing: { [weak self] progress in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: progress)
-                            self._layout.updateIfNeeded()
+                            self._view.contentLayout.state = .trailing(progress: progress)
+                            self._view.contentLayout.updateIfNeeded()
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self._layout.state = .trailing(progress: 1)
+                            self._view.contentLayout.state = .trailing(progress: 1)
                             trailingContainer.cancelHide(interactive: true)
                             self._resetInteractiveAnimation()
                         }
                     )
                 }
             } else {
-                self._layout.state = beginState
+                self._view.contentLayout.state = beginState
                 self._resetInteractiveAnimation()
             }
         }

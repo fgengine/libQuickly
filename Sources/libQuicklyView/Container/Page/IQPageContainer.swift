@@ -8,7 +8,6 @@ import libQuicklyCore
 public protocol IQPageContainer : IQContainer, IQContainerParentable {
     
     var barView: IQPageBarView { get }
-    var barSize: Float { get }
     var barVisibility: Float { get }
     var barHidden: Bool { get }
     var containers: [IQPageContentContainer] { get }
@@ -30,6 +29,11 @@ public protocol IQPageContainer : IQContainer, IQContainerParentable {
 }
 
 public extension IQPageContainer {
+    
+    @inlinable
+    func updateBar(animated: Bool = true, completion: (() -> Void)? = nil) {
+        self.updateBar(animated: animated, completion: completion)
+    }
     
     @inlinable
     func update(container: IQPageContentContainer, animated: Bool = true, completion: (() -> Void)? = nil) {

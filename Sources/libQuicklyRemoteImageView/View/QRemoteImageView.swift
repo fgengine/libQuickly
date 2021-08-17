@@ -24,28 +24,37 @@ public class QRemoteImageView : IQRemoteImageView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
     public private(set) var isLoading: Bool
-    public private(set) var imageView: IQImageView {
+    public var placeholderView: IQImageView {
         didSet(oldValue) {
-            guard self.imageView !== oldValue else { return }
-            self._layout.imageItem = QLayoutItem(view: self.imageView)
+            guard self.placeholderView !== oldValue else { return }
+            self._layout.placeholderItem = QLayoutItem(view: self.placeholderView)
         }
     }
-    public private(set) var progressView: IQProgressView? {
+    public private(set) var imageView: IQImageView? {
+        didSet(oldValue) {
+            guard self.imageView !== oldValue else { return }
+            self._layout.imageItem = self.imageView.flatMap({ QLayoutItem(view: $0) })
+        }
+    }
+    public var progressView: IQProgressView? {
         didSet(oldValue) {
             guard self.progressView !== oldValue else { return }
             self._layout.progressItem = self.progressView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public private(set) var errorView: IQView? {
+    public var errorView: IQView? {
         didSet(oldValue) {
             guard self.errorView !== oldValue else { return }
             self._layout.errorItem = self.errorView.flatMap({ QLayoutItem(view: $0) })
         }
     }
     public private(set) var loader: QRemoteImageLoader
-    public private(set) var query: IQRemoteImageQuery
-    public private(set) var filter: IQRemoteImageFilter?
+    public var query: IQRemoteImageQuery
+    public var filter: IQRemoteImageFilter?
     public var color: QColor? {
         set(value) { self._view.color = value }
         get { return self._view.color }
@@ -70,31 +79,32 @@ public class QRemoteImageView : IQRemoteImageView {
     private var _layout: Layout
     private var _view: QCustomView< Layout >
     private var _onProgress: ((_ progress: Float) -> Void)?
-    private var _onFinish: ((_ image: QImage) -> Void)?
+    private var _onFinish: ((_ image: QImage) -> IQImageView)?
     private var _onError: ((_ error: Error) -> Void)?
     
     public init(
-        imageView: IQImageView,
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        placeholderView: IQImageView,
         progressView: IQProgressView? = nil,
         errorView: IQView? = nil,
         loader: QRemoteImageLoader = QRemoteImageLoader.shared,
         query: IQRemoteImageQuery,
         filter: IQRemoteImageFilter? = nil,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
         self.isLoading = false
-        self.imageView = imageView
+        self.placeholderView = placeholderView
         self.progressView = progressView
         self.loader = loader
         self.query = query
         self.filter = filter
         self._layout = Layout(
             state: .loading,
-            imageItem: QLayoutItem(view: imageView),
+            placeholderItem: QLayoutItem(view: placeholderView),
             progressItem: progressView.flatMap({ QLayoutItem(view: $0) }),
             errorItem: errorView.flatMap({ QLayoutItem(view: $0) })
         )
@@ -108,6 +118,10 @@ public class QRemoteImageView : IQRemoteImageView {
         )
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -118,6 +132,18 @@ public class QRemoteImageView : IQRemoteImageView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
     }
     
     @discardableResult
@@ -133,8 +159,8 @@ public class QRemoteImageView : IQRemoteImageView {
     }
     
     @discardableResult
-    public func imageView(_ value: IQImageView) -> Self {
-        self.imageView = value
+    public func placeholderView(_ value: IQImageView) -> Self {
+        self.placeholderView = value
         return self
     }
     
@@ -205,13 +231,31 @@ public class QRemoteImageView : IQRemoteImageView {
     }
     
     @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
+        return self
+    }
+    
+    @discardableResult
     public func onProgress(_ value: ((_ progress: Float) -> Void)?) -> Self {
         self._onProgress = value
         return self
     }
     
     @discardableResult
-    public func onFinish(_ value: ((_ image: QImage) -> Void)?) -> Self {
+    public func onFinish(_ value: ((_ image: QImage) -> IQImageView)?) -> Self {
         self._onFinish = value
         return self
     }
@@ -227,7 +271,7 @@ public class QRemoteImageView : IQRemoteImageView {
 private extension QRemoteImageView {
     
     func _start() {
-        if self.isLoading == false {
+        if self.isLoading == false && self.imageView == nil {
             self.isLoading = true
             self._layout.state = .loading
             self.progressView?.progress(0)
@@ -257,27 +301,30 @@ private extension QRemoteImageView {
         var state: State {
             didSet(oldValue) {
                 guard self.state != oldValue else { return }
-                self.setNeedUpdate()
+                self.setNeedForceUpdate()
             }
         }
-        var imageItem: QLayoutItem {
-            didSet { self.setNeedForceUpdate() }
+        var placeholderItem: QLayoutItem {
+            didSet { self.setNeedForceUpdate(item: self.placeholderItem) }
+        }
+        var imageItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate(item: self.imageItem) }
         }
         var progressItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.progressItem) }
         }
         var errorItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+            didSet { self.setNeedForceUpdate(item: self.errorItem) }
         }
 
         init(
             state: State,
-            imageItem: QLayoutItem,
+            placeholderItem: QLayoutItem,
             progressItem: QLayoutItem?,
             errorItem: QLayoutItem?
         ) {
             self.state = state
-            self.imageItem = imageItem
+            self.placeholderItem = placeholderItem
             self.progressItem = progressItem
             self.errorItem = errorItem
         }
@@ -285,40 +332,43 @@ private extension QRemoteImageView {
         func layout(bounds: QRect) -> QSize {
             switch self.state {
             case .loading:
-                let imageSize = self.imageItem.size(bounds.size)
+                let placeholderSize = self.placeholderItem.size(bounds.size)
+                self.placeholderItem.frame = QRect(
+                    center: bounds.center,
+                    size: placeholderSize
+                )
                 if let progressItem = self.progressItem {
                     let progressSize = progressItem.size(bounds.size)
-                    self.imageItem.frame = QRect(
-                        x: bounds.origin.x,
-                        y: bounds.origin.y,
-                        width: imageSize.width,
-                        height: imageSize.height
-                    )
                     progressItem.frame = QRect(
-                        center: self.imageItem.frame.center,
+                        center: self.placeholderItem.frame.center,
                         size: progressSize
                     )
                     return QSize(
-                        width: max(progressSize.width, imageSize.height),
-                        height: max(progressSize.height, imageSize.height)
+                        width: max(progressSize.width, placeholderSize.height),
+                        height: max(progressSize.height, placeholderSize.height)
                     )
                 }
-                self.imageItem.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y,
-                    width: imageSize.width,
-                    height: imageSize.height
-                )
-                return imageSize
+                return placeholderSize
             case .loaded:
-                let imageSize = self.imageItem.size(bounds.size)
-                self.imageItem.frame = QRect(
-                    x: bounds.origin.x,
-                    y: bounds.origin.y,
-                    width: imageSize.width,
-                    height: imageSize.height
-                )
-                return imageSize
+                let size: QSize
+                if let imageItem = self.imageItem {
+                    size = imageItem.size(bounds.size)
+                    imageItem.frame = QRect(
+                        x: bounds.origin.x,
+                        y: bounds.origin.y,
+                        width: size.width,
+                        height: size.height
+                    )
+                } else {
+                    size = self.placeholderItem.size(bounds.size)
+                    self.placeholderItem.frame = QRect(
+                        x: bounds.origin.x,
+                        y: bounds.origin.y,
+                        width: size.width,
+                        height: size.height
+                    )
+                }
+                return size
             case .error:
                 if let errorItem = self.errorItem {
                     let errorSize = errorItem.size(bounds.size)
@@ -330,36 +380,42 @@ private extension QRemoteImageView {
                     )
                     return errorSize
                 }
-                let imageSize = self.imageItem.size(bounds.size)
-                self.imageItem.frame = QRect(
+                let placeholderSize = self.placeholderItem.size(bounds.size)
+                self.placeholderItem.frame = QRect(
                     x: bounds.origin.x,
                     y: bounds.origin.y,
-                    width: imageSize.width,
-                    height: imageSize.height
+                    width: placeholderSize.width,
+                    height: placeholderSize.height
                 )
-                return imageSize
+                return placeholderSize
             }
         }
         
         func size(_ available: QSize) -> QSize {
             switch self.state {
             case .loading:
-                let imageSize = self.imageItem.size(available)
+                let placeholderSize = self.placeholderItem.size(available)
                 if let progressItem = self.progressItem {
                     let progressSize = progressItem.size(available)
                     return QSize(
-                        width: max(progressSize.width, imageSize.height),
-                        height: max(progressSize.height, imageSize.height)
+                        width: max(progressSize.width, placeholderSize.height),
+                        height: max(progressSize.height, placeholderSize.height)
                     )
                 }
-                return imageSize
+                return placeholderSize
             case .loaded:
-                return self.imageItem.size(available)
+                let size: QSize
+                if let imageItem = self.imageItem {
+                    size = imageItem.size(available)
+                } else {
+                    size = self.placeholderItem.size(available)
+                }
+                return size
             case .error:
                 if let errorItem = self.errorItem {
                     return errorItem.size(available)
                 }
-                return self.imageItem.size(available)
+                return self.placeholderItem.size(available)
             }
         }
         
@@ -367,16 +423,19 @@ private extension QRemoteImageView {
             switch self.state {
             case .loading:
                 if let progressItem = self.progressItem {
-                    return [ self.imageItem, progressItem ]
+                    return [ self.placeholderItem, progressItem ]
                 }
-                return [ self.imageItem ]
+                return [ self.placeholderItem ]
             case .loaded:
-                return [ self.imageItem ]
+                if let imageItem = self.imageItem {
+                    return [ imageItem ]
+                }
+                return [ self.placeholderItem ]
             case .error:
                 if let errorItem = self.errorItem {
                     return [ errorItem ]
                 }
-                return [ self.imageItem ]
+                return [ self.placeholderItem ]
             }
         }
         
@@ -404,8 +463,14 @@ extension QRemoteImageView : IQRemoteImageTarget {
     public func remoteImage(image: QImage) {
         self.isLoading = false
         self._layout.state = .loaded
-        self.imageView.image(image)
-        self._onFinish?(image)
+        
+        let imageView: IQImageView
+        if let onFinish = self._onFinish {
+            imageView = onFinish(image)
+        } else {
+            imageView = QImageView(image: image)
+        }
+        self.imageView = imageView
     }
     
     public func remoteImage(error: Error) {

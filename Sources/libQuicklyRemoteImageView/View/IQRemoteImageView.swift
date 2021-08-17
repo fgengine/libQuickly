@@ -9,12 +9,13 @@ import libQuicklyView
 public protocol IQRemoteImageView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var isLoading: Bool { get }
-    var imageView: IQImageView { get }
-    var progressView: IQProgressView? { get }
-    var errorView: IQView? { get }
+    var placeholderView: IQImageView { set get }
+    var imageView: IQImageView? { get }
+    var progressView: IQProgressView? { set get }
+    var errorView: IQView? { set get }
     var loader: QRemoteImageLoader { get }
-    var query: IQRemoteImageQuery { get }
-    var filter: IQRemoteImageFilter? { get }
+    var query: IQRemoteImageQuery { set get }
+    var filter: IQRemoteImageFilter? { set get }
     
     @discardableResult
     func startLoading() -> Self
@@ -23,7 +24,7 @@ public protocol IQRemoteImageView : IQView, IQViewColorable, IQViewBorderable, I
     func stopLoading() -> Self
     
     @discardableResult
-    func imageView(_ value: IQImageView) -> Self
+    func placeholderView(_ value: IQImageView) -> Self
     
     @discardableResult
     func progressView(_ value: IQProgressView?) -> Self
@@ -41,7 +42,7 @@ public protocol IQRemoteImageView : IQView, IQViewColorable, IQViewBorderable, I
     func onProgress(_ value: ((_ progress: Float) -> Void)?) -> Self
     
     @discardableResult
-    func onFinish(_ value: ((_ image: QImage) -> Void)?) -> Self
+    func onFinish(_ value: ((_ image: QImage) -> IQImageView)?) -> Self
     
     @discardableResult
     func onError(_ value: ((_ error: Error) -> Void)?) -> Self

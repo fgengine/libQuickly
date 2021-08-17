@@ -50,6 +50,7 @@ extension QImageView.ImageView {
         self.update(image: view.image)
         self.update(mode: view.mode)
         self.update(color: view.color)
+        self.update(tintColor: view.tintColor)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
         self.update(shadow: view.shadow)
@@ -92,7 +93,7 @@ extension QImageView.ImageView : IQReusable {
         content.update(view: owner)
     }
     
-    static func cleanupReuse(owner: Owner, content: Content) {
+    static func cleanupReuse(content: Content) {
         content.cleanup()
     }
     

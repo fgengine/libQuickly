@@ -26,6 +26,9 @@ public class QCellView< ContentView : IQView > : IQCellView {
     public var bounds: QRect {
         return self._view.bounds
     }
+    public var isVisible: Bool {
+        return self._view.isVisible
+    }
     public var shouldHighlighting: Bool {
         set(value) { self._view.shouldHighlighting = value }
         get { return self._view.shouldHighlighting }
@@ -71,7 +74,7 @@ public class QCellView< ContentView : IQView > : IQCellView {
     public init(
         shouldPressed: Bool = true,
         contentView: ContentView,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
@@ -109,6 +112,10 @@ public class QCellView< ContentView : IQView > : IQCellView {
         self._init()
     }
     
+    public func loadIfNeeded() {
+        self._view.loadIfNeeded()
+    }
+    
     public func size(_ available: QSize) -> QSize {
         return self._view.size(available)
     }
@@ -119,6 +126,18 @@ public class QCellView< ContentView : IQView > : IQCellView {
     
     public func disappear() {
         self._view.disappear()
+    }
+    
+    public func visible() {
+        self._view.visible()
+    }
+    
+    public func visibility() {
+        self._view.visibility()
+    }
+    
+    public func invisible() {
+        self._view.invisible()
     }
     
     public func triggeredChangeStyle(_ userIteraction: Bool) {
@@ -192,6 +211,24 @@ public class QCellView< ContentView : IQView > : IQCellView {
     }
     
     @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._view.onVisible(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._view.onVisibility(value)
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._view.onInvisible(value)
+        return self
+    }
+    
+    @discardableResult
     public func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self {
         self._view.onChangeStyle(value)
         return self
@@ -212,7 +249,7 @@ private extension QCellView {
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
         var contentItem: QLayoutItem {
-            didSet { self.setNeedUpdate() }
+            didSet { self.setNeedForceUpdate() }
         }
 
         init(

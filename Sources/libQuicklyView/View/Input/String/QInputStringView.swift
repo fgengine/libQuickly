@@ -27,16 +27,17 @@ public class QInputStringView : IQInputStringView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var text: String {
@@ -136,17 +137,21 @@ public class QInputStringView : IQInputStringView {
 
     private var _reuse: QReuseItem< InputStringView >
     private var _view: InputStringView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _text: String
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
     private var _onBeginEditing: (() -> Void)?
     private var _onEditing: (() -> Void)?
     private var _onEndEditing: (() -> Void)?
 
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        reuseName: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         text: String,
@@ -157,12 +162,13 @@ public class QInputStringView : IQInputStringView {
         placeholder: QInputPlaceholder,
         placeholderInset: QInset? = nil,
         alignment: QTextAlignment = .left,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.width = width
         self.height = height
         self.textFont = textFont
@@ -178,7 +184,16 @@ public class QInputStringView : IQInputStringView {
         self.shadow = shadow
         self.alpha = alpha
         self._text = text
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -193,9 +208,23 @@ public class QInputStringView : IQInputStringView {
     
     public func disappear() {
         self.toolbar?.disappear()
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
     }
     
     @discardableResult
@@ -307,6 +336,24 @@ public class QInputStringView : IQInputStringView {
     @discardableResult
     public func onAppear(_ value: (() -> Void)?) -> Self {
         self._onAppear = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
         return self
     }
     

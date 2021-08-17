@@ -7,8 +7,10 @@ import libQuicklyCore
 
 protocol WebViewDelegate : AnyObject {
     
-    func beginLoading()
-    func endLoading()
+    func _update(contentSize: QSize)
+    
+    func _beginLoading()
+    func _endLoading(error: Error?)
     
 }
 
@@ -26,31 +28,33 @@ public class QWebView : IQWebView {
         guard self.isLoaded == true else { return .zero }
         return QRect(self._view.bounds)
     }
+    public private(set) var isVisible: Bool
     public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
-            self.setNeedForceUpdate()
+            self.setNeedForceLayout()
         }
     }
-    public var isLoading: Bool
     public var contentInset: QInset {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(contentInset: self.contentInset)
         }
     }
-    public var request: URLRequest? {
+    public private(set) var contentSize: QSize
+    public var request: QWebViewRequest? {
         didSet {
             guard self.isLoaded == true else { return }
             self._view.update(request: request)
         }
     }
+    public private(set) var state: QWebViewState
     public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
@@ -86,34 +90,50 @@ public class QWebView : IQWebView {
     
     private var _reuse: QReuseItem< WebView >
     private var _view: WebView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
+    private var _onVisible: (() -> Void)?
+    private var _onVisibility: (() -> Void)?
+    private var _onInvisible: (() -> Void)?
+    private var _onContentSize: (() -> Void)?
     private var _onBeginLoading: (() -> Void)?
     private var _onEndLoading: (() -> Void)?
     
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDestroy,
+        reuseName: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
         contentInset: QInset = .zero,
-        color: QColor? = QColor(rgba: 0x00000000),
+        color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.isVisible = false
         self.width = width
         self.height = height
         self.contentInset = contentInset
-        self.isLoading = false
+        self.contentSize = .zero
+        self.state = .empty
         self.color = color
         self.border = border
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -126,9 +146,31 @@ public class QWebView : IQWebView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.layout = nil
         self._onDisappear?()
+    }
+    
+    public func visible() {
+        self.isVisible = true
+        self._onVisible?()
+    }
+    
+    public func visibility() {
+        self._onVisibility?()
+    }
+    
+    public func invisible() {
+        self.isVisible = false
+        self._onInvisible?()
+    }
+    
+    public func evaluate< Result >(
+        javaScript: String,
+        success: @escaping (Result) -> Void,
+        failure: @escaping (Error) -> Void
+    ) {
+        self._view.evaluate(javaScript: javaScript, success: success, failure: failure)
     }
     
     @discardableResult
@@ -150,11 +192,8 @@ public class QWebView : IQWebView {
     }
     
     @discardableResult
-    public func request(_ value: URLRequest) -> Self {
+    public func request(_ value: QWebViewRequest) -> Self {
         self.request = value
-        if self.isLoaded == true {
-            self._view.load(value)
-        }
         return self
     }
     
@@ -201,6 +240,30 @@ public class QWebView : IQWebView {
     }
     
     @discardableResult
+    public func onVisible(_ value: (() -> Void)?) -> Self {
+        self._onVisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onVisibility(_ value: (() -> Void)?) -> Self {
+        self._onVisibility = value
+        return self
+    }
+    
+    @discardableResult
+    public func onInvisible(_ value: (() -> Void)?) -> Self {
+        self._onInvisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onContentSize(_ value: (() -> Void)?) -> Self {
+        self._onContentSize = value
+        return self
+    }
+    
+    @discardableResult
     public func onBeginLoading(_ value: (() -> Void)?) -> Self {
         self._onBeginLoading = value
         return self
@@ -216,18 +279,21 @@ public class QWebView : IQWebView {
 
 extension QWebView : WebViewDelegate {
     
-    func beginLoading() {
-        if self.isLoading == false {
-            self.isLoading = true
-            self._onBeginLoading?()
+    func _update(contentSize: QSize) {
+        if self.contentSize != contentSize {
+            self.contentSize = contentSize
+            self._onContentSize?()
         }
     }
     
-    func endLoading() {
-        if self.isLoading == true {
-            self.isLoading = false
-            self._onEndLoading?()
-        }
+    func _beginLoading() {
+        self.state = .loading
+        self._onBeginLoading?()
+    }
+    
+    func _endLoading(error: Error?) {
+        self.state = .loaded(error)
+        self._onEndLoading?()
     }
     
 }

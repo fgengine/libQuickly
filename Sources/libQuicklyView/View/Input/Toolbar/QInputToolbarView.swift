@@ -92,10 +92,10 @@ open class QInputToolbarView : IQInputToolbarView {
             self._view.update(translucent: self.isTranslucent)
         }
     }
-    public var tintColor: QColor? {
+    public var barTintColor: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
-            self._view.update(tintColor: self.tintColor)
+            self._view.update(barTintColor: self.barTintColor)
         }
     }
     public var contentTintColor: QColor {
@@ -113,27 +113,37 @@ open class QInputToolbarView : IQInputToolbarView {
     
     private var _reuse: QReuseItem< InputToolbarView >
     private var _view: InputToolbarView {
-        if self.isLoaded == false { self._reuse.load(owner: self) }
-        return self._reuse.content!
+        return self._reuse.content()
     }
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     
     public init(
+        reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
+        reuseName: String? = nil,
         items: [IQInputToolbarItem],
         size: Float = 55,
         isTranslucent: Bool = false,
-        tintColor: QColor? = nil,
+        barTintColor: QColor? = nil,
         contentTintColor: QColor = QColor(rgb: 0xffffff),
         color: QColor? = nil
     ) {
         self.items = items
         self.size = size
         self.isTranslucent = isTranslucent
-        self.tintColor = tintColor
+        self.barTintColor = barTintColor
         self.contentTintColor = contentTintColor
         self.color = color
-        self._reuse = QReuseItem()
+        self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
+        self._reuse.configure(owner: self)
+    }
+    
+    deinit {
+        self._reuse.destroy()
+    }
+    
+    public func loadIfNeeded() {
+        self._reuse.loadIfNeeded()
     }
     
     public func size(_ available: QSize) -> QSize {
@@ -146,7 +156,7 @@ open class QInputToolbarView : IQInputToolbarView {
     }
     
     public func disappear() {
-        self._reuse.unload(owner: self)
+        self._reuse.disappear()
         self.parentView = nil
         self._onDisappear?()
     }
@@ -170,8 +180,8 @@ open class QInputToolbarView : IQInputToolbarView {
     }
     
     @discardableResult
-    public func tintColor(_ value: QColor?) -> Self {
-        self.tintColor = value
+    public func barTintColor(_ value: QColor?) -> Self {
+        self.barTintColor = value
         return self
     }
     

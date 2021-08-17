@@ -24,7 +24,7 @@ public class QRemoteImageLoader {
     public init(
         provider: QApiProvider,
         cache: QRemoteImageCache,
-        queue: DispatchQueue = DispatchQueue.global(qos: .background)
+        queue: DispatchQueue = DispatchQueue.global(qos: .userInitiated)
     ) throws {
         self.provider = provider
         self.cache = cache
@@ -59,7 +59,7 @@ public extension QRemoteImageLoader {
     }
 
     func download(query: IQRemoteImageQuery, filter: IQRemoteImageFilter?, target: IQRemoteImageTarget) {
-        if let task = self._tasks.first(where: { return $0.query === query && $0.filter === filter }) {
+        if let task = self._tasks.first(where: { return $0.query.key == query.key && $0.filter?.name == filter?.name }) {
             task.add(target: target)
         } else {
             let task = Task(delegate: self, provider: self.provider, cache: self.cache, query: query, filter: filter, target: target)

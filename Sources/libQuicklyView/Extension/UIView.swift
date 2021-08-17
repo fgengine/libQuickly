@@ -13,6 +13,10 @@ extension UIView {
         self.backgroundColor = color?.native
     }
     
+    func update(tintColor: QColor?) {
+        self.tintColor = tintColor?.native
+    }
+    
     func update(cornerRadius: QViewCornerRadius) {
         let layer = self.layer
         switch cornerRadius {

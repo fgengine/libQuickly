@@ -33,6 +33,7 @@ public class QAnimation {
         duration: TimeInterval,
         elapsed: TimeInterval = 0,
         ease: IQAnimationEase = Ease.Linear(),
+        preparing: (() -> Void)? = nil,
         processing: @escaping (_ progress: Float) -> Void,
         completion: @escaping () -> Void
     ) -> IQAnimationTask {
@@ -40,6 +41,7 @@ public class QAnimation {
             duration: duration,
             elapsed: elapsed,
             ease: ease,
+            preparing: preparing,
             processing: processing,
             completion: completion
         )
@@ -66,6 +68,7 @@ private extension QAnimation {
         var duration: TimeInterval
         var elapsed: TimeInterval
         var ease: IQAnimationEase
+        var preparing: (() -> Void)?
         var processing: (_ progress: Float) -> Void
         var completion: () -> Void
         
@@ -78,12 +81,14 @@ private extension QAnimation {
             duration: TimeInterval,
             elapsed: TimeInterval,
             ease: IQAnimationEase,
+            preparing: (() -> Void)?,
             processing: @escaping (_ progress: Float) -> Void,
             completion: @escaping () -> Void
         ) {
             self.duration = duration
             self.elapsed = elapsed
             self.ease = ease
+            self.preparing = preparing
             self.processing = processing
             self.completion = completion
             self.isRunning = false
@@ -95,6 +100,7 @@ private extension QAnimation {
         func update(_ delta: TimeInterval) {
             if self.isRunning == false {
                 self.isRunning = true
+                self.preparing?()
             }
             if self.isCanceled == false {
                 self.elapsed += delta

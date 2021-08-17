@@ -23,7 +23,7 @@ public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     
     var isTranslucent: Bool { set get }
     
-    var tintColor: QColor? { set get }
+    var barTintColor: QColor? { set get }
     
     var contentTintColor: QColor { set get }
     
@@ -37,7 +37,7 @@ public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     func translucent(_ value: Bool) -> Self
     
     @discardableResult
-    func tintColor(_ value: QColor?) -> Self
+    func barTintColor(_ value: QColor?) -> Self
     
     @discardableResult
     func contentTintColor(_ value: QColor) -> Self

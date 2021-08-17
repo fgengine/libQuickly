@@ -128,12 +128,14 @@ let package = Package(
         .target(
             name: "libQuicklyPermission",
             dependencies: [
+                .target(name: "libQuicklyCore"),
                 .target(name: "libQuicklyObserver")
             ]
         ),
         .target(
             name: "libQuicklyView",
             dependencies: [
+                .target(name: "libQuicklyCore"),
                 .target(name: "libQuicklyObserver")
             ]
         ),

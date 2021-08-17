@@ -10,30 +10,28 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
     public var iconInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var iconView: IconView {
-        didSet {
-            self.iconItem = QLayoutItem(view: self.iconView)
-            self.setNeedUpdate()
-        }
+        didSet { self.iconItem = QLayoutItem(view: self.iconView) }
     }
-    public private(set) var iconItem: QLayoutItem
+    public private(set) var iconItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.iconItem) }
+    }
     public var contentInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var contentView: ContentView {
-        didSet {
-            self.contentItem = QLayoutItem(view: self.contentView)
-            self.setNeedUpdate()
-        }
+        didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
-    public private(set) var contentItem: QLayoutItem
+    public private(set) var contentItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.contentItem) }
+    }
     
     public init(
-        iconInset: QInset = QInset(horizontal: 8, vertical: 4),
+        iconInset: QInset,
         iconView: IconView,
-        contentInset: QInset = QInset(horizontal: 8, vertical: 4),
+        contentInset: QInset,
         contentView: ContentView
     ) {
         self.iconInset = iconInset

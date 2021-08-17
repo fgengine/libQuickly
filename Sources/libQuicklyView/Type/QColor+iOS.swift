@@ -6,7 +6,7 @@
 
 import UIKit
 
-public struct QColor {
+public struct QColor : Equatable {
     
     public var native: UIColor
     
@@ -65,12 +65,21 @@ public struct QColor {
     }
     
     @inlinable
-    init(_ native: UIColor) {
+    @available(iOS 11.0, *)
+    public init(name: String) {
+        guard let native = UIColor(named: name) else {
+            fatalError("Not found image with '\(name)'")
+        }
         self.native = native
     }
     
     @inlinable
-    init(_ cgColor: CGColor) {
+    public init(_ native: UIColor) {
+        self.native = native
+    }
+    
+    @inlinable
+    public init(_ cgColor: CGColor) {
         self.init(UIColor(cgColor: cgColor))
     }
     

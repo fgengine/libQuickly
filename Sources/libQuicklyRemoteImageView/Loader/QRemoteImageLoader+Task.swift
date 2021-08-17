@@ -153,8 +153,8 @@ private extension QRemoteImageLoader.Task {
             self._progress(progress: Progress(totalUnitCount: 0))
             self._cancellable = self.query.download(
                 provider: self._provider,
-                download: { progress in
-                    self._progress(progress: progress)
+                download: { [weak self] progress in
+                    self?._progress(progress: progress)
                 },
                 success: { data, image in
                     downloadData = data
@@ -166,8 +166,14 @@ private extension QRemoteImageLoader.Task {
                     semaphore.signal()
                 }
             )
-            semaphore.wait()
-            self._cancellable = nil
+            while true {
+                if workItem.isCancelled == true {
+                    break
+                }
+                if semaphore.wait(timeout: .now() + .milliseconds(10)) == .success {
+                    break
+                }
+            }
             if workItem.isCancelled == false, let data = downloadData, let originImage = downloadImage {
                 do {
                     try self._cache.set(data: data, image: originImage, query: self.query)
@@ -204,6 +210,7 @@ private extension QRemoteImageLoader.Task {
         DispatchQueue.main.async(execute: { [weak self] in
             guard let self = self else { return }
             self._delegate.didFinish(self)
+            self._cancellable = nil
             self._workItem = nil
             if workItem.isCancelled == false {
                 if let image = image {

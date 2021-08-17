@@ -26,7 +26,7 @@ extension QScrollView {
             content.update(view: owner)
         }
         
-        static func cleanupReuse(owner: Owner, content: Content) {
+        static func cleanupReuse(content: Content) {
             content.cleanup()
         }
         
@@ -77,9 +77,18 @@ final class NativeScrollView : UIScrollView {
     private unowned var _view: View?
     private var _contentView: UIView!
     private var _layoutManager: QLayoutManager!
+    private var _visibleInset: QInset {
+        didSet(oldValue) {
+            guard self._visibleInset != oldValue else { return }
+            self.setNeedsLayout()
+        }
+    }
+    private var _isLayout: Bool
     
     override init(frame: CGRect) {
         self.needLayoutContent = true
+        self._visibleInset = .zero
+        self._isLayout = false
         
         super.init(frame: frame)
 
@@ -102,10 +111,7 @@ final class NativeScrollView : UIScrollView {
     override func willMove(toSuperview superview: UIView?) {
         super.willMove(toSuperview: superview)
         
-        if superview != nil {
-            self.needLayoutContent = true
-            self.setNeedsLayout()
-        } else {
+        if superview == nil {
             self._layoutManager.clear()
         }
     }
@@ -113,33 +119,45 @@ final class NativeScrollView : UIScrollView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        if self.needLayoutContent == true {
-            let frame = self.bounds
-            if #available(iOS 11.0, *) {
-                let inset = self.adjustedContentInset
-                self._layoutManager.layout(
-                    bounds: QRect(
+        self._safeLayout({
+            let bounds = self.bounds
+            if self.needLayoutContent == true {
+                self.needLayoutContent = false
+                
+                let layoutBounds: QRect
+                if #available(iOS 11.0, *) {
+                    let inset = self.adjustedContentInset
+                    layoutBounds = QRect(
                         x: 0,
                         y: 0,
-                        width: Float(frame.width - (inset.left + inset.right)),
-                        height: Float(frame.height - (inset.top + inset.bottom))
+                        width: Float(bounds.size.width - (inset.left + inset.right)),
+                        height: Float(bounds.size.height - (inset.top + inset.bottom))
                     )
-                )
-            } else {
-                self._layoutManager.layout(
-                    bounds: QRect(
+                } else {
+                    layoutBounds = QRect(
                         x: 0,
                         y: 0,
-                        width: Float(frame.width),
-                        height: Float(frame.height)
+                        width: Float(bounds.size.width),
+                        height: Float(bounds.size.height)
                     )
-                )
+                }
+                self._layoutManager.layout(bounds: layoutBounds)
+                let size = self._layoutManager.size
+                self.contentSize = size.cgSize
+                self.customDelegate?._update(contentSize: size)
             }
-            self.contentSize = self._layoutManager.size.cgSize
-            self.customDelegate?._update(contentSize: self._layoutManager.size)
-            self.needLayoutContent = false
-        }
-        self._layoutManager.visible(bounds: QRect(self.bounds))
+            self._layoutManager.visible(
+                bounds: QRect(bounds),
+                inset: self._visibleInset
+            )
+        })
+    }
+    
+    @available(iOS 11.0, *)
+    override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        
+        self.scrollIndicatorInsets = self._scrollIndicatorInsets()
     }
     
 }
@@ -150,8 +168,10 @@ extension NativeScrollView {
         self._view = view
         self.update(direction: view.direction)
         self.update(indicatorDirection: view.indicatorDirection)
+        self.update(visibleInset: view.visibleInset)
         self.update(contentInset: view.contentInset)
-        self.update(contentOffset: view.contentOffset, normalized: false)
+        self.update(contentSize: view.contentSize)
+        self.update(contentOffset: view.contentOffset, normalized: true)
         self.update(contentLayout: view.contentLayout)
         self.update(color: view.color)
         self.update(border: view.border)
@@ -165,14 +185,12 @@ extension NativeScrollView {
     func update(contentLayout: IQLayout) {
         self._layoutManager.layout = contentLayout
         self.needLayoutContent = true
-        self.setNeedsLayout()
     }
     
     func update(direction: QScrollViewDirection) {
         self.alwaysBounceHorizontal = direction.contains(.horizontal)
         self.alwaysBounceVertical = direction.contains(.vertical)
         self.needLayoutContent = true
-        self.setNeedsLayout()
     }
     
     func update(indicatorDirection: QScrollViewDirection) {
@@ -180,19 +198,28 @@ extension NativeScrollView {
         self.showsVerticalScrollIndicator = indicatorDirection.contains(.vertical)
     }
     
+    func update(visibleInset: QInset) {
+        self._visibleInset = visibleInset
+    }
+    
     func update(contentInset: QInset) {
         self.contentInset = contentInset.uiEdgeInsets
-        self.scrollIndicatorInsets = contentInset.uiEdgeInsets
+        self.scrollIndicatorInsets = self._scrollIndicatorInsets()
+    }
+    
+    func update(contentSize: QSize) {
+        self.contentSize = contentSize.cgSize
     }
     
     func update(contentOffset: QPoint, normalized: Bool) {
         let validContentOffset: CGPoint
         if normalized == true {
+            let contentInset = self.contentInset
             let contentSize = self.contentSize
             let visibleSize = self.bounds.size
             validContentOffset = CGPoint(
-                x: max(0, min(CGFloat(contentOffset.x), contentSize.width - visibleSize.width)),
-                y: max(0, min(CGFloat(contentOffset.y), contentSize.height - visibleSize.height))
+                x: max(-contentInset.left, min(-contentInset.left + CGFloat(contentOffset.x), contentSize.width - visibleSize.width + contentInset.right)),
+                y: max(-contentInset.top, min(-contentInset.top + CGFloat(contentOffset.y), contentSize.height - visibleSize.height + contentInset.bottom))
             )
         } else {
             validContentOffset = contentOffset.cgPoint
@@ -231,6 +258,34 @@ extension NativeScrollView {
     
 }
 
+private extension NativeScrollView {
+    
+    func _safeLayout(_ action: () -> Void) {
+        if self._isLayout == false {
+            self._isLayout = true
+            action()
+            self._isLayout = false
+        }
+    }
+    
+    func _scrollIndicatorInsets() -> UIEdgeInsets {
+        let contentInset = self.contentInset
+        let safeArea: UIEdgeInsets
+        if #available(iOS 11.0, *) {
+            safeArea = self.safeAreaInsets
+        } else {
+            safeArea = .zero
+        }
+        return UIEdgeInsets(
+            top: contentInset.top - safeArea.top,
+            left: contentInset.left - safeArea.left,
+            bottom: contentInset.bottom - safeArea.bottom,
+            right: contentInset.right - safeArea.right
+        )
+    }
+    
+}
+
 extension NativeScrollView : UIScrollViewDelegate {
     
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
@@ -243,6 +298,9 @@ extension NativeScrollView : UIScrollViewDelegate {
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         self.customDelegate?._endScrolling(decelerate: decelerate)
+        if decelerate == false {
+            self.setNeedsLayout()
+        }
     }
     
     func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
@@ -251,6 +309,7 @@ extension NativeScrollView : UIScrollViewDelegate {
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         self.customDelegate?._endDecelerating()
+        self.setNeedsLayout()
     }
     
     func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
@@ -261,9 +320,10 @@ extension NativeScrollView : UIScrollViewDelegate {
 
 extension NativeScrollView : IQLayoutDelegate {
     
-    func setNeedUpdate(_ layout: IQLayout, force: Bool) {
+    func setNeedUpdate(_ layout: IQLayout) -> Bool {
         self.needLayoutContent = true
         self.setNeedsLayout()
+        return false
     }
     
     func updateIfNeeded(_ layout: IQLayout) {

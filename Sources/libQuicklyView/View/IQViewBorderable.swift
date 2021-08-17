@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public enum QViewBorder {
+public enum QViewBorder : Equatable {
     case none
     case manual(width: Float, color: QColor)
 }

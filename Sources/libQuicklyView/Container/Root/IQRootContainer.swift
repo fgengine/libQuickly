@@ -17,8 +17,10 @@ public protocol IQRootContainerDelegate : AnyObject {
 public protocol IQRootContainer : IQContainer {
     
     var delegate: IQRootContainerDelegate? { set get }
+    var statusBarView: IQStatusBarView? { set get }
     var safeArea: QInset { set get }
-    var container: IQRootContentContainer { set get }
+    var overlayContainer: IQRootContentContainer? { set get }
+    var contentContainer: IQRootContentContainer { set get }
     
 }
 

@@ -26,4 +26,17 @@ public extension IQScreenPageable where Self : IQScreen {
         return self.pageContentContainer?.pageContainer
     }
     
+    @inlinable
+    func updatePage(animated: Bool, completion: (() -> Void)? = nil) {
+        guard let contentContainer = self.pageContentContainer else {
+            completion?()
+            return
+        }
+        guard let container = contentContainer.pageContainer else {
+            completion?()
+            return
+        }
+        container.update(container: contentContainer, animated: animated, completion: completion)
+    }
+    
 }

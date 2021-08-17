@@ -10,25 +10,23 @@ public class QExpandComposition< ContentView: IQView, DetailView: IQView > : IQL
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
     public var contentInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var contentView: ContentView {
-        didSet {
-            self.contentItem = QLayoutItem(view: self.contentView)
-            self.setNeedUpdate()
-        }
+        didSet { self.contentItem = QLayoutItem(view: self.contentView) }
     }
-    public private(set) var contentItem: QLayoutItem
+    public private(set) var contentItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.contentItem) }
+    }
     public var detailInset: QInset {
-        didSet { self.setNeedUpdate() }
+        didSet { self.setNeedForceUpdate() }
     }
     public var detailView: DetailView {
-        didSet {
-            self.detailItem = QLayoutItem(view: self.detailView)
-            self.setNeedUpdate()
-        }
+        didSet { self.detailItem = QLayoutItem(view: self.detailView) }
     }
-    public private(set) var detailItem: QLayoutItem
+    public private(set) var detailItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.detailItem) }
+    }
     public var isAnimating: Bool {
         return self._animationTask != nil
     }
@@ -46,9 +44,9 @@ public class QExpandComposition< ContentView: IQView, DetailView: IQView > : IQL
     }
     
     public init(
-        contentInset: QInset = QInset(horizontal: 8, vertical: 4),
+        contentInset: QInset,
         contentView: ContentView,
-        detailInset: QInset = QInset(horizontal: 8, vertical: 4),
+        detailInset: QInset,
         detailView: DetailView
     ) {
         self.contentInset = contentInset
@@ -110,12 +108,6 @@ public class QExpandComposition< ContentView: IQView, DetailView: IQView > : IQL
         } else if self.detailItem === item {
             self._detailSize = nil
         }
-    }
-    
-    public func invalidate() {
-        guard self.isAnimating == false else { return }
-        self._contentSize = nil
-        self._detailSize = nil
     }
     
     public func layout(bounds: QRect) -> QSize {

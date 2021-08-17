@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public enum QViewCornerRadius {
+public enum QViewCornerRadius : Equatable {
     case none
     case manual(radius: Float)
     case auto

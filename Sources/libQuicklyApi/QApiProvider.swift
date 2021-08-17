@@ -190,10 +190,15 @@ private extension QApiProvider {
     
     func _authentication(challenge: URLAuthenticationChallenge) -> (disposition: URLSession.AuthChallengeDisposition, credential: URLCredential?) {
         guard let trust = challenge.protectionSpace.serverTrust else {
-            return (disposition: .cancelAuthenticationChallenge, credential: nil)
+            if self.allowInvalidCertificates == true {
+                return (disposition: .useCredential, credential: nil)
+            } else {
+                return (disposition: .cancelAuthenticationChallenge, credential: nil)
+            }
         }
         if self.allowInvalidCertificates == true {
-            return (disposition: .useCredential, credential: URLCredential(trust: trust))
+            let credential = URLCredential(trust: trust)
+            return (disposition: .useCredential, credential: credential)
         }
         for localCertificateUrl in self.localCertificateUrls {
             let authentication = self._authentication(localCertificateUrl: localCertificateUrl, trust: trust)

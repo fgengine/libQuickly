@@ -10,17 +10,12 @@ public protocol IQScreenStackable : AnyObject {
     associatedtype StackBar : IQStackBarView
     
     var stackBarView: StackBar { get }
-    var stackBarSize: Float { get }
     var stackBarVisibility: Float { get }
     var stackBarHidden: Bool { get }
     
 }
 
 public extension IQScreenStackable {
-    
-    var stackBarSize: Float {
-        return 50
-    }
     
     var stackBarVisibility: Float {
         return 1
@@ -47,8 +42,14 @@ public extension IQScreenStackable where Self : IQScreen {
     
     @inlinable
     func updateStack(animated: Bool, completion: (() -> Void)? = nil) {
-        guard let contentContainer = self.container as? IQStackContentContainer else { return }
-        guard let container = contentContainer.stackContainer else { return }
+        guard let contentContainer = self.stackContentContainer else {
+            completion?()
+            return
+        }
+        guard let container = contentContainer.stackContainer else {
+            completion?()
+            return
+        }
         container.update(container: contentContainer, animated: animated, completion: completion)
     }
     

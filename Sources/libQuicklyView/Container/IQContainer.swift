@@ -11,7 +11,6 @@ import libQuicklyCore
 public protocol IQContainer : AnyObject {
     
     var shouldInteractive: Bool { get }
-    var inheritedInsets: QInset { get }
     #if os(iOS)
     var statusBarHidden: Bool { get }
     var statusBarStyle: UIStatusBarStyle { get }
@@ -26,7 +25,8 @@ public protocol IQContainer : AnyObject {
     func setNeedUpdateOrientations()
     #endif
     
-    func insets(of container: IQContainer) -> QInset
+    func inheritedInsets(interactive: Bool) -> QInset
+    func insets(of container: IQContainer, interactive: Bool) -> QInset
     func didChangeInsets()
     
     func activate() -> Bool
@@ -43,7 +43,7 @@ public protocol IQContainer : AnyObject {
 
 public extension IQContainer {
     
-    var inheritedInsets: QInset {
+    func inheritedInsets(interactive: Bool) -> QInset {
         return .zero
     }
     
