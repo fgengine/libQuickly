@@ -10,6 +10,8 @@ protocol ScrollViewDelegate : AnyObject {
     
     func _update(contentSize: QSize)
     
+    func _triggeredRefresh()
+
     func _beginScrolling()
     func _scrolling(contentOffset: QPoint)
     func _endScrolling(decelerate: Bool)
@@ -85,6 +87,26 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     }
     public private(set) var isScrolling: Bool
     public private(set) var isDecelerating: Bool
+    @available(iOS 10.0, *)
+    public var refreshColor: QColor? {
+        set(value) {
+            guard self._refreshColor != value else { return }
+            self._refreshColor = value
+            guard self.isLoaded == true else { return }
+            self._view.update(refreshColor: self._refreshColor)
+        }
+        get { return self._refreshColor }
+    }
+    @available(iOS 10.0, *)
+    public var isRefreshing: Bool {
+        set(value) {
+            guard self._isRefreshing != value else { return }
+            self._isRefreshing = value
+            guard self.isLoaded == true else { return }
+            self._view.update(isRefreshing: self._isRefreshing)
+        }
+        get { return self._isRefreshing }
+    }
     public var color: QColor? {
         didSet(oldValue) {
             guard self.color != oldValue else { return }
@@ -128,12 +150,15 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         return self._reuse.content()
     }
     private var _contentOffset: QPoint
+    private var _refreshColor: QColor?
+    private var _isRefreshing: Bool
     private var _observer: QObserver< IQScrollViewObserver >
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     private var _onVisible: (() -> Void)?
     private var _onVisibility: (() -> Void)?
     private var _onInvisible: (() -> Void)?
+    private var _onTriggeredRefresh: (() -> Void)?
     private var _onBeginScrolling: (() -> Void)?
     private var _onScrolling: (() -> Void)?
     private var _onEndScrolling: ((_ decelerate: Bool) -> Void)?
@@ -163,6 +188,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         self.contentSize = .zero
         self.isScrolling = false
         self.isDecelerating = false
+        self._isRefreshing = false
         self.color = color
         self.border = border
         self.cornerRadius = cornerRadius
@@ -224,6 +250,20 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         return self._view.contentOffset(with: view, horizontal: horizontal, vertical: vertical)
     }
     
+    @available(iOS 10.0, *)
+    @discardableResult
+    public func beginRefresh() -> Self {
+        self.isRefreshing = true
+        return self
+    }
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    public func endRefresh() -> Self {
+        self.isRefreshing = false
+        return self
+    }
+    
     @discardableResult
     public func direction(_ value: QScrollViewDirection) -> Self {
         self.direction = value
@@ -254,6 +294,13 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         if self.isLoaded == true {
             self._view.update(contentOffset: value, normalized: normalized)
         }
+        return self
+    }
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    public func refreshColor(_ value: QColor?) -> Self {
+        self.refreshColor = value
         return self
     }
     
@@ -320,6 +367,13 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     @discardableResult
     public func onInvisible(_ value: (() -> Void)?) -> Self {
         self._onInvisible = value
+        return self
+    }
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    public func onTriggeredRefresh(_ value: (() -> Void)?) -> Self {
+        self._onTriggeredRefresh = value
         return self
     }
     
@@ -391,6 +445,10 @@ extension QScrollView : ScrollViewDelegate {
     
     func _update(contentSize: QSize) {
         self.contentSize = contentSize
+    }
+    
+    func _triggeredRefresh() {
+        self._onTriggeredRefresh?()
     }
     
     func _beginScrolling() {

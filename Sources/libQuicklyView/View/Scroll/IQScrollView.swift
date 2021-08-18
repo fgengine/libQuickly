@@ -58,6 +58,12 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     var isDecelerating: Bool { get }
     
+    @available(iOS 10.0, *)
+    var refreshColor: QColor? { set get }
+    
+    @available(iOS 10.0, *)
+    var isRefreshing: Bool { get }
+    
     func add(observer: IQScrollViewObserver)
     
     func remove(observer: IQScrollViewObserver)
@@ -65,6 +71,14 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     func scrollToTop(animated: Bool, completion: (() -> Void)?)
 
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint?
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    func beginRefresh() -> Self
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    func endRefresh() -> Self
     
     @discardableResult
     func direction(_ value: QScrollViewDirection) -> Self
@@ -80,6 +94,14 @@ public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQView
     
     @discardableResult
     func contentOffset(_ value: QPoint, normalized: Bool) -> Self
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    func refreshColor(_ value: QColor?) -> Self
+    
+    @available(iOS 10.0, *)
+    @discardableResult
+    func onTriggeredRefresh(_ value: (() -> Void)?) -> Self
     
     @discardableResult
     func onBeginScrolling(_ value: (() -> Void)?) -> Self

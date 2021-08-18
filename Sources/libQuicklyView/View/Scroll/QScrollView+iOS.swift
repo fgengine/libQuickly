@@ -76,6 +76,7 @@ final class NativeScrollView : UIScrollView {
     
     private unowned var _view: View?
     private var _contentView: UIView!
+    private var _refreshView: UIRefreshControl!
     private var _layoutManager: QLayoutManager!
     private var _visibleInset: QInset {
         didSet(oldValue) {
@@ -100,6 +101,12 @@ final class NativeScrollView : UIScrollView {
         
         self._contentView = UIView(frame: .zero)
         self.addSubview(self._contentView)
+        
+        self._refreshView = UIRefreshControl()
+        self._refreshView.addTarget(self, action: #selector(self._triggeredRefresh(_:)), for: .valueChanged)
+        if #available(iOS 10.0, *) {
+            self.refreshControl = self._refreshView
+        }
         
         self._layoutManager = QLayoutManager(contentView: self._contentView, delegate: self)
     }
@@ -173,6 +180,10 @@ extension NativeScrollView {
         self.update(contentSize: view.contentSize)
         self.update(contentOffset: view.contentOffset, normalized: true)
         self.update(contentLayout: view.contentLayout)
+        if #available(iOS 10.0, *) {
+            self.update(refreshColor: view.refreshColor)
+            self.update(isRefreshing: view.isRefreshing)
+        }
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
@@ -227,6 +238,29 @@ extension NativeScrollView {
         self.setContentOffset(validContentOffset, animated: false)
     }
     
+    @available(iOS 10.0, *)
+    func update(refreshColor: QColor?) {
+        if let refreshColor = refreshColor {
+            self._refreshView.tintColor = refreshColor.native
+            if self.refreshControl != self._refreshView {
+                self.refreshControl = self._refreshView
+            }
+        } else {
+            if self.refreshControl == self._refreshView {
+                self.refreshControl = nil
+            }
+        }
+    }
+    
+    @available(iOS 10.0, *)
+    func update(isRefreshing: Bool) {
+        if isRefreshing == true {
+            self._refreshView.beginRefreshing()
+        } else {
+            self._refreshView.endRefreshing()
+        }
+    }
+    
     func cleanup() {
         self._layoutManager.layout = nil
         self.customDelegate = nil
@@ -261,12 +295,9 @@ extension NativeScrollView {
 
 private extension NativeScrollView {
     
-    func _safeLayout(_ action: () -> Void) {
-        if self._isLayout == false {
-            self._isLayout = true
-            action()
-            self._isLayout = false
-        }
+    @objc
+    func _triggeredRefresh(_ sender: Any) {
+        self.customDelegate?._triggeredRefresh()
     }
     
     func _scrollIndicatorInsets() -> UIEdgeInsets {
@@ -283,6 +314,14 @@ private extension NativeScrollView {
             bottom: contentInset.bottom - safeArea.bottom,
             right: contentInset.right - safeArea.right
         )
+    }
+    
+    func _safeLayout(_ action: () -> Void) {
+        if self._isLayout == false {
+            self._isLayout = true
+            action()
+            self._isLayout = false
+        }
     }
     
 }
