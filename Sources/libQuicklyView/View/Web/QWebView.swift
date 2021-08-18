@@ -12,6 +12,8 @@ protocol WebViewDelegate : AnyObject {
     func _beginLoading()
     func _endLoading(error: Error?)
     
+    func _onDecideNavigation(request: URLRequest) -> QWebViewNavigationPolicy
+    
 }
 
 public class QWebView : IQWebView {
@@ -100,6 +102,7 @@ public class QWebView : IQWebView {
     private var _onContentSize: (() -> Void)?
     private var _onBeginLoading: (() -> Void)?
     private var _onEndLoading: (() -> Void)?
+    private var _onDecideNavigation: ((_ request: URLRequest) -> QWebViewNavigationPolicy)?
     
     public init(
         reuseBehaviour: QReuseItemBehaviour = .unloadWhenDestroy,
@@ -275,6 +278,12 @@ public class QWebView : IQWebView {
         return self
     }
     
+    @discardableResult
+    public func onDecideNavigation(_ value: ((_ request: URLRequest) -> QWebViewNavigationPolicy)?) -> Self {
+        self._onDecideNavigation = value
+        return self
+    }
+    
 }
 
 extension QWebView : WebViewDelegate {
@@ -294,6 +303,10 @@ extension QWebView : WebViewDelegate {
     func _endLoading(error: Error?) {
         self.state = .loaded(error)
         self._onEndLoading?()
+    }
+    
+    func _onDecideNavigation(request: URLRequest) -> QWebViewNavigationPolicy {
+        self._onDecideNavigation?(request) ?? .allow
     }
     
 }

@@ -133,6 +133,23 @@ extension QWebView.WebView : WKNavigationDelegate {
         self.customDelegate?._endLoading(error: error)
     }
     
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let customDelegate = self.customDelegate else {
+            decisionHandler(.allow)
+            return
+        }
+        switch navigationAction.navigationType {
+        case .linkActivated, .formSubmitted, .formResubmitted, .backForward, .reload:
+            let navigationPolicy = customDelegate._onDecideNavigation(request: navigationAction.request)
+            switch navigationPolicy {
+            case .cancel: decisionHandler(.cancel)
+            case .allow: decisionHandler(.allow)
+            }
+        default:
+            decisionHandler(.allow)
+        }
+    }
+    
 }
 
 extension QWebView.WebView : WKUIDelegate {

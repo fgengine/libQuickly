@@ -35,6 +35,13 @@ extension QWebViewState : Equatable {
     
 }
 
+public enum QWebViewNavigationPolicy {
+
+    case cancel
+    case allow
+    
+}
+
 public protocol IQWebView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var width: QDimensionBehaviour { set get }
@@ -71,5 +78,8 @@ public protocol IQWebView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     @discardableResult
     func onEndLoading(_ value: (() -> Void)?) -> Self
+    
+    @discardableResult
+    func onDecideNavigation(_ value: ((_ request: URLRequest) -> QWebViewNavigationPolicy)?) -> Self
 
 }
