@@ -19,12 +19,13 @@ public protocol IQPermission : AnyObject {
     func add(observer: IQPermissionObserver, priority: QObserverPriority)
     func remove(observer: IQPermissionObserver)
     
-    func request()
+    func request(source: Any)
     
 }
 
 public protocol IQPermissionObserver : AnyObject {
     
-    func didReqiest(_ permission: IQPermission)
+    func didRedirectToSettings(_ permission: IQPermission, source: Any?)
+    func didReqiest(_ permission: IQPermission, source: Any?)
     
 }

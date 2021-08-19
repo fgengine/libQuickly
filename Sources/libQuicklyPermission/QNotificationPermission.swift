@@ -9,34 +9,56 @@ import UIKit
 import UserNotifications
 import libQuicklyObserver
 
+@available(iOS 10.0, *)
 public class QNotificationPermission : IQPermission {
     
     public var status: QPermissionStatus {
-        if #available(iOS 10.0, *) {
-            switch self._rawStatus() {
-            case .authorized: return .authorized
-            case .denied: return .denied
-            case .notDetermined: return .notDetermined
-            case .provisional: return .authorized
-            case .ephemeral: return .authorized
-            @unknown default: return .denied
-            }
-        } else {
-            #if os(iOS)
-            if UIApplication.shared.isRegisteredForRemoteNotifications == true {
-                return .authorized
-            }
-            return .denied
-            #else
-            return .notSupported
-            #endif
+        switch self._rawStatus() {
+        case .authorized: return .authorized
+        case .denied: return .denied
+        case .notDetermined: return .notDetermined
+        case .provisional: return .authorized
+        case .ephemeral: return .authorized
+        default: return .denied
         }
     }
     
     private var _observer: QObserver< IQPermissionObserver >
+    private var _resignSource: Any?
+    private var _resignState: QPermissionStatus?
+    #if os(iOS)
+    private var _becomeActiveObserver: NSObjectProtocol?
+    private var _resignActiveObserver: NSObjectProtocol?
+    #endif
     
     public init() {
         self._observer = QObserver()
+        
+        #if os(iOS)
+        self._becomeActiveObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: OperationQueue.main,
+            using: { [unowned self] in self._didBecomeActive($0) }
+        )
+        self._resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil,
+            queue: OperationQueue.main,
+            using: { [unowned self] in self._didResignActive($0) }
+        )
+        #endif
+    }
+    
+    deinit {
+        #if os(iOS)
+        if let observer = self._becomeActiveObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = self._resignActiveObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        #endif
     }
     
     public func add(observer: IQPermissionObserver, priority: QObserverPriority) {
@@ -47,25 +69,56 @@ public class QNotificationPermission : IQPermission {
         self._observer.remove(observer)
     }
     
-    public func request() {
-        if #available(iOS 10.0, *) {
+    public func request(source: Any) {
+        switch self._rawStatus() {
+        case .notDetermined:
             UNUserNotificationCenter.current().requestAuthorization(
                 options: [ .badge, .alert, .sound ],
-                completionHandler: { settings, error in
+                completionHandler: { [weak self] settings, error in
+                    DispatchQueue.main.async(execute: {
+                        self?._didRequest(source: source)
+                    })
                 }
             )
-        } else {
-            #if os(iOS)
-            UIApplication.shared.registerForRemoteNotifications()
-            #endif
+        case .denied:
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            if UIApplication.shared.canOpenURL(url) == true {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                self._resignSource = source
+                self._didRedirectToSettings(source: source)
+            }
+        default:
+            break
         }
     }
     
 }
 
+#if os(iOS)
+
+@available(iOS 10.0, *)
 private extension QNotificationPermission {
     
-    @available(iOS 10.0, *)
+    func _didBecomeActive(_ notification: Notification) {
+        guard let resignState = self._resignState else { return }
+        if resignState != self.status {
+            self._didRequest(source: self._resignSource)
+        }
+        self._resignSource = nil
+        self._resignState = nil
+    }
+    
+    func _didResignActive(_ notification: Notification) {
+        self._resignState = self.status
+    }
+    
+}
+
+#endif
+
+@available(iOS 10.0, *)
+private extension QNotificationPermission {
+    
     func _rawStatus() -> UNAuthorizationStatus {
         var result: UNNotificationSettings?
         let semaphore = DispatchSemaphore(value: 0)
@@ -77,8 +130,12 @@ private extension QNotificationPermission {
         return result!.authorizationStatus
     }
     
-    func _didRequest() {
-        self._observer.notify({ $0.didReqiest(self) })
+    func _didRedirectToSettings(source: Any) {
+        self._observer.notify({ $0.didRedirectToSettings(self, source: source) })
+    }
+    
+    func _didRequest(source: Any?) {
+        self._observer.notify({ $0.didReqiest(self, source: source) })
     }
     
 }

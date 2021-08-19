@@ -201,6 +201,44 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         self._reuse.configure(owner: self)
     }
     
+    @available(iOS 10.0, *)
+    public init(
+        direction: QScrollViewDirection = [ .vertical ],
+        indicatorDirection: QScrollViewDirection = [],
+        visibleInset: QInset = .zero,
+        contentInset: QInset = .zero,
+        contentOffset: QPoint = .zero,
+        contentLayout: Layout,
+        refreshColor: QColor? = nil,
+        color: QColor? = nil,
+        border: QViewBorder = .none,
+        cornerRadius: QViewCornerRadius = .none,
+        shadow: QViewShadow? = nil,
+        alpha: Float = 1
+    ) {
+        self.isVisible = false
+        self.direction = direction
+        self.indicatorDirection = indicatorDirection
+        self.visibleInset = visibleInset
+        self.contentInset = contentInset
+        self.contentLayout = contentLayout
+        self._refreshColor = refreshColor
+        self.contentSize = .zero
+        self.isScrolling = false
+        self.isDecelerating = false
+        self._isRefreshing = false
+        self.color = color
+        self.border = border
+        self.cornerRadius = cornerRadius
+        self.shadow = shadow
+        self.alpha = alpha
+        self._reuse = QReuseItem()
+        self._observer = QObserver()
+        self._contentOffset = contentOffset
+        self.contentLayout.view = self
+        self._reuse.configure(owner: self)
+    }
+    
     deinit {
         self._reuse.destroy()
     }
