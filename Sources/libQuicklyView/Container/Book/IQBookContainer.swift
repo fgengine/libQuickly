@@ -15,6 +15,8 @@ public protocol IQBookContainer : IQContainer, IQContainerParentable {
     var interactiveLimit: Float { set get }
     #endif
     
+    func reload(backward: Bool, forward: Bool)
+    
     func set(current: IQBookContentContainer, animated: Bool, completion: (() -> Void)?)
     
 }

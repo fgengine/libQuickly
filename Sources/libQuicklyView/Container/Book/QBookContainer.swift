@@ -157,6 +157,34 @@ public class QBookContainer< Screen : IQBookScreen > : IQBookContainer {
         self.current?.cancelHide(interactive: interactive)
     }
     
+    public func reload(backward: Bool, forward: Bool) {
+        let newBackward: Item?
+        let newForward: Item?
+        if let item = self._current {
+            if backward == true {
+                newBackward = self.screen.backwardContainer(item.container).flatMap({ Item(container: $0) })
+            } else {
+                newBackward = nil
+            }
+            if forward == true {
+                newForward = self.screen.forwardContainer(item.container).flatMap({ Item(container: $0) })
+            } else {
+                newForward = nil
+            }
+        } else {
+            newBackward = nil
+            newForward = nil
+        }
+        self._update(
+            newBackward: newBackward ?? self._backward,
+            newCurrent: self._current,
+            newForward: newForward ?? self._forward,
+            oldBackward: self._backward,
+            oldCurrent: self._current,
+            oldForward: self._forward
+        )
+    }
+    
     public func set(current: IQBookContentContainer, animated: Bool, completion: (() -> Void)?) {
         let forward = Item(container: current)
         forward.container.parent = self

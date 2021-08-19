@@ -51,4 +51,9 @@ public extension IQBookScreen {
         return self.container as? IQBookContainer
     }
     
+    @inlinable
+    func reload(backward: Bool, forward: Bool) {
+        self.bookContainer?.reload(backward: backward, forward: forward)
+    }
+    
 }
