@@ -48,6 +48,8 @@ public protocol IQWebView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     var height: QDimensionBehaviour { set get }
     
+    var enablePinchGesture: Bool { set get }
+    
     var contentInset: QInset { set get }
     
     var contentSize: QSize { get }
@@ -63,6 +65,9 @@ public protocol IQWebView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     @discardableResult
     func height(_ value: QDimensionBehaviour) -> Self
+    
+    @discardableResult
+    func enablePinchGesture(_ value: Bool) -> Self
     
     @discardableResult
     func contentInset(_ value: QInset) -> Self

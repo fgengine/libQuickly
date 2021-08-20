@@ -27,8 +27,12 @@ public class QButtonView : IQButtonView {
         return self._view.isVisible
     }
     public var inset: QInset {
-        set(value) { self.setNeedForceLayout() }
+        set(value) { self._layout.inset = value }
         get { return self._layout.inset }
+    }
+    public var alignment: QButtonViewAlignment {
+        set(value) { self._layout.alignment = value }
+        get { return self._layout.alignment }
     }
     public var backgroundView: IQView
     public var spinnerPosition: QButtonViewSpinnerPosition {
@@ -104,6 +108,7 @@ public class QButtonView : IQButtonView {
     
     public init(
         inset: QInset = QInset(horizontal: 4, vertical: 4),
+        alignment: QButtonViewAlignment = .center,
         backgroundView: IQView,
         spinnerPosition: QButtonViewSpinnerPosition = .fill,
         spinnerView: IQSpinnerView? = nil,
@@ -127,6 +132,7 @@ public class QButtonView : IQButtonView {
         self.textView = textView
         self._layout = Layout(
             inset: inset,
+            alignment: alignment,
             backgroundItem: QLayoutItem(view: backgroundView),
             spinnerPosition: spinnerPosition,
             spinnerItem: spinnerView.flatMap({ return QLayoutItem(view: $0) }),
@@ -186,6 +192,12 @@ public class QButtonView : IQButtonView {
     @discardableResult
     public func inset(_ value: QInset) -> Self {
         self.inset = value
+        return self
+    }
+    
+    @discardableResult
+    public func alignment(_ value: QButtonViewAlignment) -> Self {
+        self.alignment = value
         return self
     }
     
@@ -314,6 +326,9 @@ extension QButtonView {
         var inset: QInset {
             didSet { self.setNeedForceUpdate() }
         }
+        var alignment: QButtonViewAlignment {
+            didSet { self.setNeedForceUpdate() }
+        }
         var backgroundItem: QLayoutItem {
             didSet { self.setNeedForceUpdate(item: self.backgroundItem) }
         }
@@ -347,6 +362,7 @@ extension QButtonView {
 
         init(
             inset: QInset,
+            alignment: QButtonViewAlignment,
             backgroundItem: QLayoutItem,
             spinnerPosition: QButtonViewSpinnerPosition,
             spinnerItem: QLayoutItem?,
@@ -358,6 +374,7 @@ extension QButtonView {
             textItem: QLayoutItem?
         ) {
             self.inset = inset
+            self.alignment = alignment
             self.backgroundItem = backgroundItem
             self.spinnerPosition = spinnerPosition
             self.spinnerItem = spinnerItem
@@ -380,48 +397,54 @@ extension QButtonView {
         }
         
         func layout(bounds: QRect) -> QSize {
+            let availableBounds = bounds.apply(inset: self.inset)
             self.backgroundItem.frame = bounds
             if self.spinnerAnimating == true, let spinnerItem = self.spinnerItem {
-                let spinnerSize = self._spinnerSize(bounds.size, item: spinnerItem)
+                let spinnerSize = self._spinnerSize(availableBounds.size, item: spinnerItem)
                 switch self.spinnerPosition {
                 case .fill:
-                    spinnerItem.frame = QRect(center: bounds.center, size: spinnerSize)
+                    spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize)
                 case .image:
                     if self.imageItem != nil, let textItem = self.textItem {
-                        let textSize = self._textSize(bounds.size, item: textItem)
+                        let textSize = self._textSize(availableBounds.size, item: textItem)
                         let frames = self._frame(
-                            position: self.imagePosition,
-                            bounds: bounds,
-                            primarySize: spinnerSize,
-                            primaryInset: self.imageInset,
-                            secondarySize: textSize,
-                            secondaryInset: self.textInset
+                            bounds: availableBounds,
+                            alignment: self.alignment,
+                            imagePosition: self.imagePosition,
+                            imageInset: self.imageInset,
+                            imageSize: spinnerSize,
+                            textInset: self.textInset,
+                            textSize: textSize
                         )
-                        spinnerItem.frame = frames.primary
-                        textItem.frame = frames.secondary
+                        spinnerItem.frame = frames.image
+                        textItem.frame = frames.text
                     } else {
-                        spinnerItem.frame = QRect(center: bounds.center, size: spinnerSize)
+                        spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize)
                     }
                 }
             } else if let imageItem = self.imageItem, let textItem = self.textItem {
-                let imageSize = self._imageSize(bounds.size, item: imageItem)
-                let textSize = self._textSize(bounds.size, item: textItem)
+                let imageSize = self._imageSize(availableBounds.size, item: imageItem)
+                let textSize = self._textSize(availableBounds.size, item: textItem)
                 let frames = self._frame(
-                    position: self.imagePosition,
-                    bounds: bounds,
-                    primarySize: imageSize,
-                    primaryInset: self.imageInset,
-                    secondarySize: textSize,
-                    secondaryInset: self.textInset
+                    bounds: availableBounds,
+                    alignment: self.alignment,
+                    imagePosition: self.imagePosition,
+                    imageInset: self.imageInset,
+                    imageSize: imageSize,
+                    textInset: self.textInset,
+                    textSize: textSize
                 )
-                imageItem.frame = frames.primary
-                textItem.frame = frames.secondary
+                imageItem.frame = frames.image
+                textItem.frame = frames.text
             } else if let imageItem = self.imageItem {
-                let imageSize = self._imageSize(bounds.size, item: imageItem)
-                imageItem.frame = QRect(center: bounds.center, size: imageSize)
+                let imageSize = self._imageSize(availableBounds.size, item: imageItem)
+                imageItem.frame = QRect(center: availableBounds.center, size: imageSize)
             } else if let textItem = self.textItem {
-                let textSize = self._textSize(bounds.size, item: textItem)
-                textItem.frame = QRect(center: bounds.center, size: textSize)
+                let textSize = self._textSize(availableBounds.size, item: textItem)
+                switch self.alignment {
+                case .fill: textItem.frame = availableBounds
+                case .center: textItem.frame = QRect(center: availableBounds.center, size: textSize)
+                }
             }
             return bounds.size
         }
@@ -529,79 +552,120 @@ private extension QButtonView.Layout {
         return self._cacheTextSize!
     }
     
-    func _frame(position: QButtonViewImagePosition, bounds: QRect, primarySize: QSize, primaryInset: QInset, secondarySize: QSize, secondaryInset: QInset) -> (primary: QRect, secondary: QRect) {
-        let primary: QRect
-        let secondary: QRect
-        switch position {
+    func _frame(bounds: QRect, alignment: QButtonViewAlignment, imagePosition: QButtonViewImagePosition, imageInset: QInset, imageSize: QSize, textInset: QInset, textSize: QSize) -> (image: QRect, text: QRect) {
+        let image: QRect
+        let text: QRect
+        switch imagePosition {
         case .top:
-            let offest = primaryInset.top + primarySize.height + secondaryInset.top
-            let baseline = max(primarySize.width, secondarySize.width) / 2
-            primary = QRect(
-                x: baseline - (primarySize.width / 2),
+            let offest = imageInset.top + imageSize.height + textInset.top
+            let baseline = max(imageSize.width, textSize.width) / 2
+            image = QRect(
+                x: baseline - (imageSize.width / 2),
                 y: 0,
-                width: primarySize.width,
-                height: primarySize.height
+                width: imageSize.width,
+                height: imageSize.height
             )
-            secondary = QRect(
-                x: baseline - (secondarySize.width / 2),
-                y: offest,
-                width: secondarySize.width,
-                height: secondarySize.height
-            )
+            switch alignment {
+            case .fill:
+                text = QRect(
+                    x: baseline - (textSize.width / 2),
+                    y: offest,
+                    width: textSize.width,
+                    height: bounds.height - (imageInset.top + imageSize.height + textInset.bottom)
+                )
+            case .center:
+                text = QRect(
+                    x: baseline - (textSize.width / 2),
+                    y: offest,
+                    width: textSize.width,
+                    height: textSize.height
+                )
+            }
         case .left:
-            let offest = primaryInset.left + primarySize.width + secondaryInset.left
-            let baseline = max(primarySize.height, secondarySize.height) / 2
-            primary = QRect(
+            let offest = imageInset.left + imageSize.width + textInset.left
+            let baseline = max(imageSize.height, textSize.height) / 2
+            image = QRect(
                 x: 0,
-                y: baseline - (primarySize.height / 2),
-                width: primarySize.width,
-                height: primarySize.height
+                y: baseline - (imageSize.height / 2),
+                width: imageSize.width,
+                height: imageSize.height
             )
-            secondary = QRect(
-                x: offest,
-                y: baseline - (secondarySize.height / 2),
-                width: secondarySize.width,
-                height: secondarySize.height
-            )
+            switch alignment {
+            case .fill:
+                text = QRect(
+                    x: offest,
+                    y: baseline - (textSize.height / 2),
+                    width: bounds.width - (imageInset.right + imageSize.width + textInset.left),
+                    height: textSize.height
+                )
+            case .center:
+                text = QRect(
+                    x: offest,
+                    y: baseline - (textSize.height / 2),
+                    width: textSize.width,
+                    height: textSize.height
+                )
+            }
         case .right:
-            let offest = primaryInset.left + secondarySize.width + secondaryInset.right
-            let baseline = max(primarySize.width, secondarySize.width) / 2
-            primary = QRect(
+            let offest = imageInset.left + textSize.width + textInset.right
+            let baseline = max(imageSize.width, textSize.width) / 2
+            image = QRect(
                 x: offest,
-                y: baseline - (primarySize.height / 2),
-                width: primarySize.width,
-                height: primarySize.height)
-            secondary = QRect(
-                x: 0,
-                y: baseline - (secondarySize.height / 2),
-                width: secondarySize.width,
-                height: secondarySize.height
+                y: baseline - (imageSize.height / 2),
+                width: imageSize.width,
+                height: imageSize.height
             )
+            switch alignment {
+            case .fill:
+                text = QRect(
+                    x: 0,
+                    y: baseline - (textSize.height / 2),
+                    width: bounds.width - (imageInset.left + imageSize.width + textInset.right),
+                    height: textSize.height
+                )
+            case .center:
+                text = QRect(
+                    x: 0,
+                    y: baseline - (textSize.height / 2),
+                    width: textSize.width,
+                    height: textSize.height
+                )
+            }
         case .bottom:
-            let offest = primaryInset.top + secondarySize.height + secondaryInset.bottom
-            let baseline = max(primarySize.height, secondarySize.height) / 2
-            primary = QRect(
-                x: baseline - (primarySize.width / 2),
+            let offest = imageInset.top + textSize.height + textInset.bottom
+            let baseline = max(imageSize.height, textSize.height) / 2
+            image = QRect(
+                x: baseline - (imageSize.width / 2),
                 y: offest,
-                width: primarySize.width,
-                height: primarySize.height
+                width: imageSize.width,
+                height: imageSize.height
             )
-            secondary = QRect(
-                x: baseline - (secondarySize.width / 2),
-                y: 0,
-                width: secondarySize.width,
-                height: secondarySize.height
-            )
+            switch alignment {
+            case .fill:
+                text = QRect(
+                    x: baseline - (textSize.width / 2),
+                    y: 0,
+                    width: textSize.width,
+                    height: bounds.height - (imageInset.top + imageSize.height + textInset.top)
+                )
+            case .center:
+                text = QRect(
+                    x: baseline - (textSize.width / 2),
+                    y: 0,
+                    width: textSize.width,
+                    height: textSize.height
+                )
+            }
         }
-        let union = primary.union(secondary)
+        let union = image.union(text)
         let center = bounds.center
         let offset = QPoint(
             x: center.x - (union.width / 2),
             y: center.y - (union.height / 2)
         )
         return (
-            primary: QRect(center: primary.center + offset, size: primarySize),
-            secondary: QRect(center: secondary.center + offset, size: secondarySize)
+            image: QRect(center: image.center + offset, size: imageSize),
+            text: QRect(center: text.center + offset, size: textSize)
         )
     }
     

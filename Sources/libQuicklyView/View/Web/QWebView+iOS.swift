@@ -29,8 +29,11 @@ extension QWebView {
         }
         
         private unowned var _view: View?
+        private var _enablePinchGesture: Bool
         
         override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+            self._enablePinchGesture = true
+            
             super.init(frame: frame, configuration: configuration)
 
             if #available(iOS 11.0, *) {
@@ -59,6 +62,7 @@ extension QWebView.WebView {
     
     func update(view: QWebView) {
         self._view = view
+        self.update(enablePinchGesture: view.enablePinchGesture)
         self.update(contentInset: view.contentInset)
         self.update(color: view.color)
         self.update(border: view.border)
@@ -69,6 +73,10 @@ extension QWebView.WebView {
         self.customDelegate = view
         self.scrollView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
         self.update(request: view.request)
+    }
+    
+    func update(enablePinchGesture: Bool) {
+        self._enablePinchGesture = enablePinchGesture
     }
     
     func update(contentInset: QInset) {
@@ -121,6 +129,11 @@ extension QWebView.WebView {
 }
 
 extension QWebView.WebView : UIScrollViewDelegate {
+    
+    func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
+        scrollView.pinchGestureRecognizer?.isEnabled = self._enablePinchGesture
+    }
+    
 }
 
 extension QWebView.WebView : WKNavigationDelegate {

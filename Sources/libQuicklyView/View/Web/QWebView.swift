@@ -43,6 +43,12 @@ public class QWebView : IQWebView {
             self.setNeedForceLayout()
         }
     }
+    public var enablePinchGesture: Bool {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(enablePinchGesture: self.enablePinchGesture)
+        }
+    }
     public var contentInset: QInset {
         didSet {
             guard self.isLoaded == true else { return }
@@ -109,6 +115,7 @@ public class QWebView : IQWebView {
         reuseName: String? = nil,
         width: QDimensionBehaviour,
         height: QDimensionBehaviour,
+        enablePinchGesture: Bool = true,
         contentInset: QInset = .zero,
         color: QColor? = nil,
         border: QViewBorder = .none,
@@ -119,6 +126,7 @@ public class QWebView : IQWebView {
         self.isVisible = false
         self.width = width
         self.height = height
+        self.enablePinchGesture = enablePinchGesture
         self.contentInset = contentInset
         self.contentSize = .zero
         self.state = .empty
@@ -185,6 +193,12 @@ public class QWebView : IQWebView {
     @discardableResult
     public func height(_ value: QDimensionBehaviour) -> Self {
         self.height = value
+        return self
+    }
+    
+    @discardableResult
+    public func enablePinchGesture(_ value: Bool) -> Self {
+        self.enablePinchGesture = value
         return self
     }
     

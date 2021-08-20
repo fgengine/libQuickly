@@ -5,6 +5,11 @@
 import Foundation
 import libQuicklyCore
 
+public enum QButtonViewAlignment {
+    case fill
+    case center
+}
+
 public enum QButtonViewSpinnerPosition {
     case fill
     case image
@@ -20,6 +25,8 @@ public enum QButtonViewImagePosition {
 public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var inset: QInset { set get }
+    
+    var alignment: QButtonViewAlignment { set get }
     
     var backgroundView: IQView { set get }
     
@@ -41,6 +48,9 @@ public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQ
     
     @discardableResult
     func inset(_ value: QInset) -> Self
+    
+    @discardableResult
+    func alignment(_ value: QButtonViewAlignment) -> Self
     
     @discardableResult
     func spinnerPosition(_ value: QButtonViewSpinnerPosition) -> Self

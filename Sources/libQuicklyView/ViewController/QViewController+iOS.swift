@@ -7,115 +7,81 @@
 import UIKit
 import libQuicklyCore
 
-public class QWindow : UIWindow {
+public class QViewController : UIViewController {
     
-    public var rootContainer: IQRootContainer {
-        return self._rootViewController.container
+    public let container: IQRootContainer
+    public override var prefersStatusBarHidden: Bool {
+        return self.container.statusBarHidden
     }
-    public override var backgroundColor: UIColor? {
-        didSet(oldValue) {
-            guard self.backgroundColor != oldValue else { return }
-            self._rootViewController.view.backgroundColor = self.backgroundColor
-        }
+    public override var preferredStatusBarStyle: UIStatusBarStyle {
+        return self.container.statusBarStyle
     }
-    public override var alpha: CGFloat {
-        didSet(oldValue) {
-            guard self.alpha != oldValue else { return }
-            self._rootViewController.view.alpha = self.alpha
-        }
+    public override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
+        return self.container.statusBarAnimation
     }
-    
-    private var _rootViewController: RootViewController
-    
-    public init(rootContainer: IQRootContainer) {
-        self._rootViewController = RootViewController(container: rootContainer)
-        super.init(frame: UIScreen.main.bounds)
-        self.rootViewController = self._rootViewController
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return self.container.supportedOrientations
+    }
+    public override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return self._interfaceOrientation()
+    }
+    public override var shouldAutorotate: Bool {
+        return true
     }
     
-    required init?(coder: NSCoder) {
+    public init(
+        container: IQRootContainer
+    ) {
+        self.container = container
+        super.init(nibName: nil, bundle: nil)
+        self.container.delegate = self
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(self._didChangeStatusBarFrame(_:)), name: UIApplication.didChangeStatusBarFrameNotification, object: nil)
+    }
+    
+    public required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-}
-
-extension QWindow {
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
     
-    class RootViewController : UIViewController {
-        
-        var container: IQRootContainer
-        override var prefersStatusBarHidden: Bool {
-            return self.container.statusBarHidden
-        }
-        override var preferredStatusBarStyle: UIStatusBarStyle {
-            return self.container.statusBarStyle
-        }
-        override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
-            return self.container.statusBarAnimation
-        }
-        override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-            return self.container.supportedOrientations
-        }
-        override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-            return self._interfaceOrientation()
-        }
-        override var shouldAutorotate: Bool {
-            return true
-        }
-        
-        init(container: IQRootContainer) {
-            self.container = container
-            super.init(nibName: nil, bundle: nil)
-            self.container.delegate = self
-            
-            NotificationCenter.default.addObserver(self, selector: #selector(self._didChangeStatusBarFrame(_:)), name: UIApplication.didChangeStatusBarFrameNotification, object: nil)
-        }
-        
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-        
-        deinit {
-            NotificationCenter.default.removeObserver(self)
-        }
-        
-        override func loadView() {
-            self.view = self.container.view.native
-        }
-        
-        override func viewDidLoad() {
-            super.viewDidLoad()
-            self.container.safeArea = self._safeArea()
-            self._updateStatusBarHeight()
-            self.container.prepareShow(interactive: false)
-            self.container.finishShow(interactive: false)
-        }
-        
-        override func viewDidAppear(_ animated: Bool) {
-            super.viewDidAppear(animated)
-            self._updateStatusBarHeight()
-        }
-        
-        override func viewDidLayoutSubviews() {
-            super.viewDidLayoutSubviews()
-            self.container.safeArea = self._safeArea()
-            self.container.view.layoutIfNeeded()
-        }
-        
-        @available(iOS 11.0, *)
-        override func viewSafeAreaInsetsDidChange() {
-            super.viewSafeAreaInsetsDidChange()
-            self.container.safeArea = self._safeArea()
-            self.container.view.layoutIfNeeded()
-        }
-        
+    public override func loadView() {
+        self.view = self.container.view.native
+    }
+    
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        self.container.safeArea = self._safeArea()
+        self._updateStatusBarHeight()
+        self.container.prepareShow(interactive: false)
+        self.container.finishShow(interactive: false)
+    }
+    
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self._updateStatusBarHeight()
+    }
+    
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        self.container.safeArea = self._safeArea()
+        self.container.view.layoutIfNeeded()
+    }
+    
+    @available(iOS 11.0, *)
+    public override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        self.container.safeArea = self._safeArea()
+        self.container.view.layoutIfNeeded()
     }
     
 }
 
-extension QWindow.RootViewController : IQRootContainerDelegate {
+extension QViewController : IQRootContainerDelegate {
     
-    func updateOrientations() {
+    public func updateOrientations() {
         let interfaceOrientation = self._interfaceOrientation()
         var deviceOrientation = UIDevice.current.orientation
         switch interfaceOrientation {
@@ -131,14 +97,14 @@ extension QWindow.RootViewController : IQRootContainerDelegate {
         }
     }
     
-    func updateStatusBar() {
+    public func updateStatusBar() {
         self.setNeedsStatusBarAppearanceUpdate()
         self._updateStatusBarHeight()
     }
     
 }
 
-private extension QWindow.RootViewController {
+private extension QViewController {
     
     @objc
     func _didChangeStatusBarFrame(_ notification: Any) {
