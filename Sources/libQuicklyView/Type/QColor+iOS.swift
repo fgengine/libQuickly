@@ -68,7 +68,7 @@ public struct QColor : Equatable {
     @available(iOS 11.0, *)
     public init(name: String) {
         guard let native = UIColor(named: name) else {
-            fatalError("Not found image with '\(name)'")
+            fatalError("Not found color with '\(name)'")
         }
         self.native = native
     }
@@ -95,6 +95,14 @@ public extension QColor {
     @inlinable
     var isOpaque: Bool {
         return self.native.isOpaque
+    }
+    
+}
+
+public extension QColor {
+    
+    func with(alpha: Float) -> QColor {
+        return QColor(self.native.withAlphaComponent(CGFloat(alpha)))
     }
     
 }

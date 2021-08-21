@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public class QStateComposition< State : Hashable > : IQLayout {
+public class QStateLayout< State : Hashable > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
@@ -132,7 +132,7 @@ public class QStateComposition< State : Hashable > : IQLayout {
     
 }
 
-public extension QStateComposition {
+public extension QStateLayout {
     
     enum Alignment {
         case topLeft

@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public class QExpandComposition< ContentView: IQView, DetailView: IQView > : IQLayout {
+public class QExpandLayout< ContentView: IQView, DetailView: IQView > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
@@ -211,7 +211,7 @@ public class QExpandComposition< ContentView: IQView, DetailView: IQView > : IQL
     
 }
 
-private extension QExpandComposition {
+private extension QExpandLayout {
     
     enum State {
         case collapsed

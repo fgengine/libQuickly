@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public class QPincodeComposition< TitleView: IQView, PincodeView: IQView, ErrorView: IQView, ButtonView: IQView, AccessoryView: IQView > : IQLayout {
+public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: IQView, ButtonView: IQView, AccessoryView: IQView > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?

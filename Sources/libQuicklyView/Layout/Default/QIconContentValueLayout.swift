@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public class QIconContentComposition< IconView: IQView, ContentView: IQView > : IQLayout {
+public class QIconContentValueLayout< IconView: IQView, ContentView: IQView, ValueView: IQView > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
@@ -27,12 +27,23 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
     public private(set) var contentItem: QLayoutItem {
         didSet { self.setNeedForceUpdate(item: self.contentItem) }
     }
+    public var valueInset: QInset {
+        didSet { self.setNeedForceUpdate() }
+    }
+    public var valueView: ValueView {
+        didSet { self.valueItem = QLayoutItem(view: self.valueView) }
+    }
+    public private(set) var valueItem: QLayoutItem {
+        didSet { self.setNeedForceUpdate(item: self.valueItem) }
+    }
     
     public init(
         iconInset: QInset,
         iconView: IconView,
         contentInset: QInset,
-        contentView: ContentView
+        contentView: ContentView,
+        valueInset: QInset,
+        valueView: ValueView
     ) {
         self.iconInset = iconInset
         self.iconView = iconView
@@ -40,35 +51,43 @@ public class QIconContentComposition< IconView: IQView, ContentView: IQView > : 
         self.contentInset = contentInset
         self.contentView = contentView
         self.contentItem = QLayoutItem(view: contentView)
+        self.valueInset = valueInset
+        self.valueView = valueView
+        self.valueItem = QLayoutItem(view: valueView)
     }
     
     public func layout(bounds: QRect) -> QSize {
         let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
-        let contentValue = bounds.split(
-            left: self.iconInset.left + iconSize.width + self.iconInset.right
+        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let iconContentValue = bounds.split(
+            left: self.iconInset.left + iconSize.width + self.iconInset.right,
+            right: self.valueInset.left + valueSize.width + self.valueInset.right
         )
-        self.iconItem.frame = contentValue.left.apply(inset: self.iconInset)
-        self.contentItem.frame = contentValue.right.apply(inset: self.contentInset)
+        self.iconItem.frame = iconContentValue.left.apply(inset: self.iconInset)
+        self.contentItem.frame = iconContentValue.middle.apply(inset: self.contentInset)
+        self.valueItem.frame = iconContentValue.right.apply(inset: self.valueInset)
         return bounds.size
     }
     
     public func size(_ available: QSize) -> QSize {
         let iconSize = self.iconItem.size(available.apply(inset: self.iconInset))
         let iconBounds = iconSize.apply(inset: -self.iconInset)
+        let valueSize = self.iconItem.size(available.apply(inset: self.valueInset))
+        let valueBounds = valueSize.apply(inset: -self.valueInset)
         let contentAvailable = QSize(
-            width: available.width - iconBounds.width,
+            width: available.width - (iconBounds.width + valueBounds.width),
             height: available.height
         )
         let contentSize = self.contentItem.size(contentAvailable.apply(inset: self.contentInset))
         let contentBounds = contentSize.apply(inset: -self.contentInset)
         return QSize(
-            width: iconBounds.width + contentBounds.width,
-            height: max(iconBounds.height, contentBounds.height)
+            width: iconBounds.width + contentBounds.width + valueBounds.width,
+            height: max(iconBounds.height, contentBounds.height, valueBounds.height)
         )
     }
     
     public func items(bounds: QRect) -> [QLayoutItem] {
-        return [ self.iconItem, self.contentItem ]
+        return [ self.iconItem, self.contentItem, self.valueItem ]
     }
     
 }

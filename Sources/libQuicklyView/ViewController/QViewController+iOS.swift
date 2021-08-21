@@ -10,6 +10,12 @@ import libQuicklyCore
 public class QViewController : UIViewController {
     
     public let container: IQRootContainer
+    public private(set) var virtualKeyboardHeight: Float {
+        didSet(oldValue) {
+            guard self.virtualKeyboardHeight != oldValue else { return }
+            self._updateSafeArea()
+        }
+    }
     public override var prefersStatusBarHidden: Bool {
         return self.container.statusBarHidden
     }
@@ -29,12 +35,19 @@ public class QViewController : UIViewController {
         return true
     }
     
+    private var _virtualKeyboard: QVirtualKeyboard
+    
     public init(
         container: IQRootContainer
     ) {
         self.container = container
+        self.virtualKeyboardHeight = 0
+        self._virtualKeyboard = QVirtualKeyboard()
+        
         super.init(nibName: nil, bundle: nil)
+        
         self.container.delegate = self
+        self._virtualKeyboard.add(observer: self, priority: .userInitiated)
         
         NotificationCenter.default.addObserver(self, selector: #selector(self._didChangeStatusBarFrame(_:)), name: UIApplication.didChangeStatusBarFrameNotification, object: nil)
     }
@@ -44,6 +57,8 @@ public class QViewController : UIViewController {
     }
     
     deinit {
+        self._virtualKeyboard.remove(observer: self)
+        
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -54,7 +69,9 @@ public class QViewController : UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         self.container.safeArea = self._safeArea()
-        self._updateStatusBarHeight()
+        if let statusBarView = self.container.statusBarView {
+            statusBarView.height = self._statusBarHeight()
+        }
         self.container.prepareShow(interactive: false)
         self.container.finishShow(interactive: false)
     }
@@ -66,15 +83,13 @@ public class QViewController : UIViewController {
     
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.container.safeArea = self._safeArea()
-        self.container.view.layoutIfNeeded()
+        self._updateSafeArea()
     }
     
     @available(iOS 11.0, *)
     public override func viewSafeAreaInsetsDidChange() {
         super.viewSafeAreaInsetsDidChange()
-        self.container.safeArea = self._safeArea()
-        self.container.view.layoutIfNeeded()
+        self._updateSafeArea()
     }
     
 }
@@ -104,6 +119,24 @@ extension QViewController : IQRootContainerDelegate {
     
 }
 
+extension QViewController : IQVirtualKeyboardObserver {
+    
+    public func willShow(virtualKeyboard: QVirtualKeyboard, info: QVirtualKeyboard.Info) {
+        self._updateVirtualKeyboardHeight(duration: info.duration, height: info.endFrame.height)
+    }
+    
+    public func didShow(virtualKeyboard: QVirtualKeyboard, info: QVirtualKeyboard.Info) {
+    }
+
+    public func willHide(virtualKeyboard: QVirtualKeyboard, info: QVirtualKeyboard.Info) {
+        self._updateVirtualKeyboardHeight(duration: info.duration, height: 0)
+    }
+    
+    public func didHide(virtualKeyboard: QVirtualKeyboard, info: QVirtualKeyboard.Info) {
+    }
+    
+}
+
 private extension QViewController {
     
     @objc
@@ -128,17 +161,42 @@ private extension QViewController {
         return height
     }
     
+    func _updateSafeArea() {
+        self.container.safeArea = self._safeArea()
+        self.container.view.layoutIfNeeded()
+    }
+    
     func _safeArea() -> QInset {
+        let safeArea: QInset
         if #available(iOS 11.0, *) {
-            return QInset(self.view.safeAreaInsets)
+            safeArea = QInset(self.view.safeAreaInsets)
         } else {
-            return QInset(
+            safeArea = QInset(
                 top: Float(self.topLayoutGuide.length),
                 left: 0,
                 right: 0,
                 bottom: Float(self.bottomLayoutGuide.length)
             )
         }
+        return QInset(
+            top: safeArea.top,
+            left: safeArea.left,
+            right: safeArea.right,
+            bottom: max(safeArea.bottom, self.virtualKeyboardHeight)
+        )
+    }
+    
+    func _updateVirtualKeyboardHeight(duration: TimeInterval, height: Float) {
+        guard abs(self.virtualKeyboardHeight - height) > .leastNonzeroMagnitude else { return }
+        QAnimation.default.run(
+            duration: duration,
+            processing: { [unowned self] progress in
+                self.virtualKeyboardHeight = self.virtualKeyboardHeight.lerp(height, progress: progress)
+            },
+            completion: { [unowned self] in
+                self.virtualKeyboardHeight = height
+            }
+        )
     }
     
     func _interfaceOrientation() -> UIInterfaceOrientation {

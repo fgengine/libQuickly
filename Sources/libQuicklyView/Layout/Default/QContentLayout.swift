@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public class QContentComposition< ContentView: IQView > : IQLayout {
+public class QContentLayout< ContentView: IQView > : IQLayout {
     
     public unowned var delegate: IQLayoutDelegate?
     public unowned var view: IQView?
