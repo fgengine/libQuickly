@@ -26,6 +26,7 @@ public protocol IQPermission : AnyObject {
 public protocol IQPermissionObserver : AnyObject {
     
     func didRedirectToSettings(_ permission: IQPermission, source: Any?)
-    func didReqiest(_ permission: IQPermission, source: Any?)
+    func willRequest(_ permission: IQPermission, source: Any?)
+    func didRequest(_ permission: IQPermission, source: Any?)
     
 }

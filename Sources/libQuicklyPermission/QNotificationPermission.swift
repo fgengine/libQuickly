@@ -72,6 +72,7 @@ public class QNotificationPermission : IQPermission {
     public func request(source: Any) {
         switch self._rawStatus() {
         case .notDetermined:
+            self._willRequest(source: source)
             UNUserNotificationCenter.current().requestAuthorization(
                 options: [ .badge, .alert, .sound ],
                 completionHandler: { [weak self] settings, error in
@@ -134,8 +135,12 @@ private extension QNotificationPermission {
         self._observer.notify({ $0.didRedirectToSettings(self, source: source) })
     }
     
+    func _willRequest(source: Any?) {
+        self._observer.notify({ $0.willRequest(self, source: source) })
+    }
+    
     func _didRequest(source: Any?) {
-        self._observer.notify({ $0.didReqiest(self, source: source) })
+        self._observer.notify({ $0.didRequest(self, source: source) })
     }
     
 }

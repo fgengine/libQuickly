@@ -75,6 +75,7 @@ public class QAppTrackingPermission : IQPermission {
         if #available(iOS 14.5, *) {
             switch ATTrackingManager.trackingAuthorizationStatus {
             case .notDetermined:
+                self._willRequest(source: source)
                 ATTrackingManager.requestTrackingAuthorization(
                     completionHandler: { [weak self] status in
                         DispatchQueue.main.async(execute: {
@@ -124,8 +125,12 @@ private extension QAppTrackingPermission {
         self._observer.notify({ $0.didRedirectToSettings(self, source: source) })
     }
     
+    func _willRequest(source: Any?) {
+        self._observer.notify({ $0.willRequest(self, source: source) })
+    }
+    
     func _didRequest(source: Any?) {
-        self._observer.notify({ $0.didReqiest(self, source: source) })
+        self._observer.notify({ $0.didRequest(self, source: source) })
     }
     
 }
