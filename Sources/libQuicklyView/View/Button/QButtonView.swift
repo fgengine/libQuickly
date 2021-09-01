@@ -30,6 +30,18 @@ public class QButtonView : IQButtonView {
         set(value) { self._layout.inset = value }
         get { return self._layout.inset }
     }
+    public var width: QDimensionBehaviour? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
+    public var height: QDimensionBehaviour? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
     public var alignment: QButtonViewAlignment {
         set(value) { self._layout.alignment = value }
         get { return self._layout.alignment }
@@ -108,6 +120,8 @@ public class QButtonView : IQButtonView {
     
     public init(
         inset: QInset = QInset(horizontal: 4, vertical: 4),
+        width: QDimensionBehaviour? = nil,
+        height: QDimensionBehaviour? = nil,
         alignment: QButtonViewAlignment = .center,
         backgroundView: IQView,
         spinnerPosition: QButtonViewSpinnerPosition = .fill,
@@ -126,6 +140,8 @@ public class QButtonView : IQButtonView {
         shadow: QViewShadow? = nil,
         alpha: Float = 1
     ) {
+        self.width = width
+        self.height = height
         self.backgroundView = backgroundView
         self.spinnerView = spinnerView
         self.imageView = imageView
@@ -162,7 +178,26 @@ public class QButtonView : IQButtonView {
     }
     
     public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+        let size: QSize
+        if let width = self.width, let height = self.height {
+            size = available.apply(width: width, height: height)
+        } else {
+            let viewSize = self._view.size(available)
+            if let widthBehaviour = self.width, let width = widthBehaviour.value(available.width) {
+                size = QSize(
+                    width: width,
+                    height: viewSize.height
+                )
+            } else if let heightBehaviour = self.height, let height = heightBehaviour.value(available.height) {
+                size = QSize(
+                    width: viewSize.width,
+                    height: height
+                )
+            } else {
+                size = viewSize
+            }
+        }
+        return size
     }
     
     public func appear(to layout: IQLayout) {
@@ -192,6 +227,18 @@ public class QButtonView : IQButtonView {
     @discardableResult
     public func inset(_ value: QInset) -> Self {
         self.inset = value
+        return self
+    }
+    
+    @discardableResult
+    public func width(_ value: QDimensionBehaviour?) -> Self {
+        self.width = value
+        return self
+    }
+    
+    @discardableResult
+    public func height(_ value: QDimensionBehaviour?) -> Self {
+        self.height = value
         return self
     }
     

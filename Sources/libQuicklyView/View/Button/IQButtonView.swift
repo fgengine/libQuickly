@@ -26,6 +26,10 @@ public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQ
     
     var inset: QInset { set get }
     
+    var width: QDimensionBehaviour? { set get }
+    
+    var height: QDimensionBehaviour? { set get }
+    
     var alignment: QButtonViewAlignment { set get }
     
     var backgroundView: IQView { set get }
@@ -48,6 +52,12 @@ public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQ
     
     @discardableResult
     func inset(_ value: QInset) -> Self
+    
+    @discardableResult
+    func width(_ value: QDimensionBehaviour?) -> Self
+    
+    @discardableResult
+    func height(_ value: QDimensionBehaviour?) -> Self
     
     @discardableResult
     func alignment(_ value: QButtonViewAlignment) -> Self
