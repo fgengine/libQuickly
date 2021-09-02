@@ -13,7 +13,7 @@ extension QAttributedTextView {
         
         typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
         
-        unowned var customDelegate: AttributedTextViewDelegate!
+        unowned var customDelegate: AttributedTextViewDelegate?
         
         override var frame: CGRect {
             set(value) {
@@ -46,7 +46,7 @@ extension QAttributedTextView {
         }
         
         override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-            let shouldTap = self.customDelegate.shouldTap()
+            let shouldTap = self.customDelegate?.shouldTap()
             if shouldTap == true {
                 return super.hitTest(point, with: event)
             }

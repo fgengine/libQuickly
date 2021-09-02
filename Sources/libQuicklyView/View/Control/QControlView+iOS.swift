@@ -38,7 +38,7 @@ final class NativeControlView : UIControl {
     
     typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
     
-    unowned var customDelegate: NativeControlViewDelegate!
+    unowned var customDelegate: NativeControlViewDelegate?
     var contentSize: QSize {
         return self._layoutManager.size
     }
@@ -98,8 +98,8 @@ final class NativeControlView : UIControl {
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        let shouldHighlighting = self.customDelegate.shouldHighlighting(view: self)
-        let shouldPressing = self.customDelegate.shouldPressing(view: self)
+        let shouldHighlighting = self.customDelegate?.shouldHighlighting(view: self)
+        let shouldPressing = self.customDelegate?.shouldPressing(view: self)
         if shouldHighlighting == true || shouldPressing == true {
             if self.bounds.contains(point) == true {
                 return self
@@ -154,25 +154,25 @@ private extension NativeControlView {
     
     @objc
     func _handleHighlighting(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: true)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: true)
         }
     }
     
     @objc
     func _handleUnhighlighting(_ sender: Any) {
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: false)
         }
     }
     
     @objc
     func _handlePressed(_ sender: Any) {
-        if self.customDelegate.shouldPressing(view: self) == true {
-            self.customDelegate.pressed(view: self)
+        if self.customDelegate?.shouldPressing(view: self) == true {
+            self.customDelegate?.pressed(view: self)
         }
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: false)
         }
     }
     

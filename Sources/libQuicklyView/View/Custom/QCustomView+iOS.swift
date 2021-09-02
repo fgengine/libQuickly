@@ -38,7 +38,7 @@ final class NativeCustomView : UIView {
     
     typealias View = IQView & IQViewCornerRadiusable & IQViewShadowable
     
-    unowned var customDelegate: NativeCustomViewDelegate!
+    unowned var customDelegate: NativeCustomViewDelegate?
     var contentSize: QSize {
         return self._layoutManager.size
     }
@@ -95,7 +95,7 @@ final class NativeCustomView : UIView {
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
-        let shouldHighlighting = self.customDelegate.shouldHighlighting(view: self)
+        let shouldHighlighting = self.customDelegate?.shouldHighlighting(view: self)
         let shouldGestures = self._gestures.contains(where: { $0.isEnabled == true })
         if shouldHighlighting == true || shouldGestures == true {
             return hitView
@@ -107,22 +107,22 @@ final class NativeCustomView : UIView {
     
     override func touchesBegan(_ touches: Set< UITouch >, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: true)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: true)
         }
     }
     
     override func touchesEnded(_ touches: Set< UITouch >, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: false)
         }
     }
     
     override func touchesCancelled(_ touches: Set< UITouch >, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
-        if self.customDelegate.shouldHighlighting(view: self) == true {
-            self.customDelegate.set(view: self, highlighted: false)
+        if self.customDelegate?.shouldHighlighting(view: self) == true {
+            self.customDelegate?.set(view: self, highlighted: false)
         }
     }
 
