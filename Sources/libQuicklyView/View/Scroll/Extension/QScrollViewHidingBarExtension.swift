@@ -26,6 +26,7 @@ public class QScrollViewHidingBarExtension {
     }
     public var threshold: Float
     public var animationVelocity: Float
+    public var isAnimating: Bool
     public var scrollView: IQScrollView {
         willSet { self.scrollView.remove(observer: self) }
         didSet { self.scrollView.add(observer: self) }
@@ -45,6 +46,7 @@ public class QScrollViewHidingBarExtension {
         self.state = state
         self.threshold = threshold
         self.animationVelocity = animationVelocity
+        self.isAnimating = false
         self.scrollView = scrollView
         self._observer = QObserver()
         self.scrollView.add(observer: self)
@@ -159,6 +161,7 @@ private extension QScrollViewHidingBarExtension {
         case .showed, .hided:
             break
         case .showing(let baseProgress):
+            self.isAnimating = true
             if baseProgress >= 0.5 {
                 QAnimation.default.run(
                     duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
@@ -169,6 +172,7 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self.isAnimating = false
                         self._set(state: .showed)
                     }
                 )
@@ -182,11 +186,13 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self.isAnimating = false
                         self._set(state: .hided)
                     }
                 )
             }
         case .hiding(let baseProgress):
+            self.isAnimating = true
             if baseProgress >= 0.5 {
                 QAnimation.default.run(
                     duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
@@ -197,6 +203,7 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self.isAnimating = false
                         self._set(state: .hided)
                     }
                 )
@@ -210,6 +217,7 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
+                        self.isAnimating = false
                         self._set(state: .showed)
                     }
                 )
@@ -223,6 +231,7 @@ private extension QScrollViewHidingBarExtension {
             switch self.state {
             case .showed:
                 if isShowed == false {
+                    self.isAnimating = true
                     QAnimation.default.run(
                         duration: TimeInterval(self.threshold / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
@@ -232,6 +241,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .hided)
                             completion?()
                         }
@@ -241,6 +251,7 @@ private extension QScrollViewHidingBarExtension {
                 }
             case .hided:
                 if isShowed == true {
+                    self.isAnimating = true
                     QAnimation.default.run(
                         duration: TimeInterval(self.threshold / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
@@ -250,6 +261,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .showed)
                             completion?()
                         }
@@ -258,6 +270,7 @@ private extension QScrollViewHidingBarExtension {
                     completion?()
                 }
             case .showing(let baseProgress):
+                self.isAnimating = true
                 if isShowed == true {
                     QAnimation.default.run(
                         duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
@@ -268,6 +281,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .showed)
                             completion?()
                         }
@@ -282,12 +296,14 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .hided)
                             completion?()
                         }
                     )
                 }
             case .hiding(let baseProgress):
+                self.isAnimating = true
                 if isShowed == true {
                     QAnimation.default.run(
                         duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
@@ -298,6 +314,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .showed)
                             completion?()
                         }
@@ -312,6 +329,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
+                            self.isAnimating = false
                             self._set(state: .hided)
                             completion?()
                         }
