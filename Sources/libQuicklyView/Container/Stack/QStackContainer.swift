@@ -380,7 +380,6 @@ extension QStackContainer : IQDialogContentContainer where Screen : IQScreenDial
 private extension QStackContainer {
     
     func _init() {
-        self._rootItem.container.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture in
             guard let gestureView = gesture.view else { return false }
@@ -401,6 +400,7 @@ private extension QStackContainer {
         })
         #else
         #endif
+        self._rootItem.container.parent = self
         self.screen.setup()
     }
     

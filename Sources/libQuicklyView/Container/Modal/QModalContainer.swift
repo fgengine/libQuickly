@@ -228,7 +228,6 @@ extension QModalContainer : IQRootContentContainer {
 private extension QModalContainer {
     
     func _init() {
-        self.contentContainer?.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
             guard let view = gesture.view else { return false }
@@ -250,6 +249,7 @@ private extension QModalContainer {
             self._endInteractiveGesture(false)
         })
         #endif
+        self.contentContainer?.parent = self
     }
     
     func _present(current: Item?, next: Item, animated: Bool, completion: (() -> Void)?) {

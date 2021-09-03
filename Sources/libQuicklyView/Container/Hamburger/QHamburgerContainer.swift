@@ -439,9 +439,6 @@ private extension QHamburgerContainer.Layout {
 private extension QHamburgerContainer {
     
     func _init() {
-        self._contentContainer.parent = self
-        self._leadingContainer?.parent = self
-        self._trailingContainer?.parent = self
         #if os(iOS)
         self._pressedGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
             guard let view = gesture.view else { return false }
@@ -468,6 +465,9 @@ private extension QHamburgerContainer {
             self._endInteractiveGesture(false)
         })
         #endif
+        self._contentContainer.parent = self
+        self._leadingContainer?.parent = self
+        self._trailingContainer?.parent = self
     }
     
     func _showLeadingContainer(interactive: Bool, animated: Bool, completion: (() -> Void)?) {

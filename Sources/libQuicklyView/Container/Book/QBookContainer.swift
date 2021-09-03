@@ -86,14 +86,6 @@ public class QBookContainer< Screen : IQBookScreen > : IQBookContainer {
             contentLayout: Layout()
         )
         #endif
-        let initial = screen.initialContainer()
-        if let backward = screen.backwardContainer(initial) {
-            self._backward = Item(container: backward)
-        }
-        self._current = Item(container: initial)
-        if let forward = screen.forwardContainer(initial) {
-            self._forward = Item(container: forward)
-        }
         self._init()
     }
     
@@ -240,16 +232,6 @@ extension QBookContainer : IQDialogContentContainer where Screen : IQScreenDialo
 private extension QBookContainer {
     
     func _init() {
-        self.screen.container = self
-        if let item = self._backward {
-            item.container.parent = self
-        }
-        if let item = self._current {
-            item.container.parent = self
-        }
-        if let item = self._forward {
-            item.container.parent = self
-        }
         #if os(iOS)
         self._interactiveGesture.onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -268,14 +250,31 @@ private extension QBookContainer {
         })
         #else
         #endif
+        self.screen.container = self
+        self.screen.setup()
+        let initial = self.screen.initialContainer()
+        if let backward = self.screen.backwardContainer(initial) {
+            let item = Item(container: backward)
+            self._backward = item
+            item.container.parent = self
+        }
+        do {
+            let item = Item(container: initial)
+            self._current = item
+            item.container.parent = self
+        }
+        if let forward = self.screen.forwardContainer(initial) {
+            let item = Item(container: forward)
+            self._forward = item
+            item.container.parent = self
+        }
+        if let current = self._current {
+            self.screen.change(current: current.container)
+        }
         if let item = self._current {
             self._view.contentLayout.state = .idle(current: item.bookItem)
         } else {
             self._view.contentLayout.state = .empty
-        }
-        self.screen.setup()
-        if let current = self._current {
-            self.screen.change(current: current.container)
         }
     }
     

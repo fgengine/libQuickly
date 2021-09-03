@@ -240,7 +240,6 @@ extension QPushContainer : IQRootContentContainer {
 private extension QPushContainer {
     
     func _init() {
-        self.contentContainer?.parent = self
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
             guard let view = gesture.view else { return false }
@@ -263,6 +262,7 @@ private extension QPushContainer {
             self._endInteractiveGesture(false)
         })
         #endif
+        self.contentContainer?.parent = self
     }
     
     func _timerReset() {

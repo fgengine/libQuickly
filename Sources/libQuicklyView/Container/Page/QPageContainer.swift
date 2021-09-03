@@ -350,11 +350,6 @@ extension QPageContainer : IQDialogContentContainer where Screen : IQScreenDialo
 private extension QPageContainer {
     
     func _init() {
-        self._barView.delegate = self
-        self.screen.container = self
-        for item in self._items {
-            item.container.parent = self
-        }
         #if os(iOS)
         self._interactiveGesture.onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
@@ -373,6 +368,11 @@ private extension QPageContainer {
         })
         #else
         #endif
+        self._barView.delegate = self
+        self.screen.container = self
+        for item in self._items {
+            item.container.parent = self
+        }
         self._barView.itemViews(self._items.compactMap({ $0.barView }))
         if let current = self._current {
             self._barView.selectedItemView(current.barView)
