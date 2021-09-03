@@ -57,6 +57,9 @@ extension UIView {
             self.clipsToBounds = false
         } else {
             layer.shadowColor = nil
+            layer.shadowOpacity = 0
+            layer.shadowRadius = 0
+            layer.shadowOffset = .zero
             self.clipsToBounds = true
         }
     }
