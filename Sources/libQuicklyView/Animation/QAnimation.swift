@@ -110,8 +110,6 @@ private extension QAnimation {
                 if self.elapsed >= self.duration && self.isCompletion == false {
                     self.isCompletion = true
                 }
-            } else {
-                self.isCompletion = true
             }
         }
         
@@ -130,7 +128,7 @@ extension QAnimation : IQAnimationQueueDelegate {
         var removingTask: [Task] = []
         for task in self._tasks {
             task.update(delta)
-            if task.isCompletion == true {
+            if task.isCompletion == true || task.isCanceled == true {
                 removingTask.append(task)
             }
         }
@@ -139,7 +137,9 @@ extension QAnimation : IQAnimationQueueDelegate {
                 return removingTask.contains(where: { return task === $0 })
             })
             for task in removingTask {
-                task.completion()
+                if task.isCompletion == true {
+                    task.completion()
+                }
             }
         }
         if self._tasks.count == 0 {

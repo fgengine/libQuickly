@@ -26,7 +26,9 @@ public class QScrollViewHidingBarExtension {
     }
     public var threshold: Float
     public var animationVelocity: Float
-    public var isAnimating: Bool
+    public var isAnimating: Bool {
+        return self._animation != nil
+    }
     public var scrollView: IQScrollView {
         willSet { self.scrollView.remove(observer: self) }
         didSet { self.scrollView.add(observer: self) }
@@ -34,6 +36,7 @@ public class QScrollViewHidingBarExtension {
     
     private var _anchor: Float?
     private var _observer: QObserver< QScrollViewHidingBarExtensionObserver >
+    private var _animation: IQAnimationTask?
     
     public init(
         direction: Direction = .vertical,
@@ -46,7 +49,6 @@ public class QScrollViewHidingBarExtension {
         self.state = state
         self.threshold = threshold
         self.animationVelocity = animationVelocity
-        self.isAnimating = false
         self.scrollView = scrollView
         self._observer = QObserver()
         self.scrollView.add(observer: self)
@@ -97,6 +99,7 @@ extension QScrollViewHidingBarExtension : IQScrollViewObserver {
     }
     
     public func scrolling(scrollView: IQScrollView) {
+        guard self._animation == nil else { return }
         let visible: Float
         let offset: Float
         let size: Float
@@ -161,9 +164,8 @@ private extension QScrollViewHidingBarExtension {
         case .showed, .hided:
             break
         case .showing(let baseProgress):
-            self.isAnimating = true
             if baseProgress >= 0.5 {
-                QAnimation.default.run(
+                self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
@@ -172,12 +174,12 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self.isAnimating = false
+                        self._animation = nil
                         self._set(state: .showed)
                     }
                 )
             } else {
-                QAnimation.default.run(
+                self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
@@ -186,15 +188,14 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self.isAnimating = false
+                        self._animation = nil
                         self._set(state: .hided)
                     }
                 )
             }
         case .hiding(let baseProgress):
-            self.isAnimating = true
             if baseProgress >= 0.5 {
-                QAnimation.default.run(
+                self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
@@ -203,12 +204,12 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self.isAnimating = false
+                        self._animation = nil
                         self._set(state: .hided)
                     }
                 )
             } else {
-                QAnimation.default.run(
+                self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
@@ -217,7 +218,7 @@ private extension QScrollViewHidingBarExtension {
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
-                        self.isAnimating = false
+                        self._animation = nil
                         self._set(state: .showed)
                     }
                 )
@@ -231,8 +232,7 @@ private extension QScrollViewHidingBarExtension {
             switch self.state {
             case .showed:
                 if isShowed == false {
-                    self.isAnimating = true
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval(self.threshold / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -241,7 +241,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .hided)
                             completion?()
                         }
@@ -251,8 +251,7 @@ private extension QScrollViewHidingBarExtension {
                 }
             case .hided:
                 if isShowed == true {
-                    self.isAnimating = true
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval(self.threshold / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -261,7 +260,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .showed)
                             completion?()
                         }
@@ -270,9 +269,8 @@ private extension QScrollViewHidingBarExtension {
                     completion?()
                 }
             case .showing(let baseProgress):
-                self.isAnimating = true
                 if isShowed == true {
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -281,13 +279,13 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .showed)
                             completion?()
                         }
                     )
                 } else {
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -296,16 +294,15 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .hided)
                             completion?()
                         }
                     )
                 }
             case .hiding(let baseProgress):
-                self.isAnimating = true
                 if isShowed == true {
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -314,13 +311,13 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .showed)
                             completion?()
                         }
                     )
                 } else {
-                    QAnimation.default.run(
+                    self._animation = QAnimation.default.run(
                         duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
                         ease: QAnimation.Ease.QuadraticInOut(),
                         processing: { [weak self] progress in
@@ -329,7 +326,7 @@ private extension QScrollViewHidingBarExtension {
                         },
                         completion: { [weak self] in
                             guard let self = self else { return }
-                            self.isAnimating = false
+                            self._animation = nil
                             self._set(state: .hided)
                             completion?()
                         }
