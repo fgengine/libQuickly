@@ -19,6 +19,7 @@ public struct QScrollViewDirection : OptionSet {
     
     public static var horizontal = QScrollViewDirection(rawValue: 1 << 0)
     public static var vertical = QScrollViewDirection(rawValue: 1 << 1)
+    public static var bounds = QScrollViewDirection(rawValue: 1 << 2)
     
 }
 

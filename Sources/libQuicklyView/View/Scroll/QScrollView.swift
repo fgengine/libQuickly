@@ -167,7 +167,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     private var _onScrollToTop: (() -> Void)?
     
     public init(
-        direction: QScrollViewDirection = [ .vertical ],
+        direction: QScrollViewDirection = [ .vertical, .bounds ],
         indicatorDirection: QScrollViewDirection = [],
         visibleInset: QInset = .zero,
         contentInset: QInset = .zero,
@@ -203,7 +203,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     
     @available(iOS 10.0, *)
     public init(
-        direction: QScrollViewDirection = [ .vertical ],
+        direction: QScrollViewDirection = [ .vertical, .bounds ],
         indicatorDirection: QScrollViewDirection = [],
         visibleInset: QInset = .zero,
         contentInset: QInset = .zero,

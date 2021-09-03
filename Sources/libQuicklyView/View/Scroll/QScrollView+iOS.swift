@@ -199,8 +199,8 @@ extension NativeScrollView {
     }
     
     func update(direction: QScrollViewDirection) {
-        self.alwaysBounceHorizontal = direction.contains(.horizontal)
-        self.alwaysBounceVertical = direction.contains(.vertical)
+        self.alwaysBounceHorizontal = direction.contains(.horizontal) && direction.contains(.bounds)
+        self.alwaysBounceVertical = direction.contains(.vertical) && direction.contains(.bounds)
         self.needLayoutContent = true
     }
     
