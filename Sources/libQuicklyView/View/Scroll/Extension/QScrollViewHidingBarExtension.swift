@@ -150,7 +150,7 @@ extension QScrollViewHidingBarExtension : IQScrollViewObserver {
     }
     
     public func scrollToTop(scrollView: IQScrollView) {
-        self._end()
+        self._end(forceShow: false)
     }
     
 }
@@ -159,12 +159,38 @@ private extension QScrollViewHidingBarExtension {
     
     @inline(__always)
     func _end() {
+        let offset: Float
+        switch self.direction {
+        case .horizontal: offset = scrollView.contentOffset.x + scrollView.contentInset.left
+        case .vertical: offset = scrollView.contentOffset.y + scrollView.contentInset.top
+        }
+        self._end(forceShow: offset < self.threshold)
+    }
+    
+    @inline(__always)
+    func _end(forceShow: Bool) {
         self._anchor = nil
         switch self.state {
-        case .showed, .hided:
+        case .showed:
             break
+        case .hided:
+            if forceShow == true {
+                self._animation = QAnimation.default.run(
+                    duration: TimeInterval(self.threshold / self.animationVelocity),
+                    ease: QAnimation.Ease.QuadraticInOut(),
+                    processing: { [weak self] progress in
+                        guard let self = self else { return }
+                        self._set(state: .showing(progress: progress))
+                    },
+                    completion: { [weak self] in
+                        guard let self = self else { return }
+                        self._animation = nil
+                        self._set(state: .showed)
+                    }
+                )
+            }
         case .showing(let baseProgress):
-            if baseProgress >= 0.5 {
+            if baseProgress >= 0.5 || forceShow == true {
                 self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
@@ -194,21 +220,7 @@ private extension QScrollViewHidingBarExtension {
                 )
             }
         case .hiding(let baseProgress):
-            if baseProgress >= 0.5 {
-                self._animation = QAnimation.default.run(
-                    duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
-                    ease: QAnimation.Ease.QuadraticInOut(),
-                    processing: { [weak self] progress in
-                        guard let self = self else { return }
-                        self._set(state: .hiding(progress: baseProgress + ((1 - baseProgress) * progress)))
-                    },
-                    completion: { [weak self] in
-                        guard let self = self else { return }
-                        self._animation = nil
-                        self._set(state: .hided)
-                    }
-                )
-            } else {
+            if baseProgress <= 0.5 || forceShow == true {
                 self._animation = QAnimation.default.run(
                     duration: TimeInterval((self.threshold * baseProgress) / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
@@ -220,6 +232,20 @@ private extension QScrollViewHidingBarExtension {
                         guard let self = self else { return }
                         self._animation = nil
                         self._set(state: .showed)
+                    }
+                )
+            } else {
+                self._animation = QAnimation.default.run(
+                    duration: TimeInterval((self.threshold * (1 - baseProgress)) / self.animationVelocity),
+                    ease: QAnimation.Ease.QuadraticInOut(),
+                    processing: { [weak self] progress in
+                        guard let self = self else { return }
+                        self._set(state: .hiding(progress: baseProgress + ((1 - baseProgress) * progress)))
+                    },
+                    completion: { [weak self] in
+                        guard let self = self else { return }
+                        self._animation = nil
+                        self._set(state: .hided)
                     }
                 )
             }
@@ -356,7 +382,12 @@ private extension QScrollViewHidingBarExtension {
         offset: Float,
         size: Float
     ) -> State {
-        let delta = anchor - offset
+        let delta: Float
+        if offset > threshold / 2 {
+            delta = anchor - offset
+        } else {
+            delta = 0
+        }
         switch state {
         case .showed:
             if delta < 0 {
