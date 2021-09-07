@@ -79,7 +79,7 @@ public class QIconContentDetailLayout< IconView: IQView, ContentView: IQView, De
             width: size.width,
             height: max(iconSize.height + self.iconInset.vertical, contentSize.height + self.contentInset.vertical + detailSize.height + self.detailInset.vertical)
         ).split(
-            left: iconSize.width + self.iconInset.left
+            left: iconSize.width + self.iconInset.horizontal
         )
         self.iconItem.frame = QRect(
             center: splitFrames.left.apply(inset: self.iconInset).center,
