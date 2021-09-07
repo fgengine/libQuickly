@@ -383,8 +383,7 @@ private extension QStackContainer {
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture in
             guard let gestureView = gesture.view else { return false }
-            guard self._view.native.isChild(of: gestureView, recursive: true) == true else { return false }
-            return true
+            return self._view.native.isChild(of: gestureView, recursive: true)
         }).onShouldBegin({ [unowned self] in
             guard self._items.count > 0 else { return false }
             guard self.shouldInteractive == true else { return false }

@@ -242,11 +242,9 @@ private extension QPushContainer {
     func _init() {
         #if os(iOS)
         self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
+            guard let contentContainer = self.contentContainer else { return true }
             guard let view = gesture.view else { return false }
-            if let contentContainer = self.contentContainer {
-                guard contentContainer.view.native.isChild(of: view, recursive: true) == true else { return false }
-            }
-            return true
+            return contentContainer.view.native.isChild(of: view, recursive: true)
         }).onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
             guard current.container.shouldInteractive == true else { return false }

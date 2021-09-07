@@ -46,7 +46,7 @@ public final class QPinchGesture : NSObject, IQPinchGesture {
     
     public init(
         isEnabled: Bool = true,
-        cancelsTouchesInView: Bool = true,
+        cancelsTouchesInView: Bool = false,
         delaysTouchesBegan: Bool = false,
         delaysTouchesEnded: Bool = true
     ) {
@@ -183,25 +183,13 @@ extension QPinchGesture : UIGestureRecognizerDelegate {
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return self._onShouldSimultaneously?(otherGestureRecognizer) ?? false
     }
-
+    
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if let onShouldRequireFailure = self._onShouldRequireFailure {
-            return onShouldRequireFailure(otherGestureRecognizer)
-        }
-        if let view = gestureRecognizer.view, let otherView = otherGestureRecognizer.view {
-            return otherView.isDescendant(of: view)
-        }
-        return false
+        return self._onShouldRequireFailure?(otherGestureRecognizer) ?? false
     }
 
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if let onShouldBeRequiredToFailBy = self._onShouldBeRequiredToFailBy {
-            return onShouldBeRequiredToFailBy(otherGestureRecognizer)
-        }
-        if let view = gestureRecognizer.view, let otherView = otherGestureRecognizer.view {
-            return view.isDescendant(of: otherView)
-        }
-        return false
+        return self._onShouldBeRequiredToFailBy?(otherGestureRecognizer) ?? false
     }
     
 }
