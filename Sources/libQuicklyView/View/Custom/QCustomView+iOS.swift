@@ -95,14 +95,14 @@ final class NativeCustomView : UIView {
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
-        let shouldHighlighting = self.customDelegate?.shouldHighlighting(view: self)
-        let shouldGestures = self._gestures.contains(where: { $0.isEnabled == true })
-        if shouldHighlighting == true || shouldGestures == true {
-            return hitView
-        } else if hitView != self {
-            return hitView
+        if hitView === self {
+            let shouldHighlighting = self.customDelegate?.shouldHighlighting(view: self)
+            let shouldGestures = self._gestures.contains(where: { $0.isEnabled == true })
+            if shouldHighlighting == false && shouldGestures == false {
+                return nil
+            }
         }
-        return nil
+        return hitView
     }
     
     override func touchesBegan(_ touches: Set< UITouch >, with event: UIEvent?) {

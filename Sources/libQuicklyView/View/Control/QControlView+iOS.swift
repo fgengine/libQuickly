@@ -97,22 +97,6 @@ final class NativeControlView : UIControl {
         })
     }
     
-    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        let shouldHighlighting = self.customDelegate?.shouldHighlighting(view: self)
-        let shouldPressing = self.customDelegate?.shouldPressing(view: self)
-        if shouldHighlighting == true || shouldPressing == true {
-            if self.bounds.contains(point) == true {
-                return self
-            }
-        } else {
-            let hitView = super.hitTest(point, with: event)
-            if hitView != self {
-                return hitView
-            }
-        }
-        return nil
-    }
-    
 }
 
 extension NativeControlView {

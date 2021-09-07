@@ -281,9 +281,7 @@ private extension QCellView {
     func _init() {
         #if os(iOS)
         self._pressedGesture.onShouldBegin({ [unowned self] in
-            guard self.shouldPressed == true else { return false }
-            guard self._pressedGesture.contains(in: self.contentView) == true else { return false }
-            return true
+            return self.shouldPressed
         }).onTriggered({ [unowned self] in
             self._pressed()
         })

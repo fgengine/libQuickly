@@ -10,16 +10,11 @@ public protocol IQStickyScreen : IQScreen {
     associatedtype StickyBar : IQBarView
     
     var stickyView: StickyBar { get }
-    var stickySize: Float { get }
     var stickyHidden: Bool { get }
     
 }
 
 public extension IQStickyScreen {
-    
-    var stickySize: Float {
-        return 96
-    }
     
     var stickyHidden: Bool {
         return false

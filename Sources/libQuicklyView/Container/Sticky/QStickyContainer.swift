@@ -46,10 +46,6 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
         }
         get { return self._overlayView }
     }
-    public private(set) var overlaySize: Float {
-        set(value) { self._view.contentLayout.overlaySize = value }
-        get { return self._view.contentLayout.overlaySize }
-    }
     public private(set) var overlayHidden: Bool {
         set(value) { self._view.contentLayout.overlayHidden = value }
         get { return self._view.contentLayout.overlayHidden }
@@ -90,7 +86,6 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
             contentLayout: Layout(
                 contentItem: QLayoutItem(view: contentContainer.view),
                 overlayItem: QLayoutItem(view: screen.stickyView),
-                overlaySize: screen.stickySize,
                 overlayHidden: screen.stickyHidden
             )
         )
@@ -105,13 +100,12 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
     
     public func insets(of container: IQContainer, interactive: Bool) -> QInset {
         let inheritedInsets = self.inheritedInsets(interactive: interactive)
-        if self._contentContainer === container {
-            let overlaySize = self._view.contentLayout.overlaySize
+        if self._contentContainer === container, let overlaySize = self._view.contentLayout.overlaySize {
             return QInset(
                 top: inheritedInsets.top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
-                bottom: inheritedInsets.bottom + overlaySize
+                bottom: inheritedInsets.bottom + overlaySize.height
             )
         }
         return inheritedInsets
@@ -162,7 +156,6 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
     }
     
     public func updateOverlay(animated: Bool, completion: (() -> Void)?) {
-        self._view.contentLayout.overlaySize = self.screen.stickySize
         self._view.contentLayout.overlayHidden = self.screen.stickyHidden
         self.didChangeInsets()
     }
@@ -197,34 +190,32 @@ private extension QStickyContainer {
         var overlayHidden: Bool {
             didSet { self.setNeedUpdate() }
         }
-        var overlaySize: Float {
-            didSet { self.setNeedUpdate() }
-        }
+        var overlaySize: QSize?
         
         init(
             contentItem: QLayoutItem,
             overlayItem: QLayoutItem,
             overlayInset: Float = 0,
-            overlaySize: Float,
             overlayHidden: Bool
         ) {
             self.contentItem = contentItem
             self.overlayItem = overlayItem
             self.overlayInset = overlayInset
-            self.overlaySize = overlaySize
             self.overlayHidden = overlayHidden
         }
         
         func layout(bounds: QRect) -> QSize {
             self.contentItem.frame = bounds
             if self.overlayHidden == false {
+                let overlaySize = self.overlayItem.size(bounds.size)
                 self.overlayItem.frame = QRect(
                     bottomLeft: bounds.bottomLeft,
                     size: QSize(
                         width: bounds.size.width,
-                        height: self.overlayInset + self.overlaySize
+                        height: self.overlayInset + overlaySize.height
                     )
                 )
+                self.overlaySize = overlaySize
             }
             return bounds.size
         }

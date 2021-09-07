@@ -8,7 +8,6 @@ import libQuicklyCore
 public protocol IQStickyContainer : IQContainer, IQContainerParentable {
     
     var overlayView: IQBarView { get }
-    var overlaySize: Float { get }
     var overlayHidden: Bool { get }
     var contentContainer: IQContainer & IQContainerParentable { set get }
     

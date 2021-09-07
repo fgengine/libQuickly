@@ -185,11 +185,23 @@ extension QPinchGesture : UIGestureRecognizerDelegate {
     }
 
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return self._onShouldRequireFailure?(otherGestureRecognizer) ?? false
+        if let onShouldRequireFailure = self._onShouldRequireFailure {
+            return onShouldRequireFailure(otherGestureRecognizer)
+        }
+        if let view = gestureRecognizer.view, let otherView = otherGestureRecognizer.view {
+            return otherView.isDescendant(of: view)
+        }
+        return false
     }
 
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return self._onShouldBeRequiredToFailBy?(otherGestureRecognizer) ?? false
+        if let onShouldBeRequiredToFailBy = self._onShouldBeRequiredToFailBy {
+            return onShouldBeRequiredToFailBy(otherGestureRecognizer)
+        }
+        if let view = gestureRecognizer.view, let otherView = otherGestureRecognizer.view {
+            return view.isDescendant(of: otherView)
+        }
+        return false
     }
     
 }
