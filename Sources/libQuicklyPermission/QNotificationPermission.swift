@@ -140,6 +140,9 @@ private extension QNotificationPermission {
     }
     
     func _didRequest(source: Any?) {
+        #if os(iOS)
+        UIApplication.shared.registerForRemoteNotifications()
+        #endif
         self._observer.notify({ $0.didRequest(self, source: source) })
     }
     
