@@ -103,7 +103,7 @@ public class QModalContainer : IQModalContainer {
     ) {
         self.isPresented = false
         #if os(iOS)
-        self.animationVelocity = 500
+        self.animationVelocity = Float(max(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 3)
         self.interactiveLimit = 20
         #endif
         self.contentContainer = contentContainer
@@ -350,11 +350,11 @@ private extension QModalContainer {
         guard let beginLocation = self._interactiveBeginLocation, let current = self._current else { return }
         let currentLocation = self._interactiveGesture.location(in: self._view)
         let deltaLocation = currentLocation.y - beginLocation.y
-        if deltaLocation < -self.interactiveLimit {
+        if deltaLocation > self.interactiveLimit {
             let height = self._view.bounds.size.height
             QAnimation.default.run(
                 duration: TimeInterval(height / self.animationVelocity),
-                elapsed: TimeInterval(-deltaLocation / self.animationVelocity),
+                elapsed: TimeInterval(deltaLocation / self.animationVelocity),
                 processing: { [weak self] progress in
                     guard let self = self else { return }
                     self._view.contentLayout.state = .dismiss(modal: current, progress: progress)
@@ -473,12 +473,12 @@ private extension QModalContainer {
             case .idle(let modal):
                 modal.item.frame = bounds.apply(inset: self.containerInset)
             case .present(let modal, let progress):
-                let beginRect = QRect(bottomLeft: bounds.topLeft, size: bounds.size)
+                let beginRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
                 let endRect = bounds.apply(inset: self.containerInset)
                 modal.item.frame = beginRect.lerp(endRect, progress: progress)
             case .dismiss(let modal, let progress):
                 let beginRect = bounds.apply(inset: self.containerInset)
-                let endRect = QRect(bottomLeft: bounds.topLeft, size: bounds.size)
+                let endRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
                 modal.item.frame = beginRect.lerp(endRect, progress: progress)
             }
             return bounds.size
