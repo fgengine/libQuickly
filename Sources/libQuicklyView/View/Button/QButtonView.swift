@@ -594,7 +594,7 @@ private extension QButtonView.Layout {
         let text: QRect
         switch imagePosition {
         case .top:
-            let offest = imageInset.top + imageSize.height + textInset.top
+            let offset = imageInset.top + imageSize.height + textInset.top
             let baseline = max(imageSize.width, textSize.width) / 2
             image = QRect(
                 x: baseline - (imageSize.width / 2),
@@ -606,20 +606,20 @@ private extension QButtonView.Layout {
             case .fill:
                 text = QRect(
                     x: baseline - (textSize.width / 2),
-                    y: offest,
+                    y: offset,
                     width: textSize.width,
-                    height: bounds.height - (imageInset.top + imageSize.height + textInset.bottom)
+                    height: bounds.height - offset
                 )
             case .center:
                 text = QRect(
                     x: baseline - (textSize.width / 2),
-                    y: offest,
+                    y: offset,
                     width: textSize.width,
                     height: textSize.height
                 )
             }
         case .left:
-            let offest = imageInset.left + imageSize.width + textInset.left
+            let offset = imageInset.left + imageSize.width + textInset.left
             let baseline = max(imageSize.height, textSize.height) / 2
             image = QRect(
                 x: 0,
@@ -630,24 +630,24 @@ private extension QButtonView.Layout {
             switch alignment {
             case .fill:
                 text = QRect(
-                    x: offest,
+                    x: offset,
                     y: baseline - (textSize.height / 2),
-                    width: bounds.width - (imageInset.right + imageSize.width + textInset.left),
+                    width: bounds.width - offset,
                     height: textSize.height
                 )
             case .center:
                 text = QRect(
-                    x: offest,
+                    x: offset,
                     y: baseline - (textSize.height / 2),
                     width: textSize.width,
                     height: textSize.height
                 )
             }
         case .right:
-            let offest = imageInset.left + textSize.width + textInset.right
+            let offset = imageInset.left + textSize.width + textInset.right
             let baseline = max(imageSize.width, textSize.width) / 2
             image = QRect(
-                x: offest,
+                x: offset,
                 y: baseline - (imageSize.height / 2),
                 width: imageSize.width,
                 height: imageSize.height
@@ -657,7 +657,7 @@ private extension QButtonView.Layout {
                 text = QRect(
                     x: 0,
                     y: baseline - (textSize.height / 2),
-                    width: bounds.width - (imageInset.left + imageSize.width + textInset.right),
+                    width: bounds.width - offset,
                     height: textSize.height
                 )
             case .center:
@@ -669,11 +669,11 @@ private extension QButtonView.Layout {
                 )
             }
         case .bottom:
-            let offest = imageInset.top + textSize.height + textInset.bottom
+            let offset = imageInset.top + textSize.height + textInset.bottom
             let baseline = max(imageSize.height, textSize.height) / 2
             image = QRect(
                 x: baseline - (imageSize.width / 2),
-                y: offest,
+                y: offset,
                 width: imageSize.width,
                 height: imageSize.height
             )
@@ -683,7 +683,7 @@ private extension QButtonView.Layout {
                     x: baseline - (textSize.width / 2),
                     y: 0,
                     width: textSize.width,
-                    height: bounds.height - (imageInset.top + imageSize.height + textInset.top)
+                    height: bounds.height - offset
                 )
             case .center:
                 text = QRect(
@@ -701,8 +701,8 @@ private extension QButtonView.Layout {
             y: center.y - (union.height / 2)
         )
         return (
-            image: QRect(center: image.center + offset, size: imageSize),
-            text: QRect(center: text.center + offset, size: textSize)
+            image: QRect(center: image.center + offset, size: image.size),
+            text: QRect(center: text.center + offset, size: text.size)
         )
     }
     
