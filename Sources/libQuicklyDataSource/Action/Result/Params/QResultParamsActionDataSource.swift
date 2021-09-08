@@ -58,7 +58,8 @@ open class QResultParamsActionDataSource< Loader : IQResultParamsActionDataLoade
     }
     
     deinit {
-        self.cancel()
+        self._query?.cancel()
+        self._query = nil
     }
 
     public func perform(_ params: Params) {
@@ -67,8 +68,8 @@ open class QResultParamsActionDataSource< Loader : IQResultParamsActionDataLoade
         self.willPerform()
         self._query = self.loader.perform(
             params: params,
-            success: { [unowned self] result in self._didPerform(result: result) },
-            failure: { [unowned self] error in self._didPerform(error: error) }
+            success: { [weak self] result in self?._didPerform(result: result) },
+            failure: { [weak self] error in self?._didPerform(error: error) }
         )
     }
     

@@ -58,7 +58,8 @@ open class QPageDataSource< Loader : IQPageDataLoader > : IQPageDataSource, IQCa
     }
     
     deinit {
-        self.cancel()
+        self._query?.cancel()
+        self._query = nil
     }
 
     public func load(reload: Bool) {
@@ -68,8 +69,8 @@ open class QPageDataSource< Loader : IQPageDataLoader > : IQPageDataSource, IQCa
         self.willLoad()
         self._query = self.loader.perform(
             reload: reload,
-            success: { [unowned self] result, canMore in self._didLoad(isFirst: isFirst, result: result, canMore: canMore) },
-            failure: { [unowned self] error in self._didLoad(error: error) }
+            success: { [weak self] result, canMore in self?._didLoad(isFirst: isFirst, result: result, canMore: canMore) },
+            failure: { [weak self] error in self?._didLoad(error: error) }
         )
     }
     

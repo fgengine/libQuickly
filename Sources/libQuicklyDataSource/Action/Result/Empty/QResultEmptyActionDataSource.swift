@@ -56,7 +56,8 @@ open class QResultEmptyActionDataSource< Loader : IQResultEmptyActionDataLoader 
     }
     
     deinit {
-        self.cancel()
+        self._query?.cancel()
+        self._query = nil
     }
 
     public func perform() {
@@ -64,8 +65,8 @@ open class QResultEmptyActionDataSource< Loader : IQResultEmptyActionDataLoader 
         guard self.loader.shouldPerform() == true else { return }
         self.willPerform()
         self._query = self.loader.perform(
-            success: { [unowned self] result in self._didPerform(result: result) },
-            failure: { [unowned self] error in self._didPerform(error: error) }
+            success: { [weak self] result in self?._didPerform(result: result) },
+            failure: { [weak self] error in self?._didPerform(error: error) }
         )
     }
     

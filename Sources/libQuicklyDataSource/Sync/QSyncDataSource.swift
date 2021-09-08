@@ -63,7 +63,8 @@ open class QSyncDataSource< Loader : IQSyncDataLoader > : IQSyncDataSource, IQCa
     }
     
     deinit {
-        self.cancel()
+        self._query?.cancel()
+        self._query = nil
     }
     
     open func isNeedSync(syncAt: Date) -> Bool {
@@ -83,8 +84,8 @@ open class QSyncDataSource< Loader : IQSyncDataLoader > : IQSyncDataSource, IQCa
         guard self.loader.shouldPerform() == true else { return }
         self.willSync()
         self._query = self.loader.perform(
-            success: { [unowned self] result in self._didSync(result: result) },
-            failure: { [unowned self] error in self._didSync(error: error) }
+            success: { [weak self] result in self?._didSync(result: result) },
+            failure: { [weak self] error in self?._didSync(error: error) }
         )
     }
     

@@ -61,7 +61,8 @@ open class QCursorDataSource< Loader : IQCursorDataLoader > : IQCursorDataSource
     }
     
     deinit {
-        self.cancel()
+        self._query?.cancel()
+        self._query = nil
     }
 
     public func load(reload: Bool) {
@@ -71,8 +72,8 @@ open class QCursorDataSource< Loader : IQCursorDataLoader > : IQCursorDataSource
         self.willLoad()
         self._query = self.loader.perform(
             cursor: isFirst == true ? nil : self.cursor,
-            success: { [unowned self] result, cursor, canMore in self._didLoad(isFirst: isFirst, result: result, cursor: cursor, canMore: canMore) },
-            failure: { [unowned self] error in self._didLoad(error: error) }
+            success: { [weak self] result, cursor, canMore in self?._didLoad(isFirst: isFirst, result: result, cursor: cursor, canMore: canMore) },
+            failure: { [weak self] error in self?._didLoad(error: error) }
         )
     }
     
