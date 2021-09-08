@@ -74,13 +74,8 @@ public class QButtonView : IQButtonView {
     }
     public var textView: IQView?
     public var isHighlighted: Bool {
-        set(value) {
-            if self._isHighlighted != value {
-                self._isHighlighted = value
-                self.triggeredChangeStyle(false)
-            }
-        }
-        get { return self._isHighlighted }
+        set(value) { self._view.isHighlighted = value }
+        get { return self._view.isHighlighted }
     }
     public var isSelected: Bool {
         set(value) {
@@ -114,9 +109,7 @@ public class QButtonView : IQButtonView {
     
     private var _layout: Layout
     private var _view: QControlView< Layout >
-    private var _isHighlighted: Bool
     private var _isSelected: Bool
-    private var _onChangeStyle: ((_ userIteraction: Bool) -> Void)?
     
     public init(
         inset: QInset = QInset(horizontal: 4, vertical: 4),
@@ -132,8 +125,6 @@ public class QButtonView : IQButtonView {
         imageView: IQView? = nil,
         textInset: QInset = QInset(horizontal: 4, vertical: 4),
         textView: IQView? = nil,
-        isHighlighted: Bool = false,
-        isSelected: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -169,8 +160,7 @@ public class QButtonView : IQButtonView {
             shadow: shadow,
             alpha: alpha
         )
-        self._isHighlighted = isHighlighted
-        self._isSelected = isSelected
+        self._isSelected = false
     }
     
     public func loadIfNeeded() {
@@ -221,7 +211,7 @@ public class QButtonView : IQButtonView {
     }
     
     public func triggeredChangeStyle(_ userIteraction: Bool) {
-        self._onChangeStyle?(userIteraction)
+        self._view.triggeredChangeStyle(userIteraction)
     }
     
     @discardableResult
