@@ -46,7 +46,9 @@ public class QButtonView : IQButtonView {
         set(value) { self._layout.alignment = value }
         get { return self._layout.alignment }
     }
-    public var backgroundView: IQView
+    public var backgroundView: IQView {
+        didSet { self._layout.backgroundItem = QLayoutItem(view: self.backgroundView) }
+    }
     public var spinnerPosition: QButtonViewSpinnerPosition {
         set(value) { self._layout.spinnerPosition = value }
         get { return self._layout.spinnerPosition }
@@ -58,7 +60,9 @@ public class QButtonView : IQButtonView {
         }
         get { return self._layout.spinnerAnimating }
     }
-    public var spinnerView: IQSpinnerView?
+    public var spinnerView: IQSpinnerView? {
+        didSet { self._layout.spinnerItem = self.spinnerView.flatMap({ QLayoutItem(view: $0) }) }
+    }
     public var imagePosition: QButtonViewImagePosition {
         set(value) { self._layout.imagePosition = value }
         get { return self._layout.imagePosition }
@@ -67,12 +71,16 @@ public class QButtonView : IQButtonView {
         set(value) { self._layout.imageInset = value }
         get { return self._layout.imageInset }
     }
-    public var imageView: IQView?
+    public var imageView: IQView? {
+        didSet { self._layout.imageItem = self.imageView.flatMap({ QLayoutItem(view: $0) }) }
+    }
     public var textInset: QInset {
         set(value) { self._layout.textInset = value }
         get { return self._layout.textInset }
     }
-    public var textView: IQView?
+    public var textView: IQView? {
+        didSet { self._layout.textItem = self.textView.flatMap({ QLayoutItem(view: $0) }) }
+    }
     public var isHighlighted: Bool {
         set(value) { self._view.isHighlighted = value }
         get { return self._view.isHighlighted }
