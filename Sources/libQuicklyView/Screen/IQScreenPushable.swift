@@ -32,4 +32,9 @@ public extension IQScreenPushable where Self : IQScreen {
         return self.pushContentContainer?.pushContainer
     }
     
+    @inlinable
+    func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
+        self.pushContentContainer?.dismiss(animated: animated, completion: completion)
+    }
+    
 }

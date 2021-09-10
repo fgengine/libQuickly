@@ -21,4 +21,9 @@ public extension IQScreenModalable where Self : IQScreen {
         return self.modalContentContainer?.modalContainer
     }
     
+    @inlinable
+    func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
+        self.modalContentContainer?.dismiss(animated: animated, completion: completion)
+    }
+    
 }

@@ -30,6 +30,23 @@ public struct QImage {
         self.size = QSize(image.size)
     }
     
+    @inlinable
+    public init(
+        names: [String],
+        duration: TimeInterval,
+        renderingMode: UIImage.RenderingMode? = nil
+    ) {
+        guard let image = UIImage.animatedImage(with: names.compactMap({ UIImage(named: $0) }), duration: duration) else {
+            fatalError("Not found images with '\(names)'")
+        }
+        if let renderingMode = renderingMode {
+            self.native = image.withRenderingMode(renderingMode)
+        } else {
+            self.native = image
+        }
+        self.size = QSize(image.size)
+    }
+    
     public init?(
         data: Data,
         renderingMode: UIImage.RenderingMode? = nil
@@ -55,6 +72,23 @@ public struct QImage {
     ) {
         self.native = uiImage
         self.size = QSize(uiImage.size)
+    }
+    
+    @inlinable
+    public init(
+        uiImages: [UIImage],
+        duration: TimeInterval,
+        renderingMode: UIImage.RenderingMode? = nil
+    ) {
+        guard let image = UIImage.animatedImage(with: uiImages, duration: duration) else {
+            fatalError("Invalid create animated image")
+        }
+        if let renderingMode = renderingMode {
+            self.native = image.withRenderingMode(renderingMode)
+        } else {
+            self.native = image
+        }
+        self.size = QSize(image.size)
     }
     
     @inlinable

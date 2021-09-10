@@ -42,4 +42,9 @@ public extension IQScreenDialogable where Self : IQScreen {
         return self.dialogContentContainer?.dialogContainer
     }
     
+    @inlinable
+    func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
+        self.dialogContentContainer?.dismiss(animated: animated, completion: completion)
+    }
+    
 }

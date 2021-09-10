@@ -283,6 +283,7 @@ private extension QModalContainer {
         } else {
             modal.container.finishShow(interactive: false)
             self._view.contentLayout.state = .idle(modal: modal)
+            completion?()
         }
     }
 
@@ -319,6 +320,7 @@ private extension QModalContainer {
         } else {
             modal.container.finishHide(interactive: false)
             self._view.contentLayout.state = .empty
+            completion?()
         }
     }
     
