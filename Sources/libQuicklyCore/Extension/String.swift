@@ -6,29 +6,11 @@ import Foundation
 
 public extension String {
 
-    static func localized(_ key: String) -> String {
-        return NSLocalizedString(key, comment: "")
-    }
-
-    static func localized(_ key: String, bundle: Bundle) -> String {
-        return NSLocalizedString(key, bundle: bundle, comment: "")
-    }
-
-    static func localized(_ key: String, args: [String: String]) -> String {
-        let result = self.localized(key)
-        return result.replace(keys: args)
-    }
-
-    static func localized(_ key: String, bundle: Bundle, args: [String: String]) -> String {
-        let result = self.localized(key, bundle: bundle)
-        return result.replace(keys: args)
-    }
-
     func remove(_ characterSet: CharacterSet) -> String {
         return self.components(separatedBy: characterSet).joined()
     }
 
-    func replace(keys: [String: String]) -> String {
+    func replace(keys: [String : String]) -> String {
         var result = self
         keys.forEach { (key: String, value: String) in
             if let range = result.range(of: key) {
