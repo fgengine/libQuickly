@@ -379,9 +379,6 @@ private extension QPageContainer {
             self._view.contentLayout.state = .idle(current: current.pageItem)
         }
         self.screen.setup()
-        if let current = self._current {
-            self.screen.change(current: current.container)
-        }
     }
     
     func _set(

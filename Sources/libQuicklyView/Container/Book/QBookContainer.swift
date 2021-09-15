@@ -251,7 +251,6 @@ private extension QBookContainer {
         #else
         #endif
         self.screen.container = self
-        self.screen.setup()
         let initial = self.screen.initialContainer()
         if let backward = self.screen.backwardContainer(initial) {
             let item = Item(container: backward)
@@ -268,14 +267,12 @@ private extension QBookContainer {
             self._forward = item
             item.container.parent = self
         }
-        if let current = self._current {
-            self.screen.change(current: current.container)
-        }
         if let item = self._current {
             self._view.contentLayout.state = .idle(current: item.bookItem)
         } else {
             self._view.contentLayout.state = .empty
         }
+        self.screen.setup()
     }
     
     func _update(
