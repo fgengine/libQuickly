@@ -348,6 +348,14 @@ public extension QRect {
         )
     }
     
+    @inlinable
+    var integral: QRect {
+        return QRect(
+            topLeft: self.origin.integral,
+            size: self.size.integral
+        )
+    }
+    
 }
 
 public extension QRect {

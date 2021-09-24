@@ -28,6 +28,18 @@ public extension QPoint {
 
 public extension QPoint {
     
+    @inlinable
+    var integral: QPoint {
+        return QPoint(
+            x: round(self.x),
+            y: round(self.y)
+        )
+    }
+    
+}
+
+public extension QPoint {
+    
     func wrap() -> QPoint {
         return QPoint(
             x: self.y,

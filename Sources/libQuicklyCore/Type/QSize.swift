@@ -37,6 +37,14 @@ public extension QSize {
         return self.width / self.height
     }
     
+    @inlinable
+    var integral: QSize {
+        return QSize(
+            width: round(self.width),
+            height: round(self.height)
+        )
+    }
+    
 }
 
 public extension QSize {

@@ -448,7 +448,7 @@ extension QButtonView {
                 let spinnerSize = self._spinnerSize(availableBounds.size, item: spinnerItem)
                 switch self.spinnerPosition {
                 case .fill:
-                    spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize)
+                    spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize).integral
                 case .image:
                     if self.imageItem != nil, let textItem = self.textItem {
                         let textSize = self._textSize(availableBounds.size, item: textItem)
@@ -461,10 +461,10 @@ extension QButtonView {
                             textInset: self.textInset,
                             textSize: textSize
                         )
-                        spinnerItem.frame = frames.image
-                        textItem.frame = frames.text
+                        spinnerItem.frame = frames.image.integral
+                        textItem.frame = frames.text.integral
                     } else {
-                        spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize)
+                        spinnerItem.frame = QRect(center: availableBounds.center, size: spinnerSize).integral
                     }
                 }
             } else if let imageItem = self.imageItem, let textItem = self.textItem {
@@ -479,16 +479,19 @@ extension QButtonView {
                     textInset: self.textInset,
                     textSize: textSize
                 )
-                imageItem.frame = frames.image
-                textItem.frame = frames.text
+                imageItem.frame = frames.image.integral
+                textItem.frame = frames.text.integral
             } else if let imageItem = self.imageItem {
                 let imageSize = self._imageSize(availableBounds.size, item: imageItem)
-                imageItem.frame = QRect(center: availableBounds.center, size: imageSize)
+                switch self.alignment {
+                case .fill: imageItem.frame = availableBounds
+                case .center: imageItem.frame = QRect(center: availableBounds.center, size: imageSize).integral
+                }
             } else if let textItem = self.textItem {
                 let textSize = self._textSize(availableBounds.size, item: textItem)
                 switch self.alignment {
                 case .fill: textItem.frame = availableBounds
-                case .center: textItem.frame = QRect(center: availableBounds.center, size: textSize)
+                case .center: textItem.frame = QRect(center: availableBounds.center, size: textSize).integral
                 }
             }
             return bounds.size
