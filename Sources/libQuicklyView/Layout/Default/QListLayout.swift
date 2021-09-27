@@ -174,7 +174,7 @@ public final class QListLayout : IQLayout {
     }
     
     public func delete(items: [QLayoutItem]) {
-        let indices = items.compactMap({ item in self.items.firstIndex(where: { $0 === item }) })
+        let indices = items.compactMap({ item in self.items.firstIndex(where: { $0 === item }) }).sorted()
         if indices.count > 0 {
             if self._animations.isEmpty == false {
                 self._operations.append(Helper.Operation(
@@ -183,7 +183,7 @@ public final class QListLayout : IQLayout {
                     progress: 0
                 ))
             } else {
-                for index in indices {
+                for index in indices.reversed() {
                     self._items.remove(at: index)
                     self._cache.remove(at: index)
                 }
