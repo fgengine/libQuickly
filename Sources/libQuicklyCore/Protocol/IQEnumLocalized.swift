@@ -72,7 +72,12 @@ public extension IQEnumLocalized {
     
     @inlinable
     func format(_ arguments: CVarArg...) -> String {
-        return String(format: self.localized, arguments)
+        return String(format: self.localized, arguments: arguments)
+    }
+    
+    @inlinable
+    func format(arguments: [CVarArg]) -> String {
+        return String(format: self.localized, arguments: arguments)
     }
     
 }
