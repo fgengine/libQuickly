@@ -210,15 +210,15 @@ public extension QImage {
             return nil
         }
         let scale = self.native.scale
-        let size = size.aspectFit(size: self.size)
-        UIGraphicsBeginImageContextWithOptions(size.cgSize, false, scale)
+        let aspectSize = self.size.aspectFit(size: size)
+        UIGraphicsBeginImageContextWithOptions(aspectSize.cgSize, false, scale)
         defer {
             UIGraphicsEndImageContext()
         }
         if let context = UIGraphicsGetCurrentContext() {
-            context.translateBy(x: 0, y: CGFloat(size.height))
+            context.translateBy(x: 0, y: CGFloat(aspectSize.height))
             context.scaleBy(x: 1.0, y: -1.0)
-            context.draw(cgImage, in: CGRect(origin: .zero, size: size.cgSize))
+            context.draw(cgImage, in: CGRect(origin: .zero, size: aspectSize.cgSize))
             if let image = context.makeImage() {
                 return QImage(UIImage(cgImage: image, scale: scale, orientation: .up))
             }
