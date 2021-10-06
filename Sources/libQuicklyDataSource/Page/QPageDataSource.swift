@@ -68,7 +68,7 @@ open class QPageDataSource< Loader : IQPageDataLoader > : IQPageDataSource, IQCa
         let isFirst = reload == true || self.result == nil
         self.willLoad()
         self._query = self.loader.perform(
-            reload: reload,
+            reload: isFirst,
             success: { [weak self] result, canMore in self?._didLoad(isFirst: isFirst, result: result, canMore: canMore) },
             failure: { [weak self] error in self?._didLoad(error: error) }
         )
