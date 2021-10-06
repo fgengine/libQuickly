@@ -199,7 +199,7 @@ public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: 
         do {
             let item = self.titleItem
             let inset = self.titleInset
-            let size = item.size(bounds.size.apply(inset: inset))
+            let size = item.size(available: bounds.size.apply(inset: inset))
             item.frame = QRect(
                 x: bounds.origin.x + inset.left,
                 y: origin + inset.top,
@@ -211,7 +211,7 @@ public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: 
         do {
             let item = self.pincodeItem
             let inset = self.pincodeInset
-            let size = item.size(bounds.size.apply(inset: inset))
+            let size = item.size(available: bounds.size.apply(inset: inset))
             item.frame = QRect(
                 x: bounds.origin.x + inset.left,
                 y: origin + inset.top,
@@ -222,7 +222,7 @@ public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: 
         }
         if let item = self.errorItem {
             let inset = self.errorInset
-            let size = item.size(bounds.size.apply(inset: inset))
+            let size = item.size(available: bounds.size.apply(inset: inset))
             item.frame = QRect(
                 x: bounds.origin.x + inset.left,
                 y: origin + inset.top,
@@ -259,7 +259,7 @@ public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: 
         return bounds.size
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         guard available.width > 0 else {
             return .zero
         }
@@ -267,12 +267,12 @@ public class QPincodeLayout< TitleView: IQView, PincodeView: IQView, ErrorView: 
             width: available.width,
             height: 0
         )
-        let titleSize = self.titleItem.size(available.apply(inset: self.titleInset))
+        let titleSize = self.titleItem.size(available: available.apply(inset: self.titleInset))
         result.height += self.titleInset.top + titleSize.height + self.titleInset.bottom
-        let pincodeSize = self.pincodeItem.size(available.apply(inset: self.pincodeInset))
+        let pincodeSize = self.pincodeItem.size(available: available.apply(inset: self.pincodeInset))
         result.height += self.pincodeInset.top + pincodeSize.height + self.pincodeInset.bottom
         if let errorItem = self.errorItem {
-            let errorSize = errorItem.size(available.apply(inset: self.errorInset))
+            let errorSize = errorItem.size(available: available.apply(inset: self.errorInset))
             result.height += self.errorInset.top + errorSize.height + self.errorInset.bottom
         }
         let availableButtonsWidth = available.width - (self.buttonsInset.left + self.buttonsInset.right)

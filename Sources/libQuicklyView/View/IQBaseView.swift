@@ -11,7 +11,7 @@ public protocol IQBaseView : AnyObject {
     var isLoaded: Bool { get }
     var bounds: QRect { get }
     
-    func size(_ available: QSize) -> QSize
+    func size(available: QSize) -> QSize
     
     func disappear()
     

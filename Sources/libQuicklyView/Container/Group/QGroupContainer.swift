@@ -629,7 +629,7 @@ private extension QGroupContainer {
         }
         
         func layout(bounds: QRect) -> QSize {
-            let barSize = self.barItem.size(QSize(
+            let barSize = self.barItem.size(available: QSize(
                 width: bounds.width,
                 height: .infinity
             ))
@@ -657,7 +657,7 @@ private extension QGroupContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

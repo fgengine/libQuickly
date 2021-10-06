@@ -218,7 +218,7 @@ public final class QListLayout : IQLayout {
         )
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         return Helper.size(
             available: available,
             direction: self.direction,

@@ -49,11 +49,11 @@ public class QContentDetailLayout< ContentView: IQView, DetailView: IQView > : I
             width: bounds.width,
             height: .infinity
         )
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal,
             height: .infinity
         ))
-        let detailSize = self.detailItem.size(QSize(
+        let detailSize = self.detailItem.size(available: QSize(
             width: size.width - self.detailInset.horizontal,
             height: .infinity
         ))
@@ -75,16 +75,16 @@ public class QContentDetailLayout< ContentView: IQView, DetailView: IQView > : I
         )
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         let size = QSize(
             width: available.width,
             height: .infinity
         )
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal,
             height: .infinity
         ))
-        let detailSize = self.detailItem.size(QSize(
+        let detailSize = self.detailItem.size(available: QSize(
             width: size.width - self.detailInset.horizontal,
             height: .infinity
         ))

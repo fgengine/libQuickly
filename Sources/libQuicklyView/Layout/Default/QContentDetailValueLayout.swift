@@ -57,11 +57,11 @@ public class QContentDetailValueLayout< ContentView: IQView, DetailView: IQView,
     }
     
     public func layout(bounds: QRect) -> QSize {
-        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let valueSize = self.valueItem.size(available: bounds.size.apply(inset: self.valueInset))
         let contentDetailValue = bounds.split(
             right: self.valueInset.left + valueSize.width + self.valueInset.right
         )
-        let contentSize = self.contentItem.size(contentDetailValue.left.size.apply(inset: self.contentInset))
+        let contentSize = self.contentItem.size(available: contentDetailValue.left.size.apply(inset: self.contentInset))
         let contentDetail = contentDetailValue.left.split(
             top: self.contentInset.top + contentSize.height + self.contentInset.bottom
         )
@@ -71,16 +71,16 @@ public class QContentDetailValueLayout< ContentView: IQView, DetailView: IQView,
         return bounds.size
     }
     
-    public func size(_ available: QSize) -> QSize {
-        let valueSize = self.valueItem.size(available.apply(inset: self.valueInset))
+    public func size(available: QSize) -> QSize {
+        let valueSize = self.valueItem.size(available: available.apply(inset: self.valueInset))
         let valueBounds = valueSize.apply(inset: -self.valueInset)
         let contentAvailable = QSize(
             width: available.width - valueBounds.width,
             height: available.height
         )
-        let contentSize = self.contentItem.size(contentAvailable.apply(inset: self.contentInset))
+        let contentSize = self.contentItem.size(available: contentAvailable.apply(inset: self.contentInset))
         let contentBounds = contentSize.apply(inset: -self.contentInset)
-        let detailSize = self.detailItem.size(contentAvailable.apply(inset: self.detailInset))
+        let detailSize = self.detailItem.size(available: contentAvailable.apply(inset: self.detailInset))
         let detailBounds = detailSize.apply(inset: -self.detailInset)
         return QSize(
             width: max(contentBounds.width, detailBounds.width) + valueBounds.width,

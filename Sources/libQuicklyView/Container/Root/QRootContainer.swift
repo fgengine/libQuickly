@@ -116,7 +116,9 @@ public class QRootContainer : IQRootContainer {
     #endif
     
     public func insets(of container: IQContainer, interactive: Bool) -> QInset {
-        if self.contentContainer === container {
+        if self.overlayContainer === container {
+            return self.safeArea
+        } else if self.contentContainer === container {
             return self.safeArea
         }
         return .zero
@@ -211,7 +213,7 @@ private extension QRootContainer {
                 overlayItem.frame = bounds
             }
             if let statusBarItem = self.statusBarItem {
-                let statusBarSize = statusBarItem.size(QSize(width: bounds.size.width, height: .infinity))
+                let statusBarSize = statusBarItem.size(available: QSize(width: bounds.size.width, height: .infinity))
                 statusBarItem.frame = QRect(
                     x: bounds.origin.x,
                     y: bounds.origin.y,
@@ -223,7 +225,7 @@ private extension QRootContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

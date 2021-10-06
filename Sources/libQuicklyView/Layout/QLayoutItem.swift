@@ -38,8 +38,8 @@ public extension QLayoutItem {
     }
     
     @inlinable
-    func size(_ available: QSize) -> QSize {
-        return self.view.size(available)
+    func size(available: QSize) -> QSize {
+        return self.view.size(available: available)
     }
     
 }

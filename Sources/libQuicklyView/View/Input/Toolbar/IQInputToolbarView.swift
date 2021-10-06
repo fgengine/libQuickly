@@ -31,7 +31,7 @@ public protocol IQInputToolbarView : IQAccessoryView, IQViewColorable {
     func items(_ value: [IQInputToolbarItem]) -> Self
     
     @discardableResult
-    func size(_ value: Float) -> Self
+    func size(available value: Float) -> Self
     
     @discardableResult
     func translucent(_ value: Bool) -> Self

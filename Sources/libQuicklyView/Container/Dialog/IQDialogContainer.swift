@@ -63,7 +63,7 @@ public protocol IQDialogContentContainer : IQContainer, IQContainerParentable {
     
 }
 
-public extension IQDialogContentContainer where Self : IQContainerParentable {
+public extension IQDialogContentContainer {
     
     @inlinable
     var dialogContainer: IQDialogContainer? {

@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQControlView : IQView, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQControlView : IQView, IQViewHighlightable, IQViewLockable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var contentSize: QSize { get }
     

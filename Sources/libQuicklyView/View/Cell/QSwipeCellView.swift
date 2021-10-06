@@ -185,8 +185,8 @@ public class QSwipeCellView< ContentView : IQView > : IQSwipeCellView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -610,17 +610,17 @@ private extension QSwipeCellView {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
-            let contentSize = self.contentItem.size(available)
+        func size(available: QSize) -> QSize {
+            let contentSize = self.contentItem.size(available: available)
             switch self.state {
             case .idle: break
             case .leading:
                 guard let leadingItem = self.leadingItem else { break }
-                let leadingSize = leadingItem.size(QSize(width: self.leadingSize, height: contentSize.height))
+                let leadingSize = leadingItem.size(available: QSize(width: self.leadingSize, height: contentSize.height))
                 return QSize(width: available.width, height: max(contentSize.height, leadingSize.height))
             case .trailing:
                 guard let trailingItem = self.trailingItem else { break }
-                let trailingSize = trailingItem.size(QSize(width: self.trailingSize, height: contentSize.height))
+                let trailingSize = trailingItem.size(available: QSize(width: self.trailingSize, height: contentSize.height))
                 return QSize(width: available.width, height: max(contentSize.height, trailingSize.height))
             }
             return QSize(width: available.width, height: contentSize.height)

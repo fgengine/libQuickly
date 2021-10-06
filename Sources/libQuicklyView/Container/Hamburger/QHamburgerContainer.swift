@@ -405,7 +405,7 @@ private extension QHamburgerContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

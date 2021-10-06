@@ -61,15 +61,15 @@ public class QIconContentDetailLayout< IconView: IQView, ContentView: IQView, De
             width: bounds.width,
             height: .infinity
         )
-        let iconSize = self.iconItem.size(QSize(
+        let iconSize = self.iconItem.size(available: QSize(
             width: size.width - self.iconInset.horizontal,
             height: .infinity
         ))
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal - iconSize.width - self.iconInset.horizontal,
             height: .infinity
         ))
-        let detailSize = self.detailItem.size(QSize(
+        let detailSize = self.detailItem.size(available: QSize(
             width: size.width - self.detailInset.horizontal - iconSize.width - self.iconInset.horizontal,
             height: .infinity
         ))
@@ -103,20 +103,20 @@ public class QIconContentDetailLayout< IconView: IQView, ContentView: IQView, De
         )
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         let size = QSize(
             width: available.width,
             height: .infinity
         )
-        let iconSize = self.iconItem.size(QSize(
+        let iconSize = self.iconItem.size(available: QSize(
             width: size.width - self.iconInset.horizontal,
             height: .infinity
         ))
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal - iconSize.width - self.iconInset.horizontal,
             height: .infinity
         ))
-        let detailSize = self.detailItem.size(QSize(
+        let detailSize = self.detailItem.size(available: QSize(
             width: size.width - self.detailInset.horizontal - iconSize.width - self.iconInset.horizontal,
             height: .infinity
         ))

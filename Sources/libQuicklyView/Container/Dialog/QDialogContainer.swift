@@ -568,7 +568,7 @@ private extension QDialogContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         
@@ -599,7 +599,7 @@ private extension QDialogContainer.Layout {
     func _size(bounds: QRect, dialog: QDialogContainer.Item) -> QSize {
         let width, height: Float
         if dialog.container.dialogWidth == .fit && dialog.container.dialogHeight == .fit {
-            let size = dialog.item.size(bounds.size)
+            let size = dialog.item.size(available: bounds.size)
             width = size.width
             height = size.height
         } else if dialog.container.dialogWidth == .fit {
@@ -608,7 +608,7 @@ private extension QDialogContainer.Layout {
             case .fixed(let value): height = value
             case .fit: height = bounds.height
             }
-            let size = dialog.item.size(QSize(width: bounds.size.width, height: height))
+            let size = dialog.item.size(available: QSize(width: bounds.size.width, height: height))
             width = size.width
         } else if dialog.container.dialogHeight == .fit {
             switch dialog.container.dialogWidth {
@@ -616,7 +616,7 @@ private extension QDialogContainer.Layout {
             case .fixed(let value): width = value
             case .fit: width = bounds.width
             }
-            let size = dialog.item.size(QSize(width: width, height: bounds.size.height))
+            let size = dialog.item.size(available: QSize(width: width, height: bounds.size.height))
             height = size.height
         } else {
             switch dialog.container.dialogWidth {

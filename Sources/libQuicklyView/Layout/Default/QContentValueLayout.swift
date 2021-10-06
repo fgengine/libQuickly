@@ -43,7 +43,7 @@ public class QContentValueLayout< ContentView: IQView, ValueView: IQView > : IQL
     }
     
     public func layout(bounds: QRect) -> QSize {
-        let valueSize = self.valueItem.size(bounds.size.apply(inset: self.valueInset))
+        let valueSize = self.valueItem.size(available: bounds.size.apply(inset: self.valueInset))
         let contentValue = bounds.split(
             right: self.valueInset.left + valueSize.width + self.valueInset.right
         )
@@ -52,14 +52,14 @@ public class QContentValueLayout< ContentView: IQView, ValueView: IQView > : IQL
         return bounds.size
     }
     
-    public func size(_ available: QSize) -> QSize {
-        let valueSize = self.valueItem.size(available.apply(inset: self.valueInset))
+    public func size(available: QSize) -> QSize {
+        let valueSize = self.valueItem.size(available: available.apply(inset: self.valueInset))
         let valueBounds = valueSize.apply(inset: -self.valueInset)
         let contentAvailable = QSize(
             width: available.width - valueBounds.width,
             height: available.height
         )
-        let contentSize = self.contentItem.size(contentAvailable.apply(inset: self.contentInset))
+        let contentSize = self.contentItem.size(available: contentAvailable.apply(inset: self.contentInset))
         let contentBounds = contentSize.apply(inset: -self.contentInset)
         return QSize(
             width: contentBounds.width + valueBounds.width,

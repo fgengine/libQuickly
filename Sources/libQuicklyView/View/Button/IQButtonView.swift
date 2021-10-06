@@ -22,7 +22,7 @@ public enum QButtonViewImagePosition {
     case bottom
 }
 
-public protocol IQButtonView : IQView, IQViewHighlightable, IQViewSelectable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQButtonView : IQView, IQViewHighlightable, IQViewLockable, IQViewSelectable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var inset: QInset { set get }
     

@@ -26,7 +26,7 @@ public protocol IQLayout : AnyObject {
 
     func layout(bounds: QRect) -> QSize
     
-    func size(_ available: QSize) -> QSize
+    func size(available: QSize) -> QSize
     
     func items(bounds: QRect) -> [QLayoutItem]
     

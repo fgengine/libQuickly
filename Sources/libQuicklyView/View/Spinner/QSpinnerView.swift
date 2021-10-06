@@ -115,7 +115,7 @@ public class QSpinnerView : IQSpinnerView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         return QSize(
             width: self.size.value(available.width) ?? 0,
             height: self.size.value(available.height) ?? 0

@@ -33,7 +33,7 @@ public class QContentLayout< ContentView: IQView > : IQLayout {
             width: bounds.width,
             height: .infinity
         )
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal,
             height: .infinity
         ))
@@ -49,12 +49,12 @@ public class QContentLayout< ContentView: IQView > : IQLayout {
         )
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         let size = QSize(
             width: available.width,
             height: .infinity
         )
-        let contentSize = self.contentItem.size(QSize(
+        let contentSize = self.contentItem.size(available: QSize(
             width: size.width - self.contentInset.horizontal,
             height: .infinity
         ))

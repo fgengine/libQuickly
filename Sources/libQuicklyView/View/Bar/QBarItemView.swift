@@ -110,8 +110,8 @@ public class QBarItemView : IQBarItemView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -267,8 +267,8 @@ private extension QBarItemView {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
-            let contentSize = self.contentItem.size(available.apply(inset: self.contentInset))
+        func size(available: QSize) -> QSize {
+            let contentSize = self.contentItem.size(available: available.apply(inset: self.contentInset))
             let contentBounds = contentSize.apply(inset: -self.contentInset)
             return contentBounds
         }

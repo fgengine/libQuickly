@@ -138,7 +138,7 @@ public class QImageView : IQImageView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         if let width = self.width, let height = self.height {
             return available.apply(width: width, height: height, aspectRatio: self.aspectRatio)
         } else if let widthBehaviour = self.width, let width = widthBehaviour.value(available.width) {

@@ -957,7 +957,7 @@ private extension QListLayout.Helper {
             if let cacheSize = cache[index] {
                 itemSize = cacheSize
             } else {
-                itemSize = items[index].size(available)
+                itemSize = items[index].size(available: available)
                 cache[index] = itemSize
             }
             if let operation = operations.first(where: { $0.indices.contains(index) }) {

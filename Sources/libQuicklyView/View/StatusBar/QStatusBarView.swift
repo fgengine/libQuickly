@@ -76,8 +76,8 @@ public class QStatusBarView : IQStatusBarView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {

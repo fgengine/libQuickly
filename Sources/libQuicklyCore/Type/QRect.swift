@@ -22,6 +22,16 @@ public struct QRect : Hashable {
     
     @inlinable
     public init(
+        x: Float,
+        y: Float,
+        size: QSize
+    ) {
+        self.origin = QPoint(x: x, y: y)
+        self.size = size
+    }
+    
+    @inlinable
+    public init(
         topLeft: QPoint,
         size: QSize
     ) {

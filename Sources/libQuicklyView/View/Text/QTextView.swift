@@ -161,7 +161,7 @@ public class QTextView : IQTextView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         if let cacheAvailable = self._cacheAvailable, let cacheSize = self._cacheSize {
             if cacheAvailable == available {
                 return cacheSize

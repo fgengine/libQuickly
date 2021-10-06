@@ -99,8 +99,8 @@ public class QBarView : IQBarView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -249,7 +249,7 @@ extension QBarView {
                 if let size = self.size {
                     height = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: bounds.width - self.safeArea.horizontal,
                         height: .infinity
                     ))
@@ -269,7 +269,7 @@ extension QBarView {
                 if let size = self.size {
                     width = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: .infinity,
                         height: bounds.height - self.safeArea.vertical
                     ))
@@ -289,7 +289,7 @@ extension QBarView {
                 if let size = self.size {
                     width = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: .infinity,
                         height: bounds.height - self.safeArea.vertical
                     ))
@@ -309,7 +309,7 @@ extension QBarView {
                 if let size = self.size {
                     height = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: bounds.width - self.safeArea.horizontal,
                         height: .infinity
                     ))
@@ -327,7 +327,7 @@ extension QBarView {
             }
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             guard let contentItem = self.contentItem else { return .zero }
             switch self.placement {
             case .top, .bottom:
@@ -335,7 +335,7 @@ extension QBarView {
                 if let size = self.size {
                     height = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: available.width - self.safeArea.horizontal,
                         height: .infinity
                     ))
@@ -350,7 +350,7 @@ extension QBarView {
                 if let size = self.size {
                     width = size
                 } else {
-                    let contentSize = contentItem.size(QSize(
+                    let contentSize = contentItem.size(available: QSize(
                         width: .infinity,
                         height: available.height - self.safeArea.vertical
                     ))

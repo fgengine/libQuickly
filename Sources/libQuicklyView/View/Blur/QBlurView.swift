@@ -100,7 +100,7 @@ public class QBlurView : IQBlurView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         return available
     }
     

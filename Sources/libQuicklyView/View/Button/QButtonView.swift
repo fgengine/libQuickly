@@ -85,6 +85,10 @@ public class QButtonView : IQButtonView {
         set(value) { self._view.isHighlighted = value }
         get { return self._view.isHighlighted }
     }
+    public var isLocked: Bool {
+        set(value) { self._view.isLocked = value }
+        get { return self._view.isLocked }
+    }
     public var isSelected: Bool {
         set(value) {
             if self._isSelected != value {
@@ -133,6 +137,7 @@ public class QButtonView : IQButtonView {
         imageView: IQView? = nil,
         textInset: QInset = QInset(horizontal: 4, vertical: 4),
         textView: IQView? = nil,
+        isLocked: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -161,6 +166,7 @@ public class QButtonView : IQButtonView {
         self._view = QControlView(
             contentLayout: self._layout,
             shouldHighlighting: true,
+            isLocked: isLocked,
             shouldPressed: true,
             color: color,
             border: border,
@@ -175,12 +181,12 @@ public class QButtonView : IQButtonView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         let size: QSize
         if let width = self.width, let height = self.height {
             size = available.apply(width: width, height: height)
         } else {
-            let viewSize = self._view.size(available)
+            let viewSize = self._view.size(available: available)
             if let widthBehaviour = self.width, let width = widthBehaviour.value(available.width) {
                 size = QSize(
                     width: width,
@@ -278,7 +284,13 @@ public class QButtonView : IQButtonView {
     
     @discardableResult
     public func highlight(_ value: Bool) -> Self {
-        self.isHighlighted = value
+        self._view.highlight(value)
+        return self
+    }
+    
+    @discardableResult
+    public func lock(_ value: Bool) -> Self {
+        self._view.lock(value)
         return self
     }
     
@@ -497,11 +509,11 @@ extension QButtonView {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             var size = QSize(width: 0, height: 0)
-            let spinnerSize = self.spinnerItem.flatMap({ return $0.size(available) })
-            let imageSize = self.imageItem.flatMap({ return $0.size(available) })
-            let textSize = self.textItem.flatMap({ return $0.size(available) })
+            let spinnerSize = self.spinnerItem.flatMap({ return $0.size(available: available) })
+            let imageSize = self.imageItem.flatMap({ return $0.size(available: available) })
+            let textSize = self.textItem.flatMap({ return $0.size(available: available) })
             if self.spinnerAnimating == true, let spinnerSize = spinnerSize {
                 switch self.spinnerPosition {
                 case .fill:
@@ -580,7 +592,7 @@ private extension QButtonView.Layout {
         if let size = self._cacheSpinnerSize {
             return size
         }
-        self._cacheSpinnerSize = item.size(available)
+        self._cacheSpinnerSize = item.size(available: available)
         return self._cacheSpinnerSize!
     }
     
@@ -588,7 +600,7 @@ private extension QButtonView.Layout {
         if let size = self._cacheImageSize {
             return size
         }
-        self._cacheImageSize = item.size(available)
+        self._cacheImageSize = item.size(available: available)
         return self._cacheImageSize!
     }
     
@@ -596,7 +608,7 @@ private extension QButtonView.Layout {
         if let size = self._cacheTextSize {
             return size
         }
-        self._cacheTextSize = item.size(available)
+        self._cacheTextSize = item.size(available: available)
         return self._cacheTextSize!
     }
     

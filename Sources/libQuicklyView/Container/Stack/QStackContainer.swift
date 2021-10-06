@@ -792,7 +792,7 @@ private extension QStackContainer.Item {
         
         func layout(bounds: QRect) -> QSize {
             if self.barHidden == false {
-                let barSize = self.barItem.size(QSize(
+                let barSize = self.barItem.size(available: QSize(
                     width: bounds.width,
                     height: .infinity
                 ))
@@ -808,7 +808,7 @@ private extension QStackContainer.Item {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         
@@ -864,7 +864,7 @@ private extension QStackContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

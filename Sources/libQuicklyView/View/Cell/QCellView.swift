@@ -116,8 +116,8 @@ public class QCellView< ContentView : IQView > : IQCellView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -263,8 +263,8 @@ private extension QCellView {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
-            let contentSize = self.contentItem.size(available)
+        func size(available: QSize) -> QSize {
+            let contentSize = self.contentItem.size(available: available)
             return QSize(width: available.width, height: contentSize.height)
         }
         

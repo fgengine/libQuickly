@@ -122,8 +122,8 @@ public class QRemoteImageView : IQRemoteImageView {
         self._view.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self._view.size(available)
+    public func size(available: QSize) -> QSize {
+        return self._view.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -332,13 +332,13 @@ private extension QRemoteImageView {
         func layout(bounds: QRect) -> QSize {
             switch self.state {
             case .loading:
-                let placeholderSize = self.placeholderItem.size(bounds.size)
+                let placeholderSize = self.placeholderItem.size(available: bounds.size)
                 self.placeholderItem.frame = QRect(
                     center: bounds.center,
                     size: placeholderSize
                 )
                 if let progressItem = self.progressItem {
-                    let progressSize = progressItem.size(bounds.size)
+                    let progressSize = progressItem.size(available: bounds.size)
                     progressItem.frame = QRect(
                         center: self.placeholderItem.frame.center,
                         size: progressSize
@@ -352,7 +352,7 @@ private extension QRemoteImageView {
             case .loaded:
                 let size: QSize
                 if let imageItem = self.imageItem {
-                    size = imageItem.size(bounds.size)
+                    size = imageItem.size(available: bounds.size)
                     imageItem.frame = QRect(
                         x: bounds.origin.x,
                         y: bounds.origin.y,
@@ -360,7 +360,7 @@ private extension QRemoteImageView {
                         height: size.height
                     )
                 } else {
-                    size = self.placeholderItem.size(bounds.size)
+                    size = self.placeholderItem.size(available: bounds.size)
                     self.placeholderItem.frame = QRect(
                         x: bounds.origin.x,
                         y: bounds.origin.y,
@@ -371,7 +371,7 @@ private extension QRemoteImageView {
                 return size
             case .error:
                 if let errorItem = self.errorItem {
-                    let errorSize = errorItem.size(bounds.size)
+                    let errorSize = errorItem.size(available: bounds.size)
                     errorItem.frame = QRect(
                         x: bounds.origin.x,
                         y: bounds.origin.y,
@@ -380,7 +380,7 @@ private extension QRemoteImageView {
                     )
                     return errorSize
                 }
-                let placeholderSize = self.placeholderItem.size(bounds.size)
+                let placeholderSize = self.placeholderItem.size(available: bounds.size)
                 self.placeholderItem.frame = QRect(
                     x: bounds.origin.x,
                     y: bounds.origin.y,
@@ -391,12 +391,12 @@ private extension QRemoteImageView {
             }
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             switch self.state {
             case .loading:
-                let placeholderSize = self.placeholderItem.size(available)
+                let placeholderSize = self.placeholderItem.size(available: available)
                 if let progressItem = self.progressItem {
-                    let progressSize = progressItem.size(available)
+                    let progressSize = progressItem.size(available: available)
                     return QSize(
                         width: max(progressSize.width, placeholderSize.height),
                         height: max(progressSize.height, placeholderSize.height)
@@ -406,16 +406,16 @@ private extension QRemoteImageView {
             case .loaded:
                 let size: QSize
                 if let imageItem = self.imageItem {
-                    size = imageItem.size(available)
+                    size = imageItem.size(available: available)
                 } else {
-                    size = self.placeholderItem.size(available)
+                    size = self.placeholderItem.size(available: available)
                 }
                 return size
             case .error:
                 if let errorItem = self.errorItem {
-                    return errorItem.size(available)
+                    return errorItem.size(available: available)
                 }
-                return self.placeholderItem.size(available)
+                return self.placeholderItem.size(available: available)
             }
         }
         

@@ -496,11 +496,11 @@ private extension QPushContainer {
         init(container: IQPushContentContainer, available: QSize) {
             self.container = container
             self.item = QLayoutItem(view: container.view)
-            self.size = container.view.size(available)
+            self.size = container.view.size(available: available)
         }
         
         func update(available: QSize) {
-            self.size = self.container.view.size(available)
+            self.size = self.container.view.size(available: available)
         }
 
     }
@@ -587,7 +587,7 @@ private extension QPushContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

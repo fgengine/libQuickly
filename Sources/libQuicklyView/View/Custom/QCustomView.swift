@@ -70,6 +70,15 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         }
         get { return self._isHighlighted }
     }
+    public var isLocked: Bool {
+        set(value) {
+            if self._isLocked != value {
+                self._isLocked = value
+                self.triggeredChangeStyle(false)
+            }
+        }
+        get { return self._isLocked }
+    }
     public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
@@ -109,6 +118,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     }
     private var _gestures: [IQGesture]
     private var _isHighlighted: Bool
+    private var _isLocked: Bool
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
     private var _onVisible: (() -> Void)?
@@ -121,6 +131,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         contentLayout: Layout,
         shouldHighlighting: Bool = false,
         isHighlighted: Bool = false,
+        isLocked: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -132,6 +143,7 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         self.contentLayout = contentLayout
         self.shouldHighlighting = shouldHighlighting
         self._isHighlighted = shouldHighlighting == true && isHighlighted == true
+        self._isLocked = isLocked
         self.color = color
         self.border = border
         self.cornerRadius = cornerRadius
@@ -150,8 +162,8 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
-        return self.contentLayout.size(available)
+    public func size(available: QSize) -> QSize {
+        return self.contentLayout.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -226,6 +238,12 @@ public class QCustomView< Layout : IQLayout > : IQCustomView {
     @discardableResult
     public func highlight(_ value: Bool) -> Self {
         self.isHighlighted = value
+        return self
+    }
+    
+    @discardableResult
+    public func lock(_ value: Bool) -> Self {
+        self.isLocked = value
         return self
     }
     

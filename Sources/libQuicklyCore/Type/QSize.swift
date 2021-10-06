@@ -66,6 +66,22 @@ public extension QSize {
     }
     
     @inlinable
+    func max(_ size: QSize) -> QSize {
+        return QSize(
+            width: Swift.max(self.width, size.width),
+            height: Swift.max(self.height, size.height)
+        )
+    }
+    
+    @inlinable
+    func min(_ size: QSize) -> QSize {
+        return QSize(
+            width: Swift.min(self.width, size.width),
+            height: Swift.min(self.height, size.height)
+        )
+    }
+    
+    @inlinable
     func lerp(_ to: QSize, progress: Float) -> QSize {
         return QSize(
             width: self.width.lerp(to.width, progress: progress),

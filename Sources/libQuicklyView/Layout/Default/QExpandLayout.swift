@@ -115,14 +115,14 @@ public class QExpandLayout< ContentView: IQView, DetailView: IQView > : IQLayout
         if let size = self._contentSize {
             contentSize = size
         } else {
-            contentSize = self.contentItem.size(bounds.size.apply(inset: self.contentInset))
+            contentSize = self.contentItem.size(available: bounds.size.apply(inset: self.contentInset))
             self._contentSize = contentSize
         }
         let detailSize: QSize
         if let size = self._detailSize {
             detailSize = size
         } else {
-            detailSize = self.detailItem.size(bounds.size.apply(inset: self.detailInset))
+            detailSize = self.detailItem.size(available: bounds.size.apply(inset: self.detailInset))
             self._detailSize = detailSize
         }
         switch self._state {
@@ -177,21 +177,21 @@ public class QExpandLayout< ContentView: IQView, DetailView: IQView > : IQLayout
         }
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         switch self._state {
         case .collapsed:
-            let contentSize = self.contentItem.size(available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
+            let contentSize = self.contentItem.size(available: available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
             return contentSize
         case .expanded:
-            let contentSize = self.contentItem.size(available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
-            let detailSize = self.detailItem.size(available.apply(inset: self.detailInset)).apply(inset: -self.detailInset)
+            let contentSize = self.contentItem.size(available: available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
+            let detailSize = self.detailItem.size(available: available.apply(inset: self.detailInset)).apply(inset: -self.detailInset)
             return QSize(
                 width: max(contentSize.width, detailSize.width),
                 height: contentSize.height + detailSize.height
             )
         case .changing(let progress):
-            let contentSize = self.contentItem.size(available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
-            let expandDetailSize = self.detailItem.size(available.apply(inset: self.detailInset)).apply(inset: -self.detailInset)
+            let contentSize = self.contentItem.size(available: available.apply(inset: self.contentInset)).apply(inset: -self.contentInset)
+            let expandDetailSize = self.detailItem.size(available: available.apply(inset: self.detailInset)).apply(inset: -self.detailInset)
             let collapseDetailSize = QSize(width: expandDetailSize.width, height: 0)
             let detailSize = collapseDetailSize.lerp(expandDetailSize, progress: progress)
             return QSize(

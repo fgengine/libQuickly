@@ -93,7 +93,7 @@ public class QStateLayout< State : Hashable > : IQLayout {
         let inset = self._insets[self.state] ?? .zero
         let alignment = self._alignments[self.state] ?? .topLeft
         let availableBounds = bounds.apply(inset: inset)
-        let itemSize = item.size(availableBounds.size)
+        let itemSize = item.size(available: availableBounds.size)
         switch alignment {
         case .topLeft:
             item.frame = QRect(topLeft: availableBounds.topLeft, size: itemSize)
@@ -117,11 +117,11 @@ public class QStateLayout< State : Hashable > : IQLayout {
         return bounds.size
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         guard let item = self._items[self.state] else { return .zero }
         let inset = self._insets[self.state] ?? .zero
         let availableSize = available.apply(inset: inset)
-        let size = item.size(availableSize)
+        let size = item.size(available: availableSize)
         return size.apply(inset: -inset)
     }
     

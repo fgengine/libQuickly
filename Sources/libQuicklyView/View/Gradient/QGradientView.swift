@@ -122,7 +122,7 @@ public class QGradientView : IQGradientView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         return available.apply(width: self.width, height: self.height, aspectRatio: self.aspectRatio)
     }
     

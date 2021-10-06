@@ -207,7 +207,7 @@ private extension QStickyContainer {
         func layout(bounds: QRect) -> QSize {
             self.contentItem.frame = bounds
             if self.overlayHidden == false {
-                let overlaySize = self.overlayItem.size(bounds.size)
+                let overlaySize = self.overlayItem.size(available: bounds.size)
                 self.overlayItem.frame = QRect(
                     bottomLeft: bounds.bottomLeft,
                     size: QSize(
@@ -220,7 +220,7 @@ private extension QStickyContainer {
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

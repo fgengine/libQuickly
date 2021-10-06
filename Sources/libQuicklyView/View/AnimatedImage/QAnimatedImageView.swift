@@ -170,7 +170,7 @@ public class QAnimatedImageView : IQAnimatedImageView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         guard let image = self.images.first else { return .zero }
         if let width = self.width, let height = self.height {
             return available.apply(width: width, height: height, aspectRatio: self.aspectRatio)

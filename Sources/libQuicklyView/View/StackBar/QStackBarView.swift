@@ -274,7 +274,7 @@ private extension QStackBarView {
             )
             var origin = self.inset.top
             if let headerItem = self.headerItem {
-                let headerSize = headerItem.size(availableSize)
+                let headerSize = headerItem.size(available: availableSize)
                 headerItem.frame = QRect(
                     x: bounds.x + self.inset.left,
                     y: bounds.y + origin,
@@ -310,7 +310,7 @@ private extension QStackBarView {
             if let titleItem = self.titleItem {
                 let leadingSpacing = self.leadingItems.count > 0 ? self.titleSpacing : 0
                 let trailingSpacing = self.trailingItems.count > 0 ? self.titleSpacing : 0
-                let titleSize = titleItem.size(QSize(
+                let titleSize = titleItem.size(available: QSize(
                     width: availableSize.width - (leadingSize.width + leadingSpacing) - (trailingSize.width + trailingSpacing),
                     height: max(leadingSize.height, trailingSize.height)
                 ))
@@ -326,7 +326,7 @@ private extension QStackBarView {
             }
             if let footerItem = self.footerItem {
                 origin += self.footerSpacing
-                let footerSize = footerItem.size(availableSize)
+                let footerSize = footerItem.size(available: availableSize)
                 footerItem.frame = QRect(
                     x: bounds.x + self.inset.left,
                     y: bounds.y + origin,
@@ -342,14 +342,14 @@ private extension QStackBarView {
             )
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             let availableSize = QSize(
                 width: available.width - self.inset.horizontal,
                 height: .infinity
             )
             let headerHeight: Float
             if let headerItem = self.headerItem {
-                let headerSize = headerItem.size(availableSize)
+                let headerSize = headerItem.size(available: availableSize)
                 headerHeight = headerSize.height + self.headerSpacing
             } else {
                 headerHeight = 0
@@ -372,7 +372,7 @@ private extension QStackBarView {
             if let titleItem = self.titleItem {
                 let leadingSpacing = self.leadingItems.count > 0 ? self.titleSpacing : 0
                 let trailingSpacing = self.trailingItems.count > 0 ? self.titleSpacing : 0
-                let titleSize = titleItem.size(QSize(
+                let titleSize = titleItem.size(available: QSize(
                     width: availableSize.width - (leadingSize.width + leadingSpacing) - (trailingSize.width + trailingSpacing),
                     height: max(leadingSize.height, trailingSize.height)
                 ))
@@ -382,7 +382,7 @@ private extension QStackBarView {
             }
             let footerHeight: Float
             if let footerItem = self.footerItem {
-                let footerSize = footerItem.size(availableSize)
+                let footerSize = footerItem.size(available: availableSize)
                 footerHeight = footerSize.height + self.footerSpacing
             } else {
                 footerHeight = 0

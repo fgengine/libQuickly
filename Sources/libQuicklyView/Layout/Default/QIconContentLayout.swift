@@ -43,7 +43,7 @@ public class QIconContentLayout< IconView: IQView, ContentView: IQView > : IQLay
     }
     
     public func layout(bounds: QRect) -> QSize {
-        let iconSize = self.iconItem.size(bounds.size.apply(inset: self.iconInset))
+        let iconSize = self.iconItem.size(available: bounds.size.apply(inset: self.iconInset))
         let contentValue = bounds.split(
             left: self.iconInset.left + iconSize.width + self.iconInset.right
         )
@@ -52,14 +52,14 @@ public class QIconContentLayout< IconView: IQView, ContentView: IQView > : IQLay
         return bounds.size
     }
     
-    public func size(_ available: QSize) -> QSize {
-        let iconSize = self.iconItem.size(available.apply(inset: self.iconInset))
+    public func size(available: QSize) -> QSize {
+        let iconSize = self.iconItem.size(available: available.apply(inset: self.iconInset))
         let iconBounds = iconSize.apply(inset: -self.iconInset)
         let contentAvailable = QSize(
             width: available.width - iconBounds.width,
             height: available.height
         )
-        let contentSize = self.contentItem.size(contentAvailable.apply(inset: self.contentInset))
+        let contentSize = self.contentItem.size(available: contentAvailable.apply(inset: self.contentInset))
         let contentBounds = contentSize.apply(inset: -self.contentInset)
         return QSize(
             width: iconBounds.width + contentBounds.width,

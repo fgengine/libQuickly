@@ -114,7 +114,6 @@ public class QModalContainer : IQModalContainer {
         self._view = QCustomView(
             gestures: [ self._interactiveGesture ],
             contentLayout: Layout(
-                containerInset: .zero,
                 contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
                 state: .empty
             )
@@ -122,7 +121,6 @@ public class QModalContainer : IQModalContainer {
         #else
         self._view = QCustomView(
             contentLayout: Layout(
-                containerInset: .zero,
                 contentItem: contentContainer.flatMap({ QLayoutItem(view: $0.view) }),
                 state: .empty
             )
@@ -137,7 +135,6 @@ public class QModalContainer : IQModalContainer {
     }
     
     public func didChangeInsets() {
-        self._view.contentLayout.containerInset = self.inheritedInsets(interactive: true)
         self.contentContainer?.didChangeInsets()
         for container in self.containers {
             container.didChangeInsets()
@@ -445,9 +442,6 @@ private extension QModalContainer {
         
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
-        var containerInset: QInset {
-            didSet { self.setNeedUpdate() }
-        }
         var contentItem: QLayoutItem? {
             didSet { self.setNeedUpdate() }
         }
@@ -456,11 +450,9 @@ private extension QModalContainer {
         }
 
         init(
-            containerInset: QInset,
             contentItem: QLayoutItem?,
             state: State
         ) {
-            self.containerInset = containerInset
             self.contentItem = contentItem
             self.state = state
         }
@@ -473,20 +465,20 @@ private extension QModalContainer {
             case .empty:
                 break
             case .idle(let modal):
-                modal.item.frame = bounds.apply(inset: self.containerInset)
+                modal.item.frame = bounds
             case .present(let modal, let progress):
                 let beginRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
-                let endRect = bounds.apply(inset: self.containerInset)
+                let endRect = bounds
                 modal.item.frame = beginRect.lerp(endRect, progress: progress)
             case .dismiss(let modal, let progress):
-                let beginRect = bounds.apply(inset: self.containerInset)
+                let beginRect = bounds
                 let endRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
                 modal.item.frame = beginRect.lerp(endRect, progress: progress)
             }
             return bounds.size
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return available
         }
         

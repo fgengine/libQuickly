@@ -159,7 +159,7 @@ private extension QGroupBarView {
             )
         }
         
-        func size(_ available: QSize) -> QSize {
+        func size(available: QSize) -> QSize {
             return QListLayout.Helper.size(
                 available: available,
                 direction: .horizontal,

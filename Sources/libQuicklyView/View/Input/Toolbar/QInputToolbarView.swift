@@ -146,7 +146,7 @@ open class QInputToolbarView : IQInputToolbarView {
         self._reuse.loadIfNeeded()
     }
     
-    public func size(_ available: QSize) -> QSize {
+    public func size(available: QSize) -> QSize {
         return QSize(width: available.width, height: self.size)
     }
     
@@ -168,7 +168,7 @@ open class QInputToolbarView : IQInputToolbarView {
     }
     
     @discardableResult
-    public func size(_ value: Float) -> Self {
+    public func size(available value: Float) -> Self {
         self.size = value
         return self
     }

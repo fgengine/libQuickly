@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQCustomView : IQView, IQViewHighlightable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQCustomView : IQView, IQViewHighlightable, IQViewLockable, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
     var gestures: [IQGesture] { set get }
     
