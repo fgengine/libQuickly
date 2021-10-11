@@ -298,7 +298,11 @@ extension QPageContainer : IQPageBarViewDelegate {
     
     public func pressed(pageBar: IQPageBarView, itemView: IQView) {
         guard let item = self._items.first(where: { $0.barView === itemView }) else { return }
-        self.set(current: item.container, animated: true, completion: nil)
+        if self._current === item {
+            _ = self.activate()
+        } else {
+            self.set(current: item.container, animated: true, completion: nil)
+        }
     }
     
 }
