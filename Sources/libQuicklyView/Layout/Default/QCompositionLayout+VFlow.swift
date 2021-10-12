@@ -9,35 +9,29 @@ public extension QCompositionLayout {
     
     struct VFlow : IQCompositionLayoutEntity {
         
-        public let inset: QInset
-        public var entities: [IQCompositionLayoutEntity]
         public var alignment: Alignment
         public var entitySpacing: Float
         public var lineSpacing: Float
-        
+        public var entities: [IQCompositionLayoutEntity]
+
         public init(
-            inset: QInset = .zero,
-            entities: [IQCompositionLayoutEntity],
             alignment: Alignment = .center,
             entitySpacing: Float,
-            lineSpacing: Float
+            lineSpacing: Float,
+            entities: [IQCompositionLayoutEntity]
         ) {
-            self.inset = inset
             self.entities = entities
             self.alignment = alignment
             self.entitySpacing = entitySpacing
             self.lineSpacing = lineSpacing
         }
         
+        @discardableResult
         public func layout(bounds: QRect) -> QSize {
-            let itemAvailable = QSize(
-                width: bounds.width - self.inset.horizontal,
-                height: .infinity
-            )
             let itemRange = Range(
                 uncheckedBounds: (
-                    lower: bounds.x + self.inset.left,
-                    upper: bounds.x + self.inset.left + itemAvailable.width
+                    lower: bounds.x,
+                    upper: bounds.x + bounds.width
                 )
             )
             var itemsSize: QSize = .zero
@@ -46,12 +40,12 @@ public extension QCompositionLayout {
             for entity in self.entities {
                 let item = Item(
                     entity: entity,
-                    size: entity.size(available: itemAvailable)
+                    size: entity.size(available: bounds.size)
                 )
                 if item.size.width > 0 {
                     let newItems = items + [ item ]
                     let newItemsSize = self._size(newItems)
-                    if newItemsSize.width >= itemAvailable.width {
+                    if newItemsSize.width >= bounds.width {
                         let layoutSize = self._layout(items, itemsSize, itemRange, line)
                         line += layoutSize.height + self.lineSpacing
                         itemsSize = item.size
@@ -71,27 +65,23 @@ public extension QCompositionLayout {
             }
             return QSize(
                 width: bounds.width,
-                height: line + self.inset.vertical
+                height: line
             )
         }
         
         public func size(available: QSize) -> QSize {
-            let itemAvailable = QSize(
-                width: available.width - self.inset.horizontal,
-                height: .infinity
-            )
             var itemsSize: QSize = .zero
             var items: [Item] = []
             var line: Float = 0
             for entity in self.entities {
                 let item = Item(
                     entity: entity,
-                    size: entity.size(available: itemAvailable)
+                    size: entity.size(available: available)
                 )
                 if item.size.width > 0 {
                     let newItems = items + [ item ]
                     let newItemsSize = self._size(newItems)
-                    if newItemsSize.width >= itemAvailable.width {
+                    if newItemsSize.width >= available.width {
                         line += itemsSize.height + self.lineSpacing
                         itemsSize = item.size
                         items = [ item ]
@@ -109,7 +99,7 @@ public extension QCompositionLayout {
             }
             return QSize(
                 width: available.width,
-                height: line + self.inset.vertical
+                height: line
             )
         }
         

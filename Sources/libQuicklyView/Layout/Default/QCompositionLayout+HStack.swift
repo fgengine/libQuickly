@@ -9,67 +9,48 @@ public extension QCompositionLayout {
     
     struct HStack : IQCompositionLayoutEntity {
         
-        public let inset: QInset
         public var entities: [IQCompositionLayoutEntity]
-        public var spacing: Float
         
         public init(
-            inset: QInset = .zero,
-            entities: [IQCompositionLayoutEntity],
-            spacing: Float = 0
+            _ entities: [IQCompositionLayoutEntity]
         ) {
-            self.inset = inset
             self.entities = entities
-            self.spacing = spacing
         }
         
+        @discardableResult
         public func layout(bounds: QRect) -> QSize {
-            let itemAvailable = QSize(
-                width: .infinity,
-                height: bounds.height - self.inset.vertical
-            )
             var origin = QSize.zero
             for entity in self.entities {
                 let size = entity.layout(
                     bounds: QRect(
-                        x: bounds.x + self.inset.left + origin.width,
-                        y: bounds.y + self.inset.top,
-                        size: entity.size(available: itemAvailable)
+                        x: bounds.x + origin.width,
+                        y: bounds.y,
+                        size: entity.size(available: bounds.size)
                     )
                 )
                 if size.width > 0 {
-                    origin.width += size.width + self.spacing
+                    origin.width += size.width
                     origin.height = max(origin.height, size.height)
                 }
             }
-            if origin.width > 0 {
-                origin.width -= self.spacing
-            }
             return QSize(
-                width: origin.width + self.inset.horizontal,
-                height: origin.height + self.inset.vertical
+                width: origin.width,
+                height: origin.height
             )
         }
         
         public func size(available: QSize) -> QSize {
-            let itemAvailable = QSize(
-                width: .infinity,
-                height: available.height - self.inset.vertical
-            )
             var origin = QSize.zero
             for entity in self.entities {
-                let size = entity.size(available: itemAvailable)
+                let size = entity.size(available: available)
                 if size.width > 0 {
-                    origin.width += size.width + self.spacing
+                    origin.width += size.width
                     origin.height = max(origin.height, size.height)
                 }
             }
-            if origin.width > 0 {
-                origin.width -= self.spacing
-            }
             return QSize(
-                width: origin.width + self.inset.horizontal,
-                height: origin.height + self.inset.vertical
+                width: origin.width,
+                height: origin.height
             )
         }
         

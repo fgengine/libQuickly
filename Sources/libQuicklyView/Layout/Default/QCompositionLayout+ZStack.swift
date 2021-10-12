@@ -12,11 +12,12 @@ public extension QCompositionLayout {
         public var entities: [IQCompositionLayoutEntity]
         
         public init(
-            entities: [IQCompositionLayoutEntity]
+            _ entities: [IQCompositionLayoutEntity]
         ) {
             self.entities = entities
         }
         
+        @discardableResult
         public func layout(bounds: QRect) -> QSize {
             var maxSize = QSize.zero
             for entity in self.entities {

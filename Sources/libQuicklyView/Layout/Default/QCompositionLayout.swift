@@ -7,6 +7,7 @@ import libQuicklyCore
 
 public protocol IQCompositionLayoutEntity {
     
+    @discardableResult
     func layout(bounds: QRect) -> QSize
     
     func size(available: QSize) -> QSize
@@ -37,6 +38,7 @@ public class QCompositionLayout : IQLayout {
         self.entity = entity
     }
     
+    @discardableResult
     public func layout(bounds: QRect) -> QSize {
         let size = self.entity.layout(
             bounds: bounds.apply(inset: self.inset)
