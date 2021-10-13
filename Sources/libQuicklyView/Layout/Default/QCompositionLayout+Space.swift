@@ -23,15 +23,15 @@ public extension QCompositionLayout {
         @discardableResult
         public func layout(bounds: QRect) -> QSize {
             switch self.mode {
-            case .horizontal: return QSize(width: self.space, height: bounds.height )
-            case .vertical: return QSize(width: bounds.width, height: self.space)
+            case .horizontal: return QSize(width: self.space, height: 0)
+            case .vertical: return QSize(width: 0, height: self.space)
             }
         }
         
         public func size(available: QSize) -> QSize {
             switch self.mode {
-            case .horizontal: return QSize(width: self.space, height: available.height )
-            case .vertical: return QSize(width: available.width, height: self.space)
+            case .horizontal: return QSize(width: self.space, height: 0)
+            case .vertical: return QSize(width: 0, height: self.space)
             }
         }
         

@@ -63,4 +63,3 @@ public extension QCompositionLayout.Position {
     }
     
 }
-
