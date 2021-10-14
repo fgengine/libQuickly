@@ -135,6 +135,7 @@ public class QModalContainer : IQModalContainer {
     }
     
     public func didChangeInsets() {
+        self._view.contentLayout.inset = self.inheritedInsets(interactive: false)
         self.contentContainer?.didChangeInsets()
         for container in self.containers {
             container.didChangeInsets()
@@ -426,10 +427,30 @@ private extension QModalContainer {
         
         var container: IQModalContentContainer
         var item: QLayoutItem
+        var sheetInset: QInset?
+        var sheetBackgroundView: (IQView & IQViewAlphable)?
+        var sheetBackgroundItem: QLayoutItem?
 
-        init(container: IQModalContentContainer) {
+        convenience init(container: IQModalContentContainer) {
+            self.init(
+                container: container,
+                item: QLayoutItem(view: container.view),
+                sheetInset: container.modalSheetInset,
+                sheetBackgroundView: container.modalSheetBackgroundView
+            )
+        }
+        
+        init(
+            container: IQModalContentContainer,
+            item: QLayoutItem,
+            sheetInset: QInset?,
+            sheetBackgroundView: (IQView & IQViewAlphable)?
+        ) {
             self.container = container
-            self.item = QLayoutItem(view: container.view)
+            self.item = item
+            self.sheetInset = sheetInset
+            self.sheetBackgroundView = sheetBackgroundView
+            self.sheetBackgroundItem = sheetBackgroundView.flatMap({ QLayoutItem(view: $0) })
         }
 
     }
@@ -442,6 +463,9 @@ private extension QModalContainer {
         
         unowned var delegate: IQLayoutDelegate?
         unowned var view: IQView?
+        var inset: QInset {
+            didSet { self.setNeedUpdate() }
+        }
         var contentItem: QLayoutItem? {
             didSet { self.setNeedUpdate() }
         }
@@ -453,6 +477,7 @@ private extension QModalContainer {
             contentItem: QLayoutItem?,
             state: State
         ) {
+            self.inset = .zero
             self.contentItem = contentItem
             self.state = state
         }
@@ -465,15 +490,55 @@ private extension QModalContainer {
             case .empty:
                 break
             case .idle(let modal):
-                modal.item.frame = bounds
+                if let sheetInset = modal.sheetInset, let view = modal.sheetBackgroundView, let item = modal.sheetBackgroundItem {
+                    let inset = QInset(
+                        top: self.inset.top + sheetInset.top,
+                        left: sheetInset.left,
+                        right: sheetInset.right,
+                        bottom: sheetInset.bottom
+                    )
+                    modal.item.frame = bounds.apply(inset: inset)
+                    view.alpha = 1
+                    item.frame = bounds
+                } else {
+                    modal.item.frame = bounds
+                }
             case .present(let modal, let progress):
-                let beginRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
-                let endRect = bounds
-                modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                if let sheetInset = modal.sheetInset, let view = modal.sheetBackgroundView, let item = modal.sheetBackgroundItem {
+                    let inset = QInset(
+                        top: self.inset.top + sheetInset.top,
+                        left: sheetInset.left,
+                        right: sheetInset.right,
+                        bottom: sheetInset.bottom
+                    )
+                    let beginRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
+                    let endRect = bounds.apply(inset: inset)
+                    modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                    view.alpha = progress
+                    item.frame = bounds
+                } else {
+                    let beginRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
+                    let endRect = bounds
+                    modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                }
             case .dismiss(let modal, let progress):
-                let beginRect = bounds
-                let endRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
-                modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                if let sheetInset = modal.sheetInset, let view = modal.sheetBackgroundView, let item = modal.sheetBackgroundItem {
+                    let inset = QInset(
+                        top: self.inset.top + sheetInset.top,
+                        left: sheetInset.left,
+                        right: sheetInset.right,
+                        bottom: sheetInset.bottom
+                    )
+                    let beginRect = bounds.apply(inset: inset)
+                    let endRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
+                    modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                    view.alpha = 1 - progress
+                    item.frame = bounds
+                } else {
+                    let beginRect = bounds
+                    let endRect = QRect(topLeft: bounds.bottomLeft, size: bounds.size)
+                    modal.item.frame = beginRect.lerp(endRect, progress: progress)
+                }
             }
             return bounds.size
         }
@@ -489,9 +554,21 @@ private extension QModalContainer {
             }
             switch self.state {
             case .empty: break
-            case .idle(let modal): items.append(modal.item)
-            case .present(let modal, _): items.append(modal.item)
-            case .dismiss(let modal, _): items.append(modal.item)
+            case .idle(let modal):
+                if let item = modal.sheetBackgroundItem {
+                    items.append(item)
+                }
+                items.append(modal.item)
+            case .present(let modal, _):
+                if let item = modal.sheetBackgroundItem {
+                    items.append(item)
+                }
+                items.append(modal.item)
+            case .dismiss(let modal, _):
+                if let item = modal.sheetBackgroundItem {
+                    items.append(item)
+                }
+                items.append(modal.item)
             }
             return items
         }

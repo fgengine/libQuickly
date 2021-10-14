@@ -169,6 +169,21 @@ extension QScreenContainer : IQHamburgerMenuContainer where Screen : IQScreenHam
 }
 
 extension QScreenContainer : IQModalContentContainer where Screen : IQScreenModalable {
+    
+    public var modalSheetInset: QInset? {
+        switch self.screen.modalPresentation {
+        case .simple: return nil
+        case .sheet(let info): return info.inset
+        }
+    }
+    
+    public var modalSheetBackgroundView: (IQView & IQViewAlphable)? {
+        switch self.screen.modalPresentation {
+        case .simple: return nil
+        case .sheet(let info): return info.backgroundView
+        }
+    }
+    
 }
 
 extension QScreenContainer : IQDialogContentContainer where Screen : IQScreenDialogable {

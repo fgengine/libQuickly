@@ -34,8 +34,11 @@ public extension IQModalContainer {
 }
 
 public protocol IQModalContentContainer : IQContainer, IQContainerParentable {
-    
+        
     var modalContainer: IQModalContainer? { get }
+    
+    var modalSheetInset: QInset? { get }
+    var modalSheetBackgroundView: (IQView & IQViewAlphable)? { get }
     
 }
 
