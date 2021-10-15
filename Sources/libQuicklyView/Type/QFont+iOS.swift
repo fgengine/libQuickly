@@ -6,7 +6,7 @@
 
 import UIKit
 
-public struct QFont {
+public struct QFont : Equatable {
 
     public var native: UIFont
     

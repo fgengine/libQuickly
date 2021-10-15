@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public extension QCompositionLayout {
     
-    struct View : IQCompositionLayoutEntity {
+    struct View {
         
         public let item: QLayoutItem
         
@@ -23,20 +23,25 @@ public extension QCompositionLayout {
             self.item = QLayoutItem(view: view)
         }
         
-        @discardableResult
-        public func layout(bounds: QRect) -> QSize {
-            self.item.frame = bounds
-            return bounds.size
-        }
-        
-        public func size(available: QSize) -> QSize {
-            return self.item.size(available: available)
-        }
-        
-        public func items(bounds: QRect) -> [QLayoutItem] {
-            return [ self.item ]
-        }
-        
+    }
+    
+}
+
+extension QCompositionLayout.View : IQCompositionLayoutEntity {
+    
+    public var items: [QLayoutItem] {
+        guard self.item.isHidden == false else { return [] }
+        return [ self.item ]
+    }
+    
+    @discardableResult
+    public func layout(bounds: QRect) -> QSize {
+        self.item.frame = bounds
+        return bounds.size
+    }
+    
+    public func size(available: QSize) -> QSize {
+        return self.item.size(available: available)
     }
     
 }

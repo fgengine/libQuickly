@@ -7,7 +7,7 @@ import libQuicklyCore
 
 public extension QCompositionLayout {
     
-    struct Fill : IQCompositionLayoutEntity {
+    struct Fill {
         
         public var mode: Mode
         public var entity: IQCompositionLayoutEntity
@@ -20,57 +20,6 @@ public extension QCompositionLayout {
             self.entity = entity
         }
         
-        @discardableResult
-        public func layout(bounds: QRect) -> QSize {
-            switch self.mode {
-            case .horizontal:
-                let size = self.entity.size(available: bounds.size)
-                return self.entity.layout(
-                    bounds: QRect(
-                        x: bounds.x,
-                        y: bounds.y,
-                        width: bounds.width,
-                        height: size.height
-                    )
-                )
-            case .vertical:
-                let size = self.entity.size(available: bounds.size)
-                return self.entity.layout(
-                    bounds: QRect(
-                        x: bounds.x,
-                        y: bounds.y,
-                        width: size.width,
-                        height: bounds.height
-                    )
-                )
-            case .both:
-                return self.entity.layout(bounds: bounds)
-            }
-        }
-        
-        public func size(available: QSize) -> QSize {
-            switch self.mode {
-            case .horizontal:
-                let size = self.entity.size(available: available)
-                return QSize(
-                    width: available.width,
-                    height: size.height
-                )
-            case .vertical:
-                let size = self.entity.size(available: available)
-                return QSize(
-                    width: size.width,
-                    height: available.height
-                )
-            case .both:
-                return available
-            }
-        }
-        
-        public func items(bounds: QRect) -> [QLayoutItem] {
-            return self.entity.items(bounds: bounds)
-        }
-        
     }
     
 }
@@ -81,6 +30,61 @@ public extension QCompositionLayout.Fill {
         case horizontal
         case vertical
         case both
+    }
+    
+}
+
+extension QCompositionLayout.Fill : IQCompositionLayoutEntity {
+    
+    public var items: [QLayoutItem] {
+        return self.entity.items
+    }
+    
+    @discardableResult
+    public func layout(bounds: QRect) -> QSize {
+        switch self.mode {
+        case .horizontal:
+            let size = self.entity.size(available: bounds.size)
+            return self.entity.layout(
+                bounds: QRect(
+                    x: bounds.x,
+                    y: bounds.y,
+                    width: bounds.width,
+                    height: size.height
+                )
+            )
+        case .vertical:
+            let size = self.entity.size(available: bounds.size)
+            return self.entity.layout(
+                bounds: QRect(
+                    x: bounds.x,
+                    y: bounds.y,
+                    width: size.width,
+                    height: bounds.height
+                )
+            )
+        case .both:
+            return self.entity.layout(bounds: bounds)
+        }
+    }
+    
+    public func size(available: QSize) -> QSize {
+        switch self.mode {
+        case .horizontal:
+            let size = self.entity.size(available: available)
+            return QSize(
+                width: available.width,
+                height: size.height
+            )
+        case .vertical:
+            let size = self.entity.size(available: available)
+            return QSize(
+                width: size.width,
+                height: available.height
+            )
+        case .both:
+            return available
+        }
     }
     
 }

@@ -29,6 +29,11 @@ public class QLayoutItem {
 
 public extension QLayoutItem {
     
+    @inlinable
+    var isHidden: Bool {
+        return self.view.isHidden
+    }
+    
     func setNeedForceUpdate() {
         self.isNeedForceUpdate = true
     }

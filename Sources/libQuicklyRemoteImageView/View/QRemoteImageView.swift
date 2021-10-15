@@ -27,6 +27,10 @@ public class QRemoteImageView : IQRemoteImageView {
     public var isVisible: Bool {
         return self._view.isVisible
     }
+    public var isHidden: Bool {
+        set(value) { self._view.isHidden = value }
+        get { return self._view.isHidden }
+    }
     public private(set) var isLoading: Bool
     public var placeholderView: IQImageView {
         didSet(oldValue) {
@@ -215,6 +219,12 @@ public class QRemoteImageView : IQRemoteImageView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self._view.hidden(value)
         return self
     }
     

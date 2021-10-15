@@ -20,40 +20,61 @@ public class QTextView : IQTextView {
         return QRect(self._view.bounds)
     }
     public private(set) var isVisible: Bool
+    public var isHidden: Bool {
+        didSet(oldValue) {
+            guard self.isHidden != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
     public var width: QDimensionBehaviour? {
         didSet {
+            guard self.width != oldValue else { return }
             guard self.isLoaded == true else { return }
+            self._cacheAvailable = nil
+            self._cacheSize = nil
             self.setNeedForceLayout()
         }
     }
     public var height: QDimensionBehaviour? {
         didSet {
+            guard self.height != oldValue else { return }
             guard self.isLoaded == true else { return }
+            self._cacheAvailable = nil
+            self._cacheSize = nil
             self.setNeedForceLayout()
         }
     }
     public var text: String {
         didSet {
+            guard self.text != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(text: self.text)
+            self._cacheAvailable = nil
+            self._cacheSize = nil
             self.setNeedForceLayout()
         }
     }
     public var textFont: QFont {
         didSet {
+            guard self.textFont != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(textFont: self.textFont)
+            self._cacheAvailable = nil
+            self._cacheSize = nil
             self.setNeedForceLayout()
         }
     }
     public var textColor: QColor {
         didSet {
+            guard self.textColor != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(textColor: self.textColor)
         }
     }
     public var alignment: QTextAlignment {
         didSet {
+            guard self.alignment != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(alignment: self.alignment)
             self.setNeedLayout()
@@ -61,6 +82,7 @@ public class QTextView : IQTextView {
     }
     public var lineBreak: QTextLineBreak {
         didSet {
+            guard self.lineBreak != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(lineBreak: self.lineBreak)
             self.setNeedForceLayout()
@@ -68,6 +90,7 @@ public class QTextView : IQTextView {
     }
     public var numberOfLines: UInt {
         didSet {
+            guard self.numberOfLines != oldValue else { return }
             guard self.isLoaded == true else { return }
             self._view.update(numberOfLines: self.numberOfLines)
             self.setNeedForceLayout()
@@ -133,7 +156,8 @@ public class QTextView : IQTextView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.isVisible = false
         self.width = width
@@ -149,6 +173,7 @@ public class QTextView : IQTextView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
+        self.isHidden = isHidden
         self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
         self._reuse.configure(owner: self)
     }
@@ -162,6 +187,7 @@ public class QTextView : IQTextView {
     }
     
     public func size(available: QSize) -> QSize {
+        guard self.isHidden == false else { return .zero }
         if let cacheAvailable = self._cacheAvailable, let cacheSize = self._cacheSize {
             if cacheAvailable == available {
                 return cacheSize
@@ -301,6 +327,12 @@ public class QTextView : IQTextView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self.alpha = value
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self.isHidden = value
         return self
     }
     

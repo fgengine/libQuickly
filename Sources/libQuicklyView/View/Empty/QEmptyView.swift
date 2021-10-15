@@ -20,6 +20,13 @@ public class QEmptyView : IQEmptyView {
         return QRect(self._view.bounds)
     }
     public private(set) var isVisible: Bool
+    public var isHidden: Bool {
+        didSet(oldValue) {
+            guard self.isHidden != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
     public var width: QDimensionBehaviour? {
         didSet {
             guard self.isLoaded == true else { return }
@@ -91,7 +98,8 @@ public class QEmptyView : IQEmptyView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.isVisible = false
         self.width = width
@@ -102,6 +110,7 @@ public class QEmptyView : IQEmptyView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
+        self.isHidden = isHidden
         self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
         self._reuse.configure(owner: self)
     }
@@ -115,6 +124,7 @@ public class QEmptyView : IQEmptyView {
     }
     
     public func size(available: QSize) -> QSize {
+        guard self.isHidden == false else { return .zero }
         return available.apply(width: self.width, height: self.height, aspectRatio: self.aspectRatio)
     }
     
@@ -188,6 +198,12 @@ public class QEmptyView : IQEmptyView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self.alpha = value
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self.isHidden = value
         return self
     }
     

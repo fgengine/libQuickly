@@ -9,6 +9,7 @@ public protocol IQView : IQBaseView {
     
     var isAppeared: Bool { get }
     var isVisible: Bool { get }
+    var isHidden: Bool { set get }
     var layout: IQLayout? { get }
     var item: QLayoutItem? { set get }
     
@@ -17,6 +18,9 @@ public protocol IQView : IQBaseView {
     func visible()
     func visibility()
     func invisible()
+    
+    @discardableResult
+    func hidden(_ value: Bool) -> Self
     
     @discardableResult
     func onVisible(_ value: (() -> Void)?) -> Self

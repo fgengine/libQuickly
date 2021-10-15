@@ -26,6 +26,10 @@ public class QButtonView : IQButtonView {
     public var isVisible: Bool {
         return self._view.isVisible
     }
+    public var isHidden: Bool {
+        set(value) { self._view.isHidden = value }
+        get { return self._view.isHidden }
+    }
     public var inset: QInset {
         set(value) { self._layout.inset = value }
         get { return self._layout.inset }
@@ -142,7 +146,8 @@ public class QButtonView : IQButtonView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.width = width
         self.height = height
@@ -172,7 +177,8 @@ public class QButtonView : IQButtonView {
             border: border,
             cornerRadius: cornerRadius,
             shadow: shadow,
-            alpha: alpha
+            alpha: alpha,
+            isHidden: isHidden
         )
         self._isSelected = false
     }
@@ -327,6 +333,12 @@ public class QButtonView : IQButtonView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self._view.hidden(value)
         return self
     }
     

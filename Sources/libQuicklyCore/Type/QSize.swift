@@ -33,6 +33,10 @@ public extension QSize {
         return self.width.isInfinite == true && self.height.isInfinite == true
     }
     
+    var isZero: Bool {
+        return self.width.isZero == true && self.height.isZero == true
+    }
+    
     var aspectRatio: Float {
         return self.width / self.height
     }

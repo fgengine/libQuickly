@@ -79,7 +79,8 @@ public class QStackBarView : QBarView, IQStackBarView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.headerView = headerView
         self.leadingViews = leadingViews
@@ -109,7 +110,8 @@ public class QStackBarView : QBarView, IQStackBarView {
             border: border,
             cornerRadius: cornerRadius,
             shadow: shadow,
-            alpha: alpha
+            alpha: alpha,
+            isHidden: isHidden
         )
     }
     

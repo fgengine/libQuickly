@@ -26,6 +26,10 @@ public class QBarItemView : IQBarItemView {
     public var isVisible: Bool {
         return self._view.isVisible
     }
+    public var isHidden: Bool {
+        set(value) { self._view.isHidden = value }
+        get { return self._view.isHidden }
+    }
     public unowned var delegate: IQBarItemViewDelegate?
     public var contentInset: QInset {
         set(value) { self._layout.contentInset = value }
@@ -83,7 +87,8 @@ public class QBarItemView : IQBarItemView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.contentView = contentView
         self._layout = Layout(
@@ -101,7 +106,8 @@ public class QBarItemView : IQBarItemView {
             border: border,
             cornerRadius: cornerRadius,
             shadow: shadow,
-            alpha: alpha
+            alpha: alpha,
+            isHidden: isHidden
         )
         self._init()
     }
@@ -189,6 +195,12 @@ public class QBarItemView : IQBarItemView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self._view.alpha(value)
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self._view.hidden(value)
         return self
     }
     

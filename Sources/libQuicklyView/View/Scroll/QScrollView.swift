@@ -37,6 +37,13 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         return QRect(self._view.bounds)
     }
     public private(set) var isVisible: Bool
+    public var isHidden: Bool {
+        didSet(oldValue) {
+            guard self.isHidden != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
     public var direction: QScrollViewDirection {
         didSet(oldValue) {
             guard self.direction != oldValue else { return }
@@ -177,7 +184,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.isVisible = false
         self.direction = direction
@@ -194,6 +202,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
+        self.isHidden = isHidden
         self._reuse = QReuseItem()
         self._observer = QObserver()
         self._contentOffset = contentOffset
@@ -214,7 +223,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.isVisible = false
         self.direction = direction
@@ -232,6 +242,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
+        self.isHidden = isHidden
         self._reuse = QReuseItem()
         self._observer = QObserver()
         self._contentOffset = contentOffset
@@ -248,6 +259,7 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     }
     
     public func size(available: QSize) -> QSize {
+        guard self.isHidden == false else { return .zero }
         return available
     }
     
@@ -375,6 +387,12 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self.alpha = value
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self.isHidden = value
         return self
     }
     

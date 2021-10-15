@@ -71,7 +71,8 @@ public class QPageBarView : QBarView, IQPageBarView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.indicatorView = indicatorView
         self._itemViews = []
@@ -94,7 +95,8 @@ public class QPageBarView : QBarView, IQPageBarView {
             border: border,
             cornerRadius: cornerRadius,
             shadow: shadow,
-            alpha: alpha
+            alpha: alpha,
+            isHidden: isHidden
         )
     }
     

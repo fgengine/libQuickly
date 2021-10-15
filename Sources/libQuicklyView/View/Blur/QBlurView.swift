@@ -22,6 +22,13 @@ public class QBlurView : IQBlurView {
         return QRect(self._view.bounds)
     }
     public private(set) var isVisible: Bool
+    public var isHidden: Bool {
+        didSet(oldValue) {
+            guard self.isHidden != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
     public var style: UIBlurEffect.Style {
         didSet {
             guard self.isLoaded == true else { return }
@@ -79,7 +86,8 @@ public class QBlurView : IQBlurView {
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
         shadow: QViewShadow? = nil,
-        alpha: Float = 1
+        alpha: Float = 1,
+        isHidden: Bool = false
     ) {
         self.isVisible = false
         self.style = style
@@ -88,6 +96,7 @@ public class QBlurView : IQBlurView {
         self.cornerRadius = cornerRadius
         self.shadow = shadow
         self.alpha = alpha
+        self.isHidden = isHidden
         self._reuse = QReuseItem(behaviour: reuseBehaviour, name: reuseName)
         self._reuse.configure(owner: self)
     }
@@ -162,6 +171,12 @@ public class QBlurView : IQBlurView {
     @discardableResult
     public func alpha(_ value: Float) -> Self {
         self.alpha = value
+        return self
+    }
+    
+    @discardableResult
+    public func hidden(_ value: Bool) -> Self {
+        self.isHidden = value
         return self
     }
     

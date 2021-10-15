@@ -7,12 +7,13 @@ import libQuicklyCore
 
 public protocol IQCompositionLayoutEntity {
     
+    var items: [QLayoutItem] { get }
+    
     @discardableResult
     func layout(bounds: QRect) -> QSize
     
     func size(available: QSize) -> QSize
     
-    func items(bounds: QRect) -> [QLayoutItem]
     
 }
 
@@ -54,7 +55,7 @@ public class QCompositionLayout : IQLayout {
     }
     
     public func items(bounds: QRect) -> [QLayoutItem] {
-        return self.entity.items(bounds: bounds)
+        return self.entity.items
     }
     
 }
