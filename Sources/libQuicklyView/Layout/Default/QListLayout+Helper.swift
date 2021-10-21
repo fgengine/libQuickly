@@ -12,7 +12,6 @@ public extension QListLayout {
         static func layout(
             bounds: QRect,
             direction: Direction,
-            origin: Origin,
             alignment: Alignment = .fill,
             inset: QInset,
             spacing: Float,
@@ -62,21 +61,11 @@ public extension QListLayout {
                     sizes: &size.sizes,
                     keyPath: \.width
                 )
-                switch origin {
-                case .forward:
-                    switch alignment {
-                    case .leading: return self._hForwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .center: return self._hForwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .trailing: return self._hForwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .fill: return self._hForwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    }
-                case .backward:
-                    switch alignment {
-                    case .leading: return self._hBackwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .center: return self._hBackwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .trailing: return self._hBackwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .fill: return self._hBackwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    }
+                switch alignment {
+                case .leading: return self._hLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .center: return self._hCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .trailing: return self._hTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .fill: return self._hFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
                 }
             case .vertical:
                 guard items.count > 0 else { return QSize(width: bounds.width, height: 0) }
@@ -115,21 +104,11 @@ public extension QListLayout {
                     sizes: &size.sizes,
                     keyPath: \.height
                 )
-                switch origin {
-                case .forward:
-                    switch alignment {
-                    case .leading: return self._vForwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .center: return self._vForwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .trailing: return self._vForwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .fill: return self._vForwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    }
-                case .backward:
-                    switch alignment {
-                    case .leading: return self._vBackwardLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .center: return self._vBackwardCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .trailing: return self._vBackwardTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    case .fill: return self._vBackwardFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
-                    }
+                switch alignment {
+                case .leading: return self._vLeadingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .center: return self._vCenterLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .trailing: return self._vTrailingLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
+                case .fill: return self._vFillLayout(size: size, pass: pass, bounds: bounds, inset: inset, spacing: spacing, items: items, sizes: size.sizes)
                 }
             }
         }
@@ -338,7 +317,7 @@ private extension QListLayout.Helper.Operation {
 private extension QListLayout.Helper {
     
     @inline(__always)
-    static func _hForwardLeadingLayout(
+    static func _hLeadingLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -364,7 +343,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _hForwardCenterLayout(
+    static func _hCenterLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -390,7 +369,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _hForwardTrailingLayout(
+    static func _hTrailingLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -416,7 +395,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _hForwardFillLayout(
+    static func _hFillLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -452,121 +431,7 @@ private extension QListLayout.Helper {
 private extension QListLayout.Helper {
     
     @inline(__always)
-    static func _hBackwardLeadingLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + bounds.width) - inset.right,
-            y: bounds.y + inset.top
-        )
-        for index in 0..<items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(topRight: origin, size: size)
-            origin.x -= size.width + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _hBackwardCenterLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + bounds.width) - inset.right,
-            y: (bounds.y + (bounds.height / 2)) + inset.top
-        )
-        for index in 0..<items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(right: origin, size: size)
-            origin.x -= size.width + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _hBackwardTrailingLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + bounds.width) - inset.right,
-            y: (bounds.y + bounds.height) + inset.bottom
-        )
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(bottomRight: origin, size: size)
-            origin.x -= size.width + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _hBackwardFillLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + bounds.width) - inset.right,
-            y: bounds.y + inset.top
-        )
-        let height: Float
-        if bounds.height.isInfinite == true {
-            height = size.max.height
-        } else {
-            height = bounds.height - inset.vertical
-        }
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(x: origin.x - size.width, y: origin.y, width: size.width, height: height)
-            origin.x -= size.width + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: bounds.height
-        )
-    }
-    
-}
-
-private extension QListLayout.Helper {
-    
-    @inline(__always)
-    static func _vForwardLeadingLayout(
+    static func _vLeadingLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -592,7 +457,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _vForwardCenterLayout(
+    static func _vCenterLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -618,7 +483,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _vForwardTrailingLayout(
+    static func _vTrailingLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -644,7 +509,7 @@ private extension QListLayout.Helper {
     }
     
     @inline(__always)
-    static func _vForwardFillLayout(
+    static func _vFillLayout(
         size: SizePass,
         pass: Pass,
         bounds: QRect,
@@ -668,120 +533,6 @@ private extension QListLayout.Helper {
             let item = items[index]
             item.frame = QRect(x: origin.x, y: origin.y, width: width, height: size.height)
             origin.y += size.height + spacing
-        }
-        return QSize(
-            width: bounds.width,
-            height: pass.full
-        )
-    }
-    
-}
-
-private extension QListLayout.Helper {
-    
-    @inline(__always)
-    static func _vBackwardLeadingLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: bounds.x + inset.left,
-            y: (bounds.y + bounds.height) - inset.bottom
-        )
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(bottomLeft: origin, size: size)
-            origin.y -= size.height + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _vBackwardCenterLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + (bounds.width / 2)) + inset.left,
-            y: (bounds.y + bounds.height) - inset.bottom
-        )
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(bottom: origin, size: size)
-            origin.y -= size.height + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _vBackwardTrailingLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: (bounds.x + bounds.width) - inset.right,
-            y: (bounds.y + bounds.height) - inset.bottom
-        )
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(bottomRight: origin, size: size)
-            origin.y -= size.height + spacing
-        }
-        return QSize(
-            width: size.max.width + inset.horizontal,
-            height: pass.full
-        )
-    }
-    
-    @inline(__always)
-    static func _vBackwardFillLayout(
-        size: SizePass,
-        pass: Pass,
-        bounds: QRect,
-        inset: QInset,
-        spacing: Float,
-        items: [QLayoutItem],
-        sizes: [QSize?]
-    ) -> QSize {
-        var origin = QPoint(
-            x: bounds.x + inset.left,
-            y: (bounds.y + bounds.height) - inset.bottom
-        )
-        let width: Float
-        if bounds.width.isInfinite == true {
-            width = size.max.width
-        } else {
-            width = bounds.width - inset.horizontal
-        }
-        for index in 0 ..< items.count {
-            guard let size = sizes[index] else { continue }
-            let item = items[index]
-            item.frame = QRect(x: origin.x, y: origin.y - size.height, width: width, height: size.height)
-            origin.y -= size.height + spacing
         }
         return QSize(
             width: bounds.width,

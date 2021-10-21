@@ -16,12 +16,6 @@ public final class QListLayout : IQLayout {
             self.setNeedForceUpdate()
         }
     }
-    public var origin: Origin {
-        didSet(oldValue) {
-            guard self.origin != oldValue else { return }
-            self.setNeedForceUpdate()
-        }
-    }
     public var alignment: Alignment {
         didSet(oldValue) {
             guard self.alignment != oldValue else { return }
@@ -44,6 +38,7 @@ public final class QListLayout : IQLayout {
         set(value) {
             self._items = value
             self._cache = Array< QSize? >(repeating: nil, count: value.count)
+            self._firstVisible = nil
             self.setNeedForceUpdate()
         }
         get { return self._items }
@@ -52,6 +47,7 @@ public final class QListLayout : IQLayout {
         set(value) {
             self._items = value.compactMap({ return QLayoutItem(view: $0) })
             self._cache = Array< QSize? >(repeating: nil, count: value.count)
+            self._firstVisible = nil
             self.setNeedForceUpdate()
         }
         get { return self._items.compactMap({ $0.view }) }
@@ -66,14 +62,12 @@ public final class QListLayout : IQLayout {
 
     public init(
         direction: Direction,
-        origin: Origin = .forward,
         alignment: Alignment = .fill,
         inset: QInset = .zero,
         spacing: Float = 0,
         items: [QLayoutItem] = []
     ) {
         self.direction = direction
-        self.origin = origin
         self.alignment = alignment
         self.inset = inset
         self.spacing = spacing
@@ -86,7 +80,6 @@ public final class QListLayout : IQLayout {
 
     public convenience init(
         direction: Direction,
-        origin: Origin = .forward,
         alignment: Alignment = .fill,
         inset: QInset = .zero,
         spacing: Float = 0,
@@ -94,7 +87,6 @@ public final class QListLayout : IQLayout {
     ) {
         self.init(
             direction: direction,
-            origin: origin,
             alignment: alignment,
             inset: inset,
             spacing: spacing,
@@ -141,6 +133,7 @@ public final class QListLayout : IQLayout {
         let safeIndex = max(0, min(index, self._items.count))
         self._items.insert(contentsOf: items, at: safeIndex)
         self._cache.insert(contentsOf: Array< QSize? >(repeating: nil, count: items.count), at: safeIndex)
+        self._firstVisible = nil
         if self._animations.isEmpty == false {
             self._operations.append(Helper.Operation(
                 type: .insert,
@@ -160,6 +153,7 @@ public final class QListLayout : IQLayout {
     }
     
     public func delete(range: Range< Int >) {
+        self._firstVisible = nil
         if self._animations.isEmpty == false {
             self._operations.append(Helper.Operation(
                 type: .delete,
@@ -176,6 +170,7 @@ public final class QListLayout : IQLayout {
     public func delete(items: [QLayoutItem]) {
         let indices = items.compactMap({ item in self.items.firstIndex(where: { $0 === item }) }).sorted()
         if indices.count > 0 {
+            self._firstVisible = nil
             if self._animations.isEmpty == false {
                 self._operations.append(Helper.Operation(
                     type: .delete,
@@ -208,7 +203,6 @@ public final class QListLayout : IQLayout {
         return Helper.layout(
             bounds: bounds,
             direction: self.direction,
-            origin: self.origin,
             alignment: self.alignment,
             inset: self.inset,
             spacing: self.spacing,
@@ -255,11 +249,6 @@ public extension QListLayout {
     enum Direction {
         case horizontal
         case vertical
-    }
-    
-    enum Origin {
-        case forward
-        case backward
     }
     
     enum Alignment {

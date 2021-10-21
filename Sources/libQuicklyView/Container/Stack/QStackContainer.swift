@@ -377,6 +377,24 @@ extension QStackContainer : IQDialogContentContainer where Screen : IQScreenDial
     
 }
 
+extension QStackContainer : IQModalContentContainer where Screen : IQScreenModalable {
+    
+    public var modalSheetInset: QInset? {
+        switch self.screen.modalPresentation {
+        case .simple: return nil
+        case .sheet(let info): return info.inset
+        }
+    }
+    
+    public var modalSheetBackgroundView: (IQView & IQViewAlphable)? {
+        switch self.screen.modalPresentation {
+        case .simple: return nil
+        case .sheet(let info): return info.backgroundView
+        }
+    }
+    
+}
+
 private extension QStackContainer {
     
     func _init() {
@@ -400,6 +418,7 @@ private extension QStackContainer {
         #else
         #endif
         self._rootItem.container.parent = self
+        self.screen.container = self
         self.screen.setup()
     }
     

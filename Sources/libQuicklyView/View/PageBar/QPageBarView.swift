@@ -225,7 +225,6 @@ private extension QPageBarView {
             return QListLayout.Helper.layout(
                 bounds: bounds,
                 direction: .horizontal,
-                origin: .forward,
                 inset: self.itemInset,
                 spacing: self.itemSpacing,
                 maxSize: bounds.size.width,

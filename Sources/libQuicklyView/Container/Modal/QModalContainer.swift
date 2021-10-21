@@ -131,7 +131,13 @@ public class QModalContainer : IQModalContainer {
     }
     
     public func insets(of container: IQContainer, interactive: Bool) -> QInset {
-        return self.inheritedInsets(interactive: interactive)
+        let inheritedInsets = self.inheritedInsets(interactive: interactive)
+        if let current = self._current?.container {
+            if current.modalSheetInset != nil {
+                return QInset(top: 0, left: inheritedInsets.left, right: inheritedInsets.right, bottom: inheritedInsets.bottom)
+            }
+        }
+        return inheritedInsets
     }
     
     public func didChangeInsets() {
@@ -227,10 +233,18 @@ private extension QModalContainer {
     
     func _init() {
         #if os(iOS)
-        self._interactiveGesture.onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
-            guard let contentContainer = self.contentContainer else { return true }
+        self._interactiveGesture.onShouldRequireFailure({ [unowned self] gesture -> Bool in
             guard let view = gesture.view else { return false }
-            return contentContainer.view.native.isChild(of: view, recursive: true)
+            if let container = self._current?.container {
+                return container.view.native.isChild(of: view, recursive: true)
+            }
+            return false
+        }).onShouldBeRequiredToFailBy({ [unowned self] gesture -> Bool in
+            guard let view = gesture.view else { return false }
+            if let container = self.contentContainer {
+                return container.view.native.isChild(of: view, recursive: true)
+            }
+            return false
         }).onShouldBegin({ [unowned self] in
             guard let current = self._current else { return false }
             guard current.container.shouldInteractive == true else { return false }
@@ -261,8 +275,9 @@ private extension QModalContainer {
 
     func _present(modal: Item, animated: Bool, completion: (() -> Void)?) {
         self._current = modal
-        modal.container.prepareShow(interactive: false)
         if animated == true {
+            self._view.contentLayout.state = .present(modal: modal, progress: 0)
+            modal.container.prepareShow(interactive: false)
             QAnimation.default.run(
                 duration: TimeInterval(self._view.bounds.size.height / self.animationVelocity),
                 ease: QAnimation.Ease.QuadraticInOut(),
@@ -279,8 +294,9 @@ private extension QModalContainer {
                 }
             )
         } else {
-            modal.container.finishShow(interactive: false)
             self._view.contentLayout.state = .idle(modal: modal)
+            modal.container.prepareShow(interactive: false)
+            modal.container.finishShow(interactive: false)
             completion?()
         }
     }

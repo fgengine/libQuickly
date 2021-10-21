@@ -269,25 +269,29 @@ extension NativeScrollView {
     
     func contentOffset(with view: IQView, horizontal: QScrollViewScrollAlignment, vertical: QScrollViewScrollAlignment) -> QPoint? {
         guard let item = view.item else { return nil }
-        let contentInset = self.contentInset
-        let contentSize = self.contentSize
-        let visibleSize = self.bounds.size
-        let itemFrame = item.frame.cgRect
-        let x: CGFloat
+        let contentInset = QInset(self.contentInset)
+        let contentSize = QSize(self.contentSize)
+        let visibleSize = QSize(self.bounds.size)
+        let itemFrame = item.frame
+        let x: Float
         switch horizontal {
-        case .leading: x = itemFrame.origin.x
-        case .center: x = (itemFrame.origin.x + (itemFrame.size.width / 2)) - (visibleSize.width / 2)
-        case .trailing: x = (itemFrame.origin.x + itemFrame.size.width) - visibleSize.width
+        case .leading: x = -contentInset.left + itemFrame.x
+        case .center: x = -contentInset.left + ((itemFrame.x + (itemFrame.width / 2)) - ((visibleSize.width - contentInset.right) / 2))
+        case .trailing: x = ((itemFrame.x + itemFrame.width) - visibleSize.width) + contentInset.right
         }
-        let y: CGFloat
+        let y: Float
         switch vertical {
-        case .leading: y = itemFrame.origin.y
-        case .center: y = (itemFrame.origin.y + (itemFrame.size.height / 2)) - (visibleSize.height / 2)
-        case .trailing: y = (itemFrame.origin.y + itemFrame.size.height) - visibleSize.height
+        case .leading: y = -contentInset.top + itemFrame.y
+        case .center: y = -contentInset.top + ((itemFrame.y + (itemFrame.size.height / 2)) - ((visibleSize.height - contentInset.bottom) / 2))
+        case .trailing: y = ((itemFrame.y + itemFrame.size.height) - visibleSize.height) + contentInset.bottom
         }
+        let lowerX = -contentInset.left
+        let lowerY = -contentInset.top
+        let upperX = (contentSize.width - visibleSize.width) + contentInset.right
+        let upperY = (contentSize.height - visibleSize.height) + contentInset.bottom
         return QPoint(
-            x: Float(max(-contentInset.left, min(x - contentInset.left, contentSize.width - visibleSize.width))),
-            y: Float(max(-contentInset.top, min(y - contentInset.top, contentSize.height - visibleSize.height)))
+            x: max(lowerX, min(x, upperX)),
+            y: max(lowerY, min(y, upperY))
         )
     }
     

@@ -59,15 +59,15 @@ public extension QJson {
 
 public extension QJson {
 
-    func saveAsData() throws -> Data {
+    func saveAsData(options: JSONSerialization.WritingOptions = []) throws -> Data {
         guard let root = self.root else {
             throw QJsonError.notJson
         }
-        return try JSONSerialization.data(withJSONObject: root, options: [])
+        return try JSONSerialization.data(withJSONObject: root, options: options)
     }
 
-    func saveAsString(encoding: String.Encoding = String.Encoding.utf8) throws -> String? {
-        return String(data: try self.saveAsData(), encoding: encoding)
+    func saveAsString(encoding: String.Encoding = String.Encoding.utf8, options: JSONSerialization.WritingOptions = []) throws -> String? {
+        return String(data: try self.saveAsData(options: options), encoding: encoding)
     }
     
 }
@@ -538,6 +538,97 @@ public extension QJson {
     @inlinable
     func encode< Alias: IQJsonEncoderAlias >(_ alias: Alias.Type, value: Alias.JsonEncoder.Value, path: String) throws {
         try self.encode(Alias.JsonEncoder.self, value: value, path: path)
+    }
+    
+}
+
+public extension QJson {
+    
+    func encode< Encoder : IQJsonValueEncoder >(_ encoder: Encoder.Type, value: Array< Encoder.Value >, skipping: Bool = false) throws {
+        let jsonValue = NSMutableArray(capacity: value.count)
+        if skipping == true {
+            for item in value {
+                guard let value = try? encoder.encode(item) else { continue }
+                jsonValue.add(value)
+            }
+        } else {
+            for item in value {
+                jsonValue.add(try encoder.encode(item))
+            }
+        }
+        try self.set(value: jsonValue)
+    }
+    
+    @inlinable
+    func encode< Encoder : IQJsonModelEncoder >(_ encoder: Encoder.Type, value: Array< Encoder.Value >, skipping: Bool = false) throws {
+        try self.encode(QModelJsonEncoder< Encoder >.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< Alias : IQJsonEncoderAlias >(_ alias: Alias.Type, value: Array< Alias.JsonEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(Alias.JsonEncoder.self, value: value, skipping: skipping)
+    }
+    
+}
+
+public extension QJson {
+    
+    func encode< KeyEncoder : IQJsonValueEncoder, ValueEncoder : IQJsonValueEncoder >(_ keyEncoder: KeyEncoder.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        let jsonValue = NSMutableDictionary(capacity: value.count)
+        if skipping == true {
+            for item in value {
+                guard let key = try? keyEncoder.encode(item.key) else { continue }
+                guard let value = try? valueEncoder.encode(item.value) else { continue }
+                jsonValue.setObject(key, forKey: value as! NSCopying)
+            }
+        } else {
+            for item in value {
+                let key = try keyEncoder.encode(item.key)
+                let value = try valueEncoder.encode(item.value)
+                jsonValue.setObject(key, forKey: value as! NSCopying)
+            }
+        }
+        try self.set(value: jsonValue)
+    }
+    
+    @inlinable
+    func encode< KeyEncoder : IQJsonValueEncoder, ValueEncoder : IQJsonModelEncoder >(_ keyEncoder: KeyEncoder.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(keyEncoder, QModelJsonEncoder< ValueEncoder >.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyEncoder : IQJsonValueEncoder, ValueAlias : IQJsonEncoderAlias >(_ keyEncoder: KeyEncoder.Type, _ valueAlias: ValueAlias.Type, value: Dictionary< KeyEncoder.Value, ValueAlias.JsonEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(keyEncoder, ValueAlias.JsonEncoder.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyEncoder : IQJsonModelEncoder, ValueEncoder : IQJsonValueEncoder >(_ keyEncoder: KeyEncoder.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(QModelJsonEncoder< KeyEncoder >.self, valueEncoder, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyEncoder : IQJsonModelEncoder, ValueEncoder : IQJsonModelEncoder >(_ keyEncoder: KeyEncoder.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(QModelJsonEncoder< KeyEncoder >.self, QModelJsonEncoder< ValueEncoder >.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyEncoder : IQJsonModelEncoder, ValueAlias : IQJsonEncoderAlias >(_ keyEncoder: KeyEncoder.Type, _ valueAlias: ValueAlias.Type, value: Dictionary< KeyEncoder.Value, ValueAlias.JsonEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(QModelJsonEncoder< KeyEncoder >.self, ValueAlias.JsonEncoder.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyAlias : IQJsonEncoderAlias, ValueEncoder : IQJsonValueEncoder >(_ keyAlias: KeyAlias.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyAlias.JsonEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(KeyAlias.JsonEncoder.self, valueEncoder.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyAlias : IQJsonEncoderAlias, ValueEncoder : IQJsonModelEncoder >(_ keyAlias: KeyAlias.Type, _ valueEncoder: ValueEncoder.Type, value: Dictionary< KeyAlias.JsonEncoder.Value, ValueEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(KeyAlias.JsonEncoder.self, QModelJsonEncoder< ValueEncoder >.self, value: value, skipping: skipping)
+    }
+    
+    @inlinable
+    func encode< KeyAlias : IQJsonEncoderAlias, ValueAlias : IQJsonEncoderAlias >(_ keyAlias: KeyAlias.Type, _ valueAlias: ValueAlias.Type, value: Dictionary< KeyAlias.JsonEncoder.Value, ValueAlias.JsonEncoder.Value >, skipping: Bool = false) throws {
+        return try self.encode(KeyAlias.JsonEncoder.self, ValueAlias.JsonEncoder.self, value: value, skipping: skipping)
     }
     
 }

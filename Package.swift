@@ -69,6 +69,16 @@ let package = Package(
             name: "libQuicklyRemoteImageView",
             type: .static,
             targets: [ "libQuicklyRemoteImageView" ]
+        ),
+        .library(
+            name: "libQuicklyLog",
+            type: .static,
+            targets: [ "libQuicklyLog" ]
+        ),
+        .library(
+            name: "libQuicklyLogUI",
+            type: .static,
+            targets: [ "libQuicklyLogUI" ]
         )
     ],
     dependencies: [
@@ -143,6 +153,20 @@ let package = Package(
             name: "libQuicklyRemoteImageView",
             dependencies: [
                 .target(name: "libQuicklyApi"),
+                .target(name: "libQuicklyView")
+            ]
+        ),
+        .target(
+            name: "libQuicklyLog",
+            dependencies: [
+                .target(name: "libQuicklyCore")
+            ]
+        ),
+        .target(
+            name: "libQuicklyLogUI",
+            dependencies: [
+                .target(name: "libQuicklyLog"),
+                .target(name: "libQuicklyObserver"),
                 .target(name: "libQuicklyView")
             ]
         )

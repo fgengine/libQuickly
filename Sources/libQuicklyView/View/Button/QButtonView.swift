@@ -141,6 +141,7 @@ public class QButtonView : IQButtonView {
         imageView: IQView? = nil,
         textInset: QInset = QInset(horizontal: 4, vertical: 4),
         textView: IQView? = nil,
+        isSelected: Bool = false,
         isLocked: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
@@ -180,7 +181,7 @@ public class QButtonView : IQButtonView {
             alpha: alpha,
             isHidden: isHidden
         )
-        self._isSelected = false
+        self._isSelected = isSelected
     }
     
     public func loadIfNeeded() {

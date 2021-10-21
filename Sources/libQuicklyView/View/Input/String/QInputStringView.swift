@@ -10,6 +10,7 @@ protocol InputStringViewDelegate : AnyObject {
     func beginEditing()
     func editing(text: String)
     func endEditing()
+    func pressedReturn()
     
 }
 
@@ -155,6 +156,7 @@ public class QInputStringView : IQInputStringView {
     private var _onBeginEditing: (() -> Void)?
     private var _onEditing: (() -> Void)?
     private var _onEndEditing: (() -> Void)?
+    private var _onPressedReturn: (() -> Void)?
 
     public init(
         reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
@@ -396,6 +398,12 @@ public class QInputStringView : IQInputStringView {
         self._onEndEditing = value
         return self
     }
+    
+    @discardableResult
+    public func onPressedReturn(_ value: (() -> Void)?) -> Self {
+        self._onPressedReturn = value
+        return self
+    }
 
 }
 
@@ -412,6 +420,10 @@ extension QInputStringView: InputStringViewDelegate {
     
     func endEditing() {
         self._onEndEditing?()
+    }
+    
+    func pressedReturn() {
+        self._onPressedReturn?()
     }
     
 }

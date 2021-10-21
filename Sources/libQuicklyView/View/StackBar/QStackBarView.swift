@@ -8,60 +8,41 @@ import libQuicklyCore
 public class QStackBarView : QBarView, IQStackBarView {
     
     public var inset: QInset {
-        set(value) { self._contentLayout.inset = value }
-        get { return self._contentLayout.inset }
+        set(value) { self._contentView.contentLayout.inset = value }
+        get { return self._contentView.contentLayout.inset }
     }
     public var headerView: IQView? {
-        didSet(oldValue) {
-            guard self.headerView !== oldValue else { return }
-            self._contentLayout.headerItem = self.headerView.flatMap({ QLayoutItem(view: $0) })
-        }
+        didSet { self._relayout() }
     }
     public var headerSpacing: Float {
-        set(value) { self._contentLayout.headerSpacing = value }
-        get { return self._contentLayout.headerSpacing }
+        didSet { self._relayout() }
     }
     public var leadingViews: [IQView] {
-        didSet(oldValue) {
-            self._contentLayout.leadingItems = self.leadingViews.compactMap({ QLayoutItem(view: $0) })
-        }
+        didSet { self._relayout() }
     }
     public var leadingViewSpacing: Float {
-        set(value) { self._contentLayout.leadingItemSpacing = value }
-        get { return self._contentLayout.leadingItemSpacing }
+        didSet { self._relayout() }
     }
     public var titleView: IQView? {
-        didSet(oldValue) {
-            guard self.titleView !== oldValue else { return }
-            self._contentLayout.titleItem = self.titleView.flatMap({ QLayoutItem(view: $0) })
-        }
+        didSet { self._relayout() }
     }
     public var titleSpacing: Float {
-        set(value) { self._contentLayout.titleSpacing = value }
-        get { return self._contentLayout.titleSpacing }
+        didSet { self._relayout() }
     }
     public var trailingViews: [IQView] {
-        didSet(oldValue) {
-            self._contentLayout.trailingItems = self.trailingViews.compactMap({ QLayoutItem(view: $0) })
-        }
+        didSet { self._relayout() }
     }
     public var trailingViewSpacing: Float {
-        set(value) { self._contentLayout.trailingItemSpacing = value }
-        get { return self._contentLayout.trailingItemSpacing }
+        didSet { self._relayout() }
     }
     public var footerView: IQView? {
-        didSet(oldValue) {
-            guard self.footerView !== oldValue else { return }
-            self._contentLayout.footerItem = self.footerView.flatMap({ QLayoutItem(view: $0) })
-        }
+        didSet { self._relayout() }
     }
     public var footerSpacing: Float {
-        set(value) { self._contentLayout.footerSpacing = value }
-        get { return self._contentLayout.footerSpacing }
+        didSet { self._relayout() }
     }
 
-    private var _contentLayout: Layout
-    private var _contentView: QCustomView< Layout >
+    private var _contentView: QCustomView< QCompositionLayout >
     
     public init(
         inset: QInset,
@@ -83,25 +64,29 @@ public class QStackBarView : QBarView, IQStackBarView {
         isHidden: Bool = false
     ) {
         self.headerView = headerView
+        self.headerSpacing = headerSpacing
         self.leadingViews = leadingViews
+        self.leadingViewSpacing = leadingViewSpacing
         self.titleView = titleView
+        self.titleSpacing = titleSpacing
         self.trailingViews = trailingViews
+        self.trailingViewSpacing = trailingViewSpacing
         self.footerView = footerView
-        self._contentLayout = Layout(
-            inset: inset,
-            headerItem: headerView.flatMap({ QLayoutItem(view: $0) }),
-            headerSpacing: headerSpacing,
-            leadingItems: leadingViews.compactMap({ QLayoutItem(view: $0) }),
-            leadingItemSpacing: leadingViewSpacing,
-            titleItem: titleView.flatMap({ QLayoutItem(view: $0) }),
-            titleSpacing: titleSpacing,
-            trailingItems: trailingViews.compactMap({ QLayoutItem(view: $0) }),
-            trailingItemSpacing: trailingViewSpacing,
-            footerItem: footerView.flatMap({ QLayoutItem(view: $0) }),
-            footerSpacing: footerSpacing
-        )
+        self.footerSpacing = footerSpacing
         self._contentView = QCustomView(
-            contentLayout: self._contentLayout
+            contentLayout: Self._layout(
+                inset: inset,
+                headerView: headerView,
+                headerSpacing: headerSpacing,
+                leadingViews: leadingViews,
+                leadingViewSpacing: leadingViewSpacing,
+                titleView: titleView,
+                titleSpacing: titleSpacing,
+                trailingViews: trailingViews,
+                trailingViewSpacing: trailingViewSpacing,
+                footerView: footerView,
+                footerSpacing: footerSpacing
+            )
         )
         super.init(
             placement: .top,
@@ -185,232 +170,77 @@ public class QStackBarView : QBarView, IQStackBarView {
 
 private extension QStackBarView {
     
-    class Layout : IQLayout {
-        
-        unowned var delegate: IQLayoutDelegate?
-        unowned var view: IQView?
-        var inset: QInset {
-            didSet { self.setNeedForceUpdate() }
+    static func _layout(
+        inset: QInset,
+        headerView: IQView?,
+        headerSpacing: Float,
+        leadingViews: [IQView],
+        leadingViewSpacing: Float,
+        titleView: IQView?,
+        titleSpacing: Float,
+        trailingViews: [IQView],
+        trailingViewSpacing: Float,
+        footerView: IQView?,
+        footerSpacing: Float
+    ) -> QCompositionLayout {
+        var vstack: [IQCompositionLayoutEntity] = []
+        if let headerView = headerView {
+            vstack.append(QCompositionLayout.Inset(
+                inset: QInset(top: 0, left: 0, right: 0, bottom: headerSpacing),
+                entity: QCompositionLayout.View(headerView)
+            ))
         }
-        var headerItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
+        vstack.append(QCompositionLayout.HAccessory(
+            leading: QCompositionLayout.HStack(
+                alignment: .fill,
+                spacing: leadingViewSpacing,
+                entities: leadingViews.compactMap({ QCompositionLayout.View($0) })
+            ),
+            center: QCompositionLayout.Inset(
+                inset: QInset(
+                    top: 0,
+                    left: leadingViews.count > 0 ? titleSpacing : 0,
+                    right: trailingViews.count > 0 ? titleSpacing : 0,
+                    bottom: 0
+                ),
+                entity: titleView.flatMap({ QCompositionLayout.View($0) }) ?? QCompositionLayout.None()
+            ),
+            trailing: QCompositionLayout.HStack(
+                alignment: .fill,
+                spacing: trailingViewSpacing,
+                entities: trailingViews.reversed().compactMap({ QCompositionLayout.View($0) })
+            ),
+            filling: true
+        ))
+        if let footerView = footerView {
+            vstack.append(QCompositionLayout.Inset(
+                inset: QInset(top: footerSpacing, left: 0, right: 0, bottom: 0),
+                entity: QCompositionLayout.View(footerView)
+            ))
         }
-        var headerSpacing: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var leadingItems: [QLayoutItem] {
-            didSet {
-                self._leadingItemsCache = Array< QSize? >(repeating: nil, count: self.leadingItems.count)
-                self.setNeedForceUpdate()
-            }
-        }
-        var leadingItemSpacing: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var titleItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var titleSpacing: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var trailingItems: [QLayoutItem] {
-            didSet {
-                self._trailingItemsCache = Array< QSize? >(repeating: nil, count: self.trailingItems.count)
-                self.setNeedForceUpdate()
-            }
-        }
-        var trailingItemSpacing: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var footerItem: QLayoutItem? {
-            didSet { self.setNeedForceUpdate() }
-        }
-        var footerSpacing: Float {
-            didSet { self.setNeedForceUpdate() }
-        }
-        
-        private var _leadingItemsCache: [QSize?]
-        private var _trailingItemsCache: [QSize?]
-
-        init(
-            inset: QInset,
-            headerItem: QLayoutItem?,
-            headerSpacing: Float,
-            leadingItems: [QLayoutItem],
-            leadingItemSpacing: Float,
-            titleItem: QLayoutItem?,
-            titleSpacing: Float,
-            trailingItems: [QLayoutItem],
-            trailingItemSpacing: Float,
-            footerItem: QLayoutItem?,
-            footerSpacing: Float
-        ) {
-            self.inset = inset
-            self.headerItem = headerItem
-            self.headerSpacing = headerSpacing
-            self.leadingItems = leadingItems
-            self.leadingItemSpacing = leadingItemSpacing
-            self.titleItem = titleItem
-            self.titleSpacing = titleSpacing
-            self.trailingItems = trailingItems
-            self.trailingItemSpacing = trailingItemSpacing
-            self.footerItem = footerItem
-            self.footerSpacing = footerSpacing
-            self._leadingItemsCache = Array< QSize? >(repeating: nil, count: leadingItems.count)
-            self._trailingItemsCache = Array< QSize? >(repeating: nil, count: trailingItems.count)
-        }
-        
-        func invalidate(item: QLayoutItem) {
-            if let index = self.leadingItems.firstIndex(where: { $0 === item }) {
-                self._leadingItemsCache.remove(at: index)
-            }
-            if let index = self.trailingItems.firstIndex(where: { $0 === item }) {
-                self._trailingItemsCache.remove(at: index)
-            }
-        }
-        
-        func layout(bounds: QRect) -> QSize {
-            let availableSize = QSize(
-                width: bounds.width - self.inset.horizontal,
-                height: .infinity
+        return QCompositionLayout(
+            inset: inset,
+            entity: QCompositionLayout.VStack(
+                alignment: .fill,
+                entities: vstack
             )
-            var origin = self.inset.top
-            if let headerItem = self.headerItem {
-                let headerSize = headerItem.size(available: availableSize)
-                headerItem.frame = QRect(
-                    x: bounds.x + self.inset.left,
-                    y: bounds.y + origin,
-                    width: headerSize.width,
-                    height: headerSize.height
-                )
-                origin += headerSize.height + self.headerSpacing
-            }
-            let headerBounds = QRect(
-                x: bounds.x + self.inset.left,
-                y: bounds.y + origin,
-                width: availableSize.width,
-                height: .infinity
-            )
-            let leadingSize = QListLayout.Helper.layout(
-                bounds: headerBounds,
-                direction: .horizontal,
-                origin: .forward,
-                inset: .zero,
-                spacing: self.leadingItemSpacing,
-                items: self.leadingItems,
-                cache: &self._leadingItemsCache
-            )
-            let trailingSize = QListLayout.Helper.layout(
-                bounds: headerBounds,
-                direction: .horizontal,
-                origin: .backward,
-                inset: .zero,
-                spacing: self.trailingItemSpacing,
-                items: self.trailingItems,
-                cache: &self._trailingItemsCache
-            )
-            if let titleItem = self.titleItem {
-                let leadingSpacing = self.leadingItems.count > 0 ? self.titleSpacing : 0
-                let trailingSpacing = self.trailingItems.count > 0 ? self.titleSpacing : 0
-                let titleSize = titleItem.size(available: QSize(
-                    width: availableSize.width - (leadingSize.width + leadingSpacing) - (trailingSize.width + trailingSpacing),
-                    height: max(leadingSize.height, trailingSize.height)
-                ))
-                titleItem.frame = QRect(
-                    x: bounds.x + self.inset.left + (leadingSize.width + leadingSpacing),
-                    y: bounds.y + origin,
-                    width: titleSize.width,
-                    height: titleSize.height
-                )
-                origin += max(leadingSize.height, titleSize.height, trailingSize.height)
-            } else {
-                origin += max(leadingSize.height, trailingSize.height)
-            }
-            if let footerItem = self.footerItem {
-                origin += self.footerSpacing
-                let footerSize = footerItem.size(available: availableSize)
-                footerItem.frame = QRect(
-                    x: bounds.x + self.inset.left,
-                    y: bounds.y + origin,
-                    width: footerSize.width,
-                    height: footerSize.height
-                )
-                origin += footerSize.height
-            }
-            origin += self.inset.bottom
-            return QSize(
-                width: bounds.width,
-                height: origin
-            )
-        }
-        
-        func size(available: QSize) -> QSize {
-            let availableSize = QSize(
-                width: available.width - self.inset.horizontal,
-                height: .infinity
-            )
-            let headerHeight: Float
-            if let headerItem = self.headerItem {
-                let headerSize = headerItem.size(available: availableSize)
-                headerHeight = headerSize.height + self.headerSpacing
-            } else {
-                headerHeight = 0
-            }
-            let leadingSize = QListLayout.Helper.size(
-                available: availableSize,
-                direction: .horizontal,
-                inset: .zero,
-                spacing: self.leadingItemSpacing,
-                items: self.leadingItems
-            )
-            let trailingSize = QListLayout.Helper.size(
-                available: availableSize,
-                direction: .horizontal,
-                inset: .zero,
-                spacing: self.trailingItemSpacing,
-                items: self.trailingItems
-            )
-            let titleHeight: Float
-            if let titleItem = self.titleItem {
-                let leadingSpacing = self.leadingItems.count > 0 ? self.titleSpacing : 0
-                let trailingSpacing = self.trailingItems.count > 0 ? self.titleSpacing : 0
-                let titleSize = titleItem.size(available: QSize(
-                    width: availableSize.width - (leadingSize.width + leadingSpacing) - (trailingSize.width + trailingSpacing),
-                    height: max(leadingSize.height, trailingSize.height)
-                ))
-                titleHeight = titleSize.height
-            } else {
-                titleHeight = 0
-            }
-            let footerHeight: Float
-            if let footerItem = self.footerItem {
-                let footerSize = footerItem.size(available: availableSize)
-                footerHeight = footerSize.height + self.footerSpacing
-            } else {
-                footerHeight = 0
-            }
-            return QSize(
-                width: available.width,
-                height: headerHeight + max(leadingSize.height, titleHeight, trailingSize.height) + footerHeight + self.inset.vertical
-            )
-        }
-        
-        func items(bounds: QRect) -> [QLayoutItem] {
-            var items: [QLayoutItem] = []
-            if let headerItem = self.headerItem {
-                items.append(headerItem)
-            }
-            items.append(contentsOf: self.leadingItems)
-            if let titleItem = self.titleItem {
-                items.append(titleItem)
-            }
-            items.append(contentsOf: self.trailingItems)
-            if let footerItem = self.footerItem {
-                items.append(footerItem)
-            }
-            return items
-        }
-        
+        )
+    }
+    
+    func _relayout() {
+        self._contentView.contentLayout = Self._layout(
+            inset: self.inset,
+            headerView: self.headerView,
+            headerSpacing: self.headerSpacing,
+            leadingViews: self.leadingViews,
+            leadingViewSpacing: self.leadingViewSpacing,
+            titleView: self.titleView,
+            titleSpacing: self.titleSpacing,
+            trailingViews: self.trailingViews,
+            trailingViewSpacing: self.trailingViewSpacing,
+            footerView: self.footerView,
+            footerSpacing: self.footerSpacing
+        )
     }
     
 }

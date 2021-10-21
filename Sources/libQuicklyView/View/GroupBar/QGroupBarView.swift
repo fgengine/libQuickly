@@ -151,7 +151,6 @@ private extension QGroupBarView {
             return QListLayout.Helper.layout(
                 bounds: bounds,
                 direction: .horizontal,
-                origin: .forward,
                 inset: self.itemInset,
                 spacing: self.itemSpacing,
                 minSize: bounds.size.width / Float(self.items.count),

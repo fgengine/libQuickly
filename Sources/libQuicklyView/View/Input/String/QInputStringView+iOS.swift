@@ -158,6 +158,15 @@ extension QInputStringView.InputStringView : UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
         self.customDelegate?.endEditing()
     }
+    
+    func textFieldShouldClear(_ textField: UITextField) -> Bool {
+        return true
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.customDelegate?.pressedReturn()
+        return true
+    }
 
 }
 

@@ -84,4 +84,7 @@ public protocol IQInputStringView : IQView, IQViewColorable, IQViewBorderable, I
     @discardableResult
     func onEndEditing(_ value: (() -> Void)?) -> Self
     
+    @discardableResult
+    func onPressedReturn(_ value: (() -> Void)?) -> Self
+    
 }
