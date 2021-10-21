@@ -31,50 +31,57 @@ public class QBarView : IQBarView {
         get { return self._view.isHidden }
     }
     public var placement: QBarViewPlacement {
-        set(value) { self._layout.placement = value }
-        get { return self._layout.placement }
+        set(value) { self._view.contentLayout.placement = value }
+        get { return self._view.contentLayout.placement }
     }
     public var size: Float? {
-        set(value) { self._layout.size = value }
-        get { return self._layout.size }
+        set(value) { self._view.contentLayout.size = value }
+        get { return self._view.contentLayout.size }
     }
     public var safeArea: QInset {
-        set(value) { self._layout.safeArea = value }
-        get { return self._layout.safeArea }
+        set(value) { self._view.contentLayout.safeArea = value }
+        get { return self._view.contentLayout.safeArea }
+    }
+    public var separatorView: IQView? {
+        didSet(oldValue) {
+            guard self.separatorView !== oldValue else { return }
+            self._view.contentLayout.separatorItem = self.separatorView.flatMap({ QLayoutItem(view: $0) })
+        }
     }
     public var contentView: IQView? {
         didSet(oldValue) {
             guard self.contentView !== oldValue else { return }
-            self._layout.contentItem = self.contentView.flatMap({ QLayoutItem(view: $0) })
+            self._view.contentLayout.contentItem = self.contentView.flatMap({ QLayoutItem(view: $0) })
         }
     }
     public var color: QColor? {
-        set(value) { self._view.color = value }
-        get { return self._view.color }
+        set(value) { self._backgroundView.color = value }
+        get { return self._backgroundView.color }
     }
     public var cornerRadius: QViewCornerRadius {
-        set(value) { self._view.cornerRadius = value }
-        get { return self._view.cornerRadius }
+        set(value) { self._backgroundView.cornerRadius = value }
+        get { return self._backgroundView.cornerRadius }
     }
     public var border: QViewBorder {
-        set(value) { self._view.border = value }
-        get { return self._view.border }
+        set(value) { self._backgroundView.border = value }
+        get { return self._backgroundView.border }
     }
     public var shadow: QViewShadow? {
-        set(value) { self._view.shadow = value }
-        get { return self._view.shadow }
+        set(value) { self._backgroundView.shadow = value }
+        get { return self._backgroundView.shadow }
     }
     public var alpha: Float {
-        set(value) { self._view.alpha = value }
-        get { return self._view.alpha }
+        set(value) { self._backgroundView.alpha = value }
+        get { return self._backgroundView.alpha }
     }
     
-    private var _layout: Layout
     private var _view: QCustomView< Layout >
-    
+    private var _backgroundView: QEmptyView
+
     public init(
         placement: QBarViewPlacement,
         size: Float? = nil,
+        separatorView: IQView? = nil,
         contentView: IQView? = nil,
         color: QColor? = nil,
         border: QViewBorder = .none,
@@ -83,20 +90,24 @@ public class QBarView : IQBarView {
         alpha: Float = 1,
         isHidden: Bool = false
     ) {
+        self.separatorView = separatorView
         self.contentView = contentView
-        self._layout = Layout(
-            placement: placement,
-            size: size,
-            safeArea: .zero,
-            contentItem: contentView.flatMap({ QLayoutItem(view: $0) })
-        )
-        self._view = QCustomView(
-            contentLayout: self._layout,
+        self._backgroundView = QEmptyView(
             color: color,
             border: border,
             cornerRadius: cornerRadius,
             shadow: shadow,
-            alpha: alpha,
+            alpha: alpha
+        )
+        self._view = QCustomView(
+            contentLayout: Layout(
+                placement: placement,
+                size: size,
+                safeArea: .zero,
+                separatorItem: separatorView.flatMap({ QLayoutItem(view: $0) }),
+                contentItem: contentView.flatMap({ QLayoutItem(view: $0) }),
+                backgroundItem: QLayoutItem(view: self._backgroundView)
+            ),
             isHidden: isHidden
         )
     }
@@ -148,6 +159,12 @@ public class QBarView : IQBarView {
     }
     
     @discardableResult
+    public func separatorView(_ value: IQView?) -> Self {
+        self.separatorView = value
+        return self
+    }
+    
+    @discardableResult
     public func contentView(_ value: IQView?) -> Self {
         self.contentView = value
         return self
@@ -155,31 +172,31 @@ public class QBarView : IQBarView {
     
     @discardableResult
     public func color(_ value: QColor?) -> Self {
-        self._view.color(value)
+        self._backgroundView.color = value
         return self
     }
     
     @discardableResult
     public func border(_ value: QViewBorder) -> Self {
-        self._view.border(value)
+        self._backgroundView.border = value
         return self
     }
     
     @discardableResult
     public func cornerRadius(_ value: QViewCornerRadius) -> Self {
-        self._view.cornerRadius(value)
+        self._backgroundView.cornerRadius = value
         return self
     }
     
     @discardableResult
     public func shadow(_ value: QViewShadow?) -> Self {
-        self._view.shadow(value)
+        self._backgroundView.shadow = value
         return self
     }
     
     @discardableResult
     public func alpha(_ value: Float) -> Self {
-        self._view.alpha(value)
+        self._backgroundView.alpha = value
         return self
     }
     
@@ -236,20 +253,30 @@ extension QBarView {
         var safeArea: QInset {
             didSet { self.setNeedForceUpdate() }
         }
+        var separatorItem: QLayoutItem? {
+            didSet { self.setNeedForceUpdate(item: self.separatorItem) }
+        }
         var contentItem: QLayoutItem? {
             didSet { self.setNeedForceUpdate(item: self.contentItem) }
+        }
+        var backgroundItem: QLayoutItem {
+            didSet { self.setNeedForceUpdate(item: self.backgroundItem) }
         }
         
         init(
             placement: QBarViewPlacement,
             size: Float?,
             safeArea: QInset,
-            contentItem: QLayoutItem?
+            separatorItem: QLayoutItem?,
+            contentItem: QLayoutItem?,
+            backgroundItem: QLayoutItem
         ) {
             self.placement = placement
             self.size = size
             self.safeArea = safeArea
+            self.separatorItem = separatorItem
             self.contentItem = contentItem
+            self.backgroundItem = backgroundItem
         }
         
         func layout(bounds: QRect) -> QSize {
@@ -257,127 +284,120 @@ extension QBarView {
             let safeBounds = bounds.apply(inset: self.safeArea)
             switch self.placement {
             case .top:
-                let height: Float
+                let separatorHeight: Float
+                if let separatorItem = self.separatorItem {
+                    let separatorSize = separatorItem.size(available: QSize(
+                        width: bounds.width,
+                        height: .infinity
+                    ))
+                    separatorItem.frame = QRect(
+                        bottomLeft: safeBounds.bottomLeft,
+                        size: separatorSize
+                    )
+                    separatorHeight = separatorSize.height
+                } else {
+                    separatorHeight = 0
+                }
+                let contentHeight: Float
                 if let size = self.size {
-                    height = size
+                    contentHeight = size
                 } else {
                     let contentSize = contentItem.size(available: QSize(
                         width: bounds.width - self.safeArea.horizontal,
                         height: .infinity
                     ))
-                    height = contentSize.height
+                    contentHeight = contentSize.height
                 }
                 contentItem.frame = QRect(
-                    bottom: safeBounds.bottom,
+                    bottom: safeBounds.bottom + QPoint(x: 0, y: separatorHeight),
                     width: safeBounds.width,
-                    height: height
+                    height: contentHeight
+                )
+                self.backgroundItem.frame = QRect(
+                    topLeft: bounds.topLeft,
+                    bottomRight: contentItem.frame.bottomRight
                 )
                 return QSize(
                     width: bounds.width,
-                    height: height + self.safeArea.vertical
-                )
-            case .left:
-                let width: Float
-                if let size = self.size {
-                    width = size
-                } else {
-                    let contentSize = contentItem.size(available: QSize(
-                        width: .infinity,
-                        height: bounds.height - self.safeArea.vertical
-                    ))
-                    width = contentSize.width
-                }
-                contentItem.frame = QRect(
-                    right: safeBounds.right,
-                    width: width,
-                    height: safeBounds.height
-                )
-                return QSize(
-                    width: width + self.safeArea.horizontal,
-                    height: bounds.height
-                )
-            case .right:
-                let width: Float
-                if let size = self.size {
-                    width = size
-                } else {
-                    let contentSize = contentItem.size(available: QSize(
-                        width: .infinity,
-                        height: bounds.height - self.safeArea.vertical
-                    ))
-                    width = contentSize.width
-                }
-                contentItem.frame = QRect(
-                    left: safeBounds.left,
-                    width: width,
-                    height: safeBounds.height
-                )
-                return QSize(
-                    width: width + self.safeArea.horizontal,
-                    height: bounds.height
+                    height: separatorHeight + contentHeight + self.safeArea.vertical
                 )
             case .bottom:
-                let height: Float
+                let separatorHeight: Float
+                if let separatorItem = self.separatorItem {
+                    let separatorSize = separatorItem.size(available: QSize(
+                        width: bounds.width,
+                        height: .infinity
+                    ))
+                    separatorItem.frame = QRect(
+                        topLeft: safeBounds.topLeft,
+                        size: separatorSize
+                    )
+                    separatorHeight = separatorSize.height
+                } else {
+                    separatorHeight = 0
+                }
+                let contentHeight: Float
                 if let size = self.size {
-                    height = size
+                    contentHeight = size
                 } else {
                     let contentSize = contentItem.size(available: QSize(
                         width: bounds.width - self.safeArea.horizontal,
                         height: .infinity
                     ))
-                    height = contentSize.height
+                    contentHeight = contentSize.height
                 }
                 contentItem.frame = QRect(
-                    top: safeBounds.top,
+                    top: safeBounds.top + QPoint(x: 0, y: separatorHeight),
                     width: safeBounds.width,
-                    height: height
+                    height: contentHeight
+                )
+                self.backgroundItem.frame = QRect(
+                    topLeft: contentItem.frame.topLeft,
+                    bottomRight: bounds.bottomRight
                 )
                 return QSize(
                     width: bounds.width,
-                    height: height + self.safeArea.vertical
+                    height: separatorHeight + contentHeight + self.safeArea.vertical
                 )
             }
         }
         
         func size(available: QSize) -> QSize {
             guard let contentItem = self.contentItem else { return .zero }
-            switch self.placement {
-            case .top, .bottom:
-                let height: Float
-                if let size = self.size {
-                    height = size
-                } else {
-                    let contentSize = contentItem.size(available: QSize(
-                        width: available.width - self.safeArea.horizontal,
-                        height: .infinity
-                    ))
-                    height = contentSize.height
-                }
-                return QSize(
-                    width: available.width,
-                    height: height + self.safeArea.vertical
-                )
-            case .left, .right:
-                let width: Float
-                if let size = self.size {
-                    width = size
-                } else {
-                    let contentSize = contentItem.size(available: QSize(
-                        width: .infinity,
-                        height: available.height - self.safeArea.vertical
-                    ))
-                    width = contentSize.width
-                }
-                return QSize(
-                    width: width + self.safeArea.horizontal,
-                    height: available.height
-                )
+            var height: Float
+            if let size = self.size {
+                height = size
+            } else {
+                let contentSize = contentItem.size(available: QSize(
+                    width: available.width - self.safeArea.horizontal,
+                    height: .infinity
+                ))
+                height = contentSize.height
             }
+            if let separatorItem = self.separatorItem {
+                let separatorSize = separatorItem.size(available: QSize(
+                    width: available.width - self.safeArea.horizontal,
+                    height: .infinity
+                ))
+                height += separatorSize.height
+            }
+            return QSize(
+                width: available.width,
+                height: height + self.safeArea.vertical
+            )
         }
         
         func items(bounds: QRect) -> [QLayoutItem] {
-            guard let contentItem = self.contentItem else { return [] }
-            return [ contentItem ]
+            var items: [QLayoutItem] = [
+                self.backgroundItem
+            ]
+            if let separatorItem = self.separatorItem {
+                items.append(separatorItem)
+            }
+            if let contentItem = self.contentItem {
+                items.append(contentItem)
+            }
+            return items
         }
         
     }

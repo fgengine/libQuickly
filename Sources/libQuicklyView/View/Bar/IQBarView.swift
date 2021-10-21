@@ -7,8 +7,6 @@ import libQuicklyCore
 
 public enum QBarViewPlacement {
     case top
-    case left
-    case right
     case bottom
 }
 
@@ -20,6 +18,10 @@ public protocol IQBarView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     var safeArea: QInset { set get }
     
+    var separatorView: IQView? { set get }
+    
+    var contentView: IQView? { set get }
+    
     @discardableResult
     func placement(_ value: QBarViewPlacement) -> Self
     
@@ -28,5 +30,11 @@ public protocol IQBarView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     @discardableResult
     func safeArea(_ value: QInset) -> Self
+    
+    @discardableResult
+    func separatorView(_ value: IQView?) -> Self
+    
+    @discardableResult
+    func contentView(_ value: IQView?) -> Self
 
 }
