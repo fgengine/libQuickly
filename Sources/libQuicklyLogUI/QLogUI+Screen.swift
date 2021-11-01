@@ -71,7 +71,8 @@ extension QLogUI {
                 enablesReturnKeyAutomatically: false
             ))
             inputView.onPressedReturn({ [unowned self, unowned inputView] in
-                self._search = inputView.text.lowercased()
+                inputView.endEditing()
+                self._search = inputView.text
                 self._reload()
             })
             return inputView
@@ -100,7 +101,7 @@ extension QLogUI {
                     backgroundView.color = QColor(rgb: 0xA9AEBA)
                 }
             })
-            button.onPressed({ [unowned button] in
+            button.onPressed({ [unowned self, unowned button] in
                 button.isSelected = !button.isSelected
                 self._scrollToBottom()
             })
@@ -122,6 +123,13 @@ extension QLogUI {
                 backgroundView: backgroundView,
                 textView: textView
             )
+            button.onPressed({ [unowned self] in
+                if self._searchView.isEditing == true {
+                    self._searchView.endEditing()
+                } else {
+                    self._pressedClose()
+                }
+            })
             return button
         }()
         private var _entities: [Entity]
@@ -136,8 +144,6 @@ extension QLogUI {
         
         func setup() {
             self.target.add(observer: self, priority: .userInitiated)
-            
-            self._closeButton.onPressed({ [unowned self] in self._pressedClose() })
         }
         
         func destroy() {
@@ -194,7 +200,7 @@ private extension QLogUI.Screen {
     }
     
     func _filter(_ item: QLogUI.Target.Item) -> Bool {
-        guard let search = self._search else { return true }
+        guard let search = self._search?.lowercased() else { return true }
         if search.count > 0 {
             if item.category.lowercased().contains(search) == true {
                 return true

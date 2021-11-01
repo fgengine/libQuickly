@@ -6,7 +6,7 @@ import Foundation
 
 public extension QLog.Target {
     
-    class Default : IQLogTarget {
+    class OS : IQLogTarget {
         
         public var enabled: Bool
         
@@ -18,7 +18,7 @@ public extension QLog.Target {
         
         public func log(level: QLog.Level, category: String, message: String) {
             guard self.enabled == true else { return }
-            print("[\(category)]: \(message)")
+            NSLog("[\(category)]: \(message)")
         }
         
     }

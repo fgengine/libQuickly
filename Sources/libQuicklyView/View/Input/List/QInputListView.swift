@@ -35,6 +35,10 @@ public class QInputListView : IQInputListView {
             self.setNeedForceLayout()
         }
     }
+    public var isEditing: Bool {
+        guard self.isLoaded == true else { return false }
+        return self._view.isFirstResponder
+    }
     public var width: QDimensionBehaviour {
         didSet {
             guard self.isLoaded == true else { return }
@@ -229,6 +233,18 @@ public class QInputListView : IQInputListView {
     public func invisible() {
         self.isVisible = false
         self._onInvisible?()
+    }
+    
+    @discardableResult
+    public func startEditing() -> Self {
+        self._view.becomeFirstResponder()
+        return self
+    }
+    
+    @discardableResult
+    public func endEditing() -> Self {
+        self._view.endEditing(false)
+        return self
     }
     
     @discardableResult

@@ -5,7 +5,7 @@
 import Foundation
 import libQuicklyCore
 
-public protocol IQInputTextView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQInputTextView : IQInputView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
     var width: QDimensionBehaviour { set get }
     

@@ -11,7 +11,7 @@ public protocol IQInputListViewItem : AnyObject {
     
 }
 
-public protocol IQInputListView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQInputListView : IQInputView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
     var width: QDimensionBehaviour { set get }
     

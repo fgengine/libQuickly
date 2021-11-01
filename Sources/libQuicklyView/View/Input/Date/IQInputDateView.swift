@@ -11,7 +11,7 @@ public enum QInputDateViewMode {
     case dateTime
 }
 
-public protocol IQInputDateView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
+public protocol IQInputDateView : IQInputView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
 
     var width: QDimensionBehaviour { set get }
     
