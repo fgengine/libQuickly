@@ -56,6 +56,8 @@ public class QStackBarView : QBarView, IQStackBarView {
         trailingViewSpacing: Float = 4,
         footerView: IQView? = nil,
         footerSpacing: Float = 8,
+        size: Float? = nil,
+        separatorView: IQView? = nil,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -90,6 +92,8 @@ public class QStackBarView : QBarView, IQStackBarView {
         )
         super.init(
             placement: .top,
+            size: size,
+            separatorView: separatorView,
             contentView: self._contentView,
             color: color,
             border: border,

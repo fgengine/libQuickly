@@ -131,13 +131,13 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
                     bottom = barSize
                 }
             } else {
-                bottom = inheritedInsets.bottom
+                bottom = 0
             }
             return QInset(
                 top: inheritedInsets.top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
-                bottom: bottom
+                bottom: inheritedInsets.bottom + bottom
             )
         }
         return inheritedInsets
@@ -330,6 +330,7 @@ private extension QGroupContainer {
         }
         self._barView.itemViews(self._items.compactMap({ $0.barView }))
         if let current = self._current {
+            self._barView.selectedItemView(current.barView)
             self._view.contentLayout.state = .idle(current: current.groupItem)
         }
         self.screen.setup()

@@ -48,12 +48,6 @@ public class QBarView : IQBarView {
             self._view.contentLayout.separatorItem = self.separatorView.flatMap({ QLayoutItem(view: $0) })
         }
     }
-    public var contentView: IQView? {
-        didSet(oldValue) {
-            guard self.contentView !== oldValue else { return }
-            self._view.contentLayout.contentItem = self.contentView.flatMap({ QLayoutItem(view: $0) })
-        }
-    }
     public var color: QColor? {
         set(value) { self._backgroundView.color = value }
         get { return self._backgroundView.color }
@@ -91,7 +85,6 @@ public class QBarView : IQBarView {
         isHidden: Bool = false
     ) {
         self.separatorView = separatorView
-        self.contentView = contentView
         self._backgroundView = QEmptyView(
             color: color,
             border: border,
@@ -161,12 +154,6 @@ public class QBarView : IQBarView {
     @discardableResult
     public func separatorView(_ value: IQView?) -> Self {
         self.separatorView = value
-        return self
-    }
-    
-    @discardableResult
-    public func contentView(_ value: IQView?) -> Self {
-        self.contentView = value
         return self
     }
     
@@ -309,7 +296,7 @@ extension QBarView {
                     contentHeight = contentSize.height
                 }
                 contentItem.frame = QRect(
-                    bottom: safeBounds.bottom + QPoint(x: 0, y: separatorHeight),
+                    bottom: safeBounds.bottom - QPoint(x: 0, y: separatorHeight),
                     width: safeBounds.width,
                     height: contentHeight
                 )

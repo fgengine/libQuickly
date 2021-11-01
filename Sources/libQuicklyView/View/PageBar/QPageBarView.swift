@@ -67,6 +67,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         itemInset: QInset = QInset(horizontal: 12, vertical: 0),
         itemSpacing: Float = 4,
         size: Float? = nil,
+        separatorView: IQView? = nil,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -90,6 +91,7 @@ public class QPageBarView : QBarView, IQPageBarView {
         super.init(
             placement: .top,
             size: size,
+            separatorView: separatorView,
             contentView: self._contentView,
             color: color,
             border: border,

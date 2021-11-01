@@ -20,8 +20,6 @@ public protocol IQBarView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     var separatorView: IQView? { set get }
     
-    var contentView: IQView? { set get }
-    
     @discardableResult
     func placement(_ value: QBarViewPlacement) -> Self
     
@@ -33,8 +31,5 @@ public protocol IQBarView : IQView, IQViewColorable, IQViewBorderable, IQViewCor
     
     @discardableResult
     func separatorView(_ value: IQView?) -> Self
-    
-    @discardableResult
-    func contentView(_ value: IQView?) -> Self
 
 }
