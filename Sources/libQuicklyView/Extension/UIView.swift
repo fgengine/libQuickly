@@ -9,6 +9,10 @@ import libQuicklyCore
 
 extension UIView {
     
+    func update(locked: Bool) {
+        self.isUserInteractionEnabled = locked
+    }
+    
     func update(color: QColor?) {
         self.backgroundColor = color?.native
     }

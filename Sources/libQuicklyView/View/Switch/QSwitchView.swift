@@ -71,6 +71,18 @@ public class QSwitchView : IQSwitchView {
         }
         get { return self._value }
     }
+    public var isLocked: Bool {
+        set(value) {
+            if self._isLocked != value {
+                self._isLocked = value
+                if self.isLoaded == true {
+                    self._view.update(locked: self._isLocked)
+                }
+                self.triggeredChangeStyle(false)
+            }
+        }
+        get { return self._isLocked }
+    }
     public var color: QColor? {
         didSet {
             guard self.isLoaded == true else { return }
@@ -106,13 +118,15 @@ public class QSwitchView : IQSwitchView {
     private var _view: SwitchView {
         return self._reuse.content()
     }
+    private var _isLocked: Bool
     private var _value: Bool
     private var _onAppear: (() -> Void)?
     private var _onDisappear: (() -> Void)?
-    private var _onChangeValue: (() -> Void)?
     private var _onVisible: (() -> Void)?
     private var _onVisibility: (() -> Void)?
     private var _onInvisible: (() -> Void)?
+    private var _onChangeStyle: ((_ userIteraction: Bool) -> Void)?
+    private var _onChangeValue: (() -> Void)?
     
     public init(
         reuseBehaviour: QReuseItemBehaviour = .unloadWhenDisappear,
@@ -123,6 +137,7 @@ public class QSwitchView : IQSwitchView {
         offColor: QColor,
         onColor: QColor,
         value: Bool,
+        isLocked: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
         cornerRadius: QViewCornerRadius = .none,
@@ -137,6 +152,7 @@ public class QSwitchView : IQSwitchView {
         self.offColor = offColor
         self.onColor = onColor
         self._value = value
+        self._isLocked = isLocked
         self.color = color
         self.border = border
         self.cornerRadius = cornerRadius
@@ -185,6 +201,10 @@ public class QSwitchView : IQSwitchView {
         self._onInvisible?()
     }
     
+    public func triggeredChangeStyle(_ userIteraction: Bool) {
+        self._onChangeStyle?(userIteraction)
+    }
+    
     @discardableResult
     public func width(_ value: QDimensionBehaviour) -> Self {
         self.width = value
@@ -218,6 +238,12 @@ public class QSwitchView : IQSwitchView {
     @discardableResult
     public func value(_ value: Bool) -> Self {
         self.value = value
+        return self
+    }
+    
+    @discardableResult
+    public func lock(_ value: Bool) -> Self {
+        self.isLocked = value
         return self
     }
     
@@ -284,6 +310,12 @@ public class QSwitchView : IQSwitchView {
     @discardableResult
     public func onInvisible(_ value: (() -> Void)?) -> Self {
         self._onInvisible = value
+        return self
+    }
+    
+    @discardableResult
+    public func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self {
+        self._onChangeStyle = value
         return self
     }
     

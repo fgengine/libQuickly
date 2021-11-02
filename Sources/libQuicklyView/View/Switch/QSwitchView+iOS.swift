@@ -57,6 +57,7 @@ extension QSwitchView.SwitchView {
         self.update(offColor: view.offColor)
         self.update(onColor: view.onColor)
         self.update(value: view.value)
+        self.update(locked: view.isLocked)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
