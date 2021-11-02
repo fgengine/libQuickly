@@ -10,7 +10,7 @@ import libQuicklyCore
 extension UIView {
     
     func update(locked: Bool) {
-        self.isUserInteractionEnabled = locked
+        self.isUserInteractionEnabled = locked == false
     }
     
     func update(color: QColor?) {
