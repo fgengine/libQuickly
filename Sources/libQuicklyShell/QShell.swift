@@ -8,6 +8,7 @@ import libQuicklyCore
 
 public class QShell {
     
+    public typealias OnData = (_ data: Data) -> Void
     public typealias OnCompletion = (_ result: Result) -> Void
     
     public var isRunning: Bool {
@@ -17,9 +18,9 @@ public class QShell {
         guard self._process.isRunning == false else { return nil }
         return Self._result(self._process.terminationStatus)
     }
-    public let outputBuffer: IQShellBuffer
-    public let errorBuffer: IQShellBuffer
-    public let onCompletion: OnCompletion
+    public let onOutput: OnData?
+    public let onError: OnData?
+    public let onCompletion: OnCompletion?
     
     private let _queue: DispatchQueue
     private let _process: Process
@@ -28,12 +29,12 @@ public class QShell {
     
     public init(
         with command: String,
-        outputBuffer: IQShellBuffer,
-        errorBuffer: IQShellBuffer,
-        onCompletion: @escaping OnCompletion
+        onOutput: OnData? = nil,
+        onError: OnData? = nil,
+        onCompletion: OnCompletion? = nil
     ) {
-        self.outputBuffer = outputBuffer
-        self.errorBuffer = errorBuffer
+        self.onOutput = onOutput
+        self.onError = onError
         self.onCompletion = onCompletion
         
         self._queue = DispatchQueue(label: "QShellQueue")
@@ -51,17 +52,17 @@ public class QShell {
         self._outputPipe.fileHandleForReading.readabilityHandler = { [unowned self] handler in
             let data = handler.availableData
             self._queue.async(execute: { [unowned self] in
-                self.outputBuffer.append(data: data)
+                self.onOutput?(data)
             })
         }
         self._errorPipe.fileHandleForReading.readabilityHandler = { [unowned self] handler in
             let data = handler.availableData
             self._queue.async(execute: { [unowned self] in
-                self.errorBuffer.append(data: data)
+                self.onError?(data)
             })
         }
         self._process.terminationHandler = { [unowned self] process in
-            self.onCompletion(Self._result(process.terminationStatus))
+            self.onCompletion?(Self._result(process.terminationStatus))
         }
         
         self._process.launch()
@@ -91,9 +92,63 @@ extension QShell : IQCancellable {
 
 public extension QShell {
     
-    enum Result {
+    enum Result : Equatable {
         case success
         case failure(code: Int32)
+    }
+    
+    struct Run {
+        
+        public let result: QShell.Result
+        public let output: Data
+        public let error: Data
+        
+    }
+    
+}
+
+public extension QShell {
+    
+    static func run(
+        with command: String,
+        onOutput: @escaping OnData,
+        onError: @escaping OnData
+    ) -> QShell.Result {
+        let shell = QShell(
+            with: command,
+            onOutput: onOutput,
+            onError: onError
+        )
+        return shell.wait()
+    }
+    
+    static func run(
+        with command: String
+    ) -> QShell.Run {
+        var output = Data()
+        var error = Data()
+        let result = Self.run(
+            with: command,
+            onOutput: { data in
+                output.append(data)
+            },
+            onError: { data in
+                error.append(data)
+            }
+        )
+        return Run(
+            result: result,
+            output: output,
+            error: error
+        )
+    }
+    
+}
+
+public extension QShell.Run {
+    
+    var isSuccess: Bool {
+        return self.result == .success
     }
     
 }
