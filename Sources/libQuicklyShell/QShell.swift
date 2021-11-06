@@ -111,11 +111,18 @@ public extension QShell {
     
     static func run(
         with command: String,
+        at path: String? = nil,
         onOutput: @escaping OnData,
         onError: @escaping OnData
     ) -> QShell.Result {
+        let final: String
+        if let path = path {
+            final = "cd \(path.replacingOccurrences(of: " ", with: "\\ ")) && \(command)"
+        } else {
+            final = command
+        }
         let shell = QShell(
-            with: command,
+            with: final,
             onOutput: onOutput,
             onError: onError
         )
@@ -123,12 +130,14 @@ public extension QShell {
     }
     
     static func run(
-        with command: String
+        with command: String,
+        at path: String? = nil
     ) -> QShell.Run {
         var output = Data()
         var error = Data()
         let result = Self.run(
             with: command,
+            at: path,
             onOutput: { data in
                 output.append(data)
             },

@@ -44,6 +44,60 @@ public extension QSemaVersion {
         return self.isStable == true && self.patch > 0
     }
     
+    func build(options: BuildOptions = [ .major, .minor, .patch, .preRelease, .build ]) -> String {
+        var result = ""
+        if options.contains(.major) == true || options.contains(.minor) == true || options.contains(.patch) == true {
+            var components: [String] = []
+            if options.contains(.major) == true {
+                components.append("\(self.major)")
+            }
+            if options.contains(.minor) == true {
+                components.append("\(self.minor)")
+            }
+            if options.contains(.patch) == true {
+                components.append("\(self.patch)")
+            }
+            result = components.joined(separator: ".")
+        }
+        if self.preRelease.isEmpty == false && options.contains(.preRelease) == true {
+            if result.isEmpty == false {
+                result.append("-\(self.preRelease)")
+            } else {
+                result.append(self.preRelease)
+            }
+        }
+        if self.build.isEmpty == false && options.contains(.build) == true {
+            if result.isEmpty == false {
+                result.append("+\(self.build)")
+            } else {
+                result.append(self.build)
+            }
+        }
+        return result
+    }
+    
+}
+
+public extension QSemaVersion {
+    
+    struct BuildOptions : OptionSet {
+        
+        public typealias RawValue = UInt
+        
+        public var rawValue: RawValue
+        
+        public init(rawValue: RawValue) {
+            self.rawValue = rawValue
+        }
+        
+        public static var major = BuildOptions(rawValue: 1 << 0)
+        public static var minor = BuildOptions(rawValue: 1 << 1)
+        public static var patch = BuildOptions(rawValue: 1 << 2)
+        public static var preRelease = BuildOptions(rawValue: 1 << 3)
+        public static var build = BuildOptions(rawValue: 1 << 4)
+        
+    }
+    
 }
 
 extension QSemaVersion : LosslessStringConvertible {
@@ -54,9 +108,7 @@ extension QSemaVersion : LosslessStringConvertible {
     }
 
     public var description: String {
-        let pre = self.preRelease.isEmpty == true ? "" : "-" + self.preRelease
-        let bld = self.build.isEmpty == true ? "" : "+" + self.build
-        return "\(self.major).\(self.minor).\(self.patch)\(pre)\(bld)"
+        return self.build()
     }
     
 }
