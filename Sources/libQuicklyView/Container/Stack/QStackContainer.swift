@@ -765,6 +765,9 @@ private extension QStackContainer {
         }
         
         func update() {
+            if self.container.stackBarView !== self._layout.barItem.view {
+                self._layout.barItem = QLayoutItem(view: self.container.stackBarView)
+            }
             self._layout.barVisibility = self.container.stackBarVisibility
             self._layout.barHidden = self.container.stackBarHidden
         }
