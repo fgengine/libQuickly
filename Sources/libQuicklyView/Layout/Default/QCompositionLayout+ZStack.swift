@@ -63,7 +63,8 @@ extension QCompositionLayout.ZStack : IQCompositionLayoutEntity {
         var maxSize = QSize.zero
         if self.size.contains(.horizontal) == true {
             maxSize.width = bounds.width
-        } else if self.size.contains(.vertical) == true {
+        }
+        if self.size.contains(.vertical) == true {
             maxSize.height = bounds.height
         }
         for entity in self.entities {
@@ -85,7 +86,8 @@ extension QCompositionLayout.ZStack : IQCompositionLayoutEntity {
         var maxSize = QSize.zero
         if self.size.contains(.horizontal) == true {
             maxSize.width = available.width
-        } else if self.size.contains(.vertical) == true {
+        }
+        if self.size.contains(.vertical) == true {
             maxSize.height = available.height
         }
         for entity in self.entities {
