@@ -28,6 +28,7 @@ public class QShell {
     private let _errorPipe: Pipe
     
     public init(
+        environment: [String : String]? = nil,
         with command: String,
         onOutput: OnData? = nil,
         onError: OnData? = nil,
@@ -42,6 +43,7 @@ public class QShell {
         self._process = Process()
         self._process.launchPath = "/bin/bash"
         self._process.arguments = [ "-c", command ]
+        self._process.environment = environment
         
         self._outputPipe = Pipe()
         self._errorPipe = Pipe()
@@ -69,12 +71,12 @@ public class QShell {
     }
     
     deinit {
-        self._outputPipe.fileHandleForReading.readabilityHandler = nil
-        self._errorPipe.fileHandleForReading.readabilityHandler = nil
+        self._erase()
     }
     
     public func wait() -> Result {
         self._process.waitUntilExit()
+        self._erase()
         return self._queue.sync(execute: {
             return Self._result(self._process.terminationStatus)
         })
@@ -110,6 +112,7 @@ public extension QShell {
 public extension QShell {
     
     static func run(
+        environment: [String : String]? = nil,
         with command: String,
         at path: String? = nil,
         onOutput: @escaping OnData,
@@ -122,6 +125,7 @@ public extension QShell {
             final = command
         }
         let shell = QShell(
+            environment: environment,
             with: final,
             onOutput: onOutput,
             onError: onError
@@ -130,12 +134,14 @@ public extension QShell {
     }
     
     static func run(
+        environment: [String : String]? = nil,
         with command: String,
         at path: String? = nil
     ) -> QShell.Run {
         var output = Data()
         var error = Data()
         let result = Self.run(
+            environment: environment,
             with: command,
             at: path,
             onOutput: { data in
@@ -169,6 +175,11 @@ private extension QShell {
         case 0: return .success
         default: return .failure(code: code)
         }
+    }
+    
+    func _erase() {
+        self._outputPipe.fileHandleForReading.readabilityHandler = nil
+        self._errorPipe.fileHandleForReading.readabilityHandler = nil
     }
     
 }

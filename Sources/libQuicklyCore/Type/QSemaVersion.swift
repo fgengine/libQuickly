@@ -44,7 +44,7 @@ public extension QSemaVersion {
         return self.isStable == true && self.patch > 0
     }
     
-    func build(options: BuildOptions = [ .major, .minor, .patch, .preRelease, .build ]) -> String {
+    func make(options: MakeOptions = [ .major, .minor, .patch, .preRelease, .build ]) -> String {
         var result = ""
         if options.contains(.major) == true || options.contains(.minor) == true || options.contains(.patch) == true {
             var components: [String] = []
@@ -80,7 +80,7 @@ public extension QSemaVersion {
 
 public extension QSemaVersion {
     
-    struct BuildOptions : OptionSet {
+    struct MakeOptions : OptionSet {
         
         public typealias RawValue = UInt
         
@@ -90,11 +90,11 @@ public extension QSemaVersion {
             self.rawValue = rawValue
         }
         
-        public static var major = BuildOptions(rawValue: 1 << 0)
-        public static var minor = BuildOptions(rawValue: 1 << 1)
-        public static var patch = BuildOptions(rawValue: 1 << 2)
-        public static var preRelease = BuildOptions(rawValue: 1 << 3)
-        public static var build = BuildOptions(rawValue: 1 << 4)
+        public static var major = MakeOptions(rawValue: 1 << 0)
+        public static var minor = MakeOptions(rawValue: 1 << 1)
+        public static var patch = MakeOptions(rawValue: 1 << 2)
+        public static var preRelease = MakeOptions(rawValue: 1 << 3)
+        public static var build = MakeOptions(rawValue: 1 << 4)
         
     }
     
@@ -108,7 +108,7 @@ extension QSemaVersion : LosslessStringConvertible {
     }
 
     public var description: String {
-        return self.build()
+        return self.make()
     }
     
 }
