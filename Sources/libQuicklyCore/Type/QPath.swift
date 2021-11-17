@@ -23,6 +23,7 @@ public struct QPath : Hashable {
             } else {
                 self.string = Self._join(prefix: "/", components: compoments)
             }
+        #if os(macOS)
         case "~":
             let home = Self._home
             if compoments.isEmpty == true {
@@ -30,6 +31,7 @@ public struct QPath : Hashable {
             } else {
                 self.string = Self._join(prefix: home, components: compoments.dropFirst())
             }
+        #endif
         default:
             return nil
         }
@@ -78,9 +80,13 @@ public extension QPath {
         return QPath(string: "/")
     }
     
+    #if os(macOS)
+    
     static var home: QPath {
         return QPath(string: Self._home)
     }
+    
+    #endif
     
     static var current: QPath {
         return QPath(string: Self._current)
@@ -133,12 +139,13 @@ private extension QPath {
         return FileManager.default.currentDirectoryPath
     }
     
+    #if os(macOS)
+    
     static var _home: String {
-        if #available(OSX 10.12, *) {
-            return FileManager.default.homeDirectoryForCurrentUser.path
-        }
-        return NSHomeDirectory()
+        return FileManager.default.homeDirectoryForCurrentUser.path
     }
+    
+    #endif
     
     @inline(__always)
     static func _join< Compoment: StringProtocol >(prefix: String, component: Compoment) -> String {
@@ -179,23 +186,3 @@ private extension QPath {
     }
     
 }
-
-/*
-public extension QFilePath {
-    
-    func read(options: Data.ReadingOptions = []) -> Data? {
-        guard let data = try? Data(contentsOf: self.url, options: options) else { return nil }
-        return data
-    }
-    
-    func write(_ data: Data, options: Data.WritingOptions = []) -> Bool {
-        do {
-            try data.write(to: self.url, options: options)
-        } catch {
-            return false
-        }
-        return true
-    }
-    
-}
-*/
