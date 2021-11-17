@@ -74,6 +74,9 @@ public class QControlView< Layout : IQLayout > : IQControlView {
         set(value) {
             if self._isLocked != value {
                 self._isLocked = value
+                if self.isLoaded == true {
+                    self._view.update(locked: self._isLocked)
+                }
                 self.triggeredChangeStyle(false)
             }
         }

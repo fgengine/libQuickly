@@ -134,6 +134,7 @@ extension NativeCustomView {
         self._view = view
         self.update(gestures: view.gestures)
         self.update(contentLayout: view.contentLayout)
+        self.update(locked: view.isLocked)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)

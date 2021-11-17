@@ -104,6 +104,7 @@ extension NativeControlView {
     func update< Layout : IQLayout >(view: QControlView< Layout >) {
         self._view = view
         self.update(contentLayout: view.contentLayout)
+        self.update(locked: view.isLocked)
         self.update(color: view.color)
         self.update(border: view.border)
         self.update(cornerRadius: view.cornerRadius)
