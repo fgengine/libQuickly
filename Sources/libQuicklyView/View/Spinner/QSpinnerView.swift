@@ -39,6 +39,12 @@ public class QSpinnerView : IQSpinnerView {
             self._view.update(activityColor: self.activityColor)
         }
     }
+    public var scaleFactor: Float {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(scaleFactor: self.scaleFactor)
+        }
+    }
     public var isAnimating: Bool {
         set(value) {
             self._isAnimating = value
@@ -94,6 +100,7 @@ public class QSpinnerView : IQSpinnerView {
         reuseName: String? = nil,
         size: QDimensionBehaviour,
         activityColor: QColor,
+        scaleFactor: Float = 1,
         isAnimating: Bool = false,
         color: QColor? = nil,
         border: QViewBorder = .none,
@@ -105,6 +112,7 @@ public class QSpinnerView : IQSpinnerView {
         self.isVisible = false
         self.size = size
         self.activityColor = activityColor
+        self.scaleFactor = scaleFactor
         self._isAnimating = isAnimating
         self.color = color
         self.border = border

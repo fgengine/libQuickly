@@ -39,6 +39,7 @@ extension QSpinnerView.SpinnerView {
     func update(view: QSpinnerView) {
         self._view = view
         self.update(activityColor: view.activityColor)
+        self.update(scaleFactor: view.scaleFactor)
         self.update(isAnimating: view.isAnimating)
         self.update(color: view.color)
         self.update(border: view.border)
@@ -50,6 +51,10 @@ extension QSpinnerView.SpinnerView {
     
     func update(activityColor: QColor) {
         self.color = activityColor.native
+    }
+    
+    func update(scaleFactor: Float) {
+        self.transform = CGAffineTransform(scaleX: CGFloat(scaleFactor), y: CGFloat(scaleFactor))
     }
     
     func update(isAnimating: Bool) {
