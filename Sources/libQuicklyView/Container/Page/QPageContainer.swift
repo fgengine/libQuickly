@@ -307,6 +307,9 @@ extension QPageContainer : IQPageBarViewDelegate {
     
 }
 
+extension QPageContainer : IQRootContentContainer {
+}
+
 extension QPageContainer : IQStackContentContainer where Screen : IQScreenStackable {
     
     public var stackBarView: IQStackBarView {

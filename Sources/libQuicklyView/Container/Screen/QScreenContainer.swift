@@ -113,6 +113,9 @@ private extension QScreenContainer {
     
 }
 
+extension QScreenContainer : IQRootContentContainer {
+}
+
 extension QScreenContainer : IQStackContentContainer where Screen : IQScreenStackable {
     
     public var stackBarView: IQStackBarView {
