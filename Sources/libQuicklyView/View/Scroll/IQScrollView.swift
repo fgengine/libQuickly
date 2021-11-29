@@ -43,6 +43,10 @@ public protocol IQScrollViewObserver : AnyObject {
 
 public protocol IQScrollView : IQView, IQViewColorable, IQViewBorderable, IQViewCornerRadiusable, IQViewShadowable, IQViewAlphable {
     
+    var width: QDimensionBehaviour? { set get }
+    
+    var height: QDimensionBehaviour? { set get }
+    
     var direction: QScrollViewDirection { set get }
     
     var indicatorDirection: QScrollViewDirection { set get }

@@ -13,3 +13,17 @@ public protocol IQViewStyleable : AnyObject {
     func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self
     
 }
+
+extension IQWidgetView where Body : IQViewStyleable {
+    
+    public func triggeredChangeStyle(_ userIteraction: Bool) {
+        self.body.triggeredChangeStyle(userIteraction)
+    }
+    
+    @discardableResult
+    public func onChangeStyle(_ value: ((_ userIteraction: Bool) -> Void)?) -> Self {
+        self.body.onChangeStyle(value)
+        return self
+    }
+    
+}

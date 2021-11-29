@@ -35,3 +35,18 @@ public protocol IQViewShadowable : AnyObject {
     func shadow(_ value: QViewShadow?) -> Self
     
 }
+
+extension IQWidgetView where Body : IQViewShadowable {
+    
+    public var shadow: QViewShadow? {
+        set(value) { self.body.shadow = value }
+        get { return self.body.shadow }
+    }
+    
+    @discardableResult
+    public func shadow(_ value: QViewShadow?) -> Self {
+        self.body.shadow(value)
+        return self
+    }
+    
+}

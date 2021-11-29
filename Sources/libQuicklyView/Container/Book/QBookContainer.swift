@@ -215,6 +215,10 @@ extension QBookContainer : IQGroupContentContainer where Screen : IQScreenGroupa
 
 extension QBookContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
     
+    public var dialogInset: QInset {
+        return self.screen.dialogInset
+    }
+    
     public var dialogWidth: QDialogContentContainerSize {
         return self.screen.dialogWidth
     }
@@ -225,6 +229,10 @@ extension QBookContainer : IQDialogContentContainer where Screen : IQScreenDialo
     
     public var dialogAlignment: QDialogContentContainerAlignment {
         return self.screen.dialogAlignment
+    }
+    
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.screen.dialogBackgroundView
     }
     
 }

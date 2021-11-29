@@ -137,9 +137,11 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
             self._current = self._items.first
         }
         self._init()
+        QContainerBarController.shared.add(observer: self)
     }
     
     deinit {
+        QContainerBarController.shared.remove(observer: self)
         self.screen.destroy()
     }
     
@@ -147,7 +149,7 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         let inheritedInsets = self.inheritedInsets(interactive: interactive)
         if self._items.contains(where: { $0.container === container }) == true {
             let top: Float
-            if self.barHidden == false {
+            if self.barHidden == false && QContainerBarController.shared.hidden(.page) == false {
                 let barSize = self.barSize
                 let barVisibility = self.barVisibility
                 if interactive == true {
@@ -340,6 +342,10 @@ extension QPageContainer : IQGroupContentContainer where Screen : IQScreenGroupa
 
 extension QPageContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
     
+    public var dialogInset: QInset {
+        return self.screen.dialogInset
+    }
+    
     public var dialogWidth: QDialogContentContainerSize {
         return self.screen.dialogWidth
     }
@@ -350,6 +356,18 @@ extension QPageContainer : IQDialogContentContainer where Screen : IQScreenDialo
     
     public var dialogAlignment: QDialogContentContainerAlignment {
         return self.screen.dialogAlignment
+    }
+    
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.screen.dialogBackgroundView
+    }
+    
+}
+
+extension QPageContainer : IQContainerBarControllerObserver {
+    
+    public func changed(containerBarController: QContainerBarController) {
+        self._view.contentLayout.barVisibility = containerBarController.visibility(.page)
     }
     
 }

@@ -18,3 +18,18 @@ public protocol IQViewBorderable : AnyObject {
     func border(_ value: QViewBorder) -> Self
     
 }
+
+extension IQWidgetView where Body : IQViewBorderable {
+    
+    public var border: QViewBorder {
+        set(value) { self.body.border = value }
+        get { return self.body.border }
+    }
+    
+    @discardableResult
+    public func border(_ value: QViewBorder) -> Self {
+        self.body.border(value)
+        return self
+    }
+    
+}

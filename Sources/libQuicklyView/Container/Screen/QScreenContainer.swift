@@ -50,7 +50,9 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
         self.isPresented = false
         self.screen = screen
         self._view = QCustomView(
-            contentLayout: Layout()
+            contentLayout: Layout(
+                fit: (screen is IQScreenPushable) || (screen is IQScreenDialogable)
+            )
         )
         self._init()
     }
@@ -74,9 +76,6 @@ public class QScreenContainer< Screen : IQScreen & IQScreenViewable > : IQScreen
     
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
-        if self._view.contentLayout.item == nil {
-            self._view.contentLayout.item = QLayoutItem(view: self.screen.view)
-        }
         self.screen.prepareShow(interactive: interactive)
     }
     
@@ -109,6 +108,8 @@ private extension QScreenContainer {
     func _init() {
         self.screen.container = self
         self.screen.setup()
+        
+        self._view.contentLayout.item = QLayoutItem(view: self.screen.view)
     }
     
 }
@@ -191,6 +192,10 @@ extension QScreenContainer : IQModalContentContainer where Screen : IQScreenModa
 
 extension QScreenContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
     
+    public var dialogInset: QInset {
+        return self.screen.dialogInset
+    }
+    
     public var dialogWidth: QDialogContentContainerSize {
         return self.screen.dialogWidth
     }
@@ -201,6 +206,10 @@ extension QScreenContainer : IQDialogContentContainer where Screen : IQScreenDia
     
     public var dialogAlignment: QDialogContentContainerAlignment {
         return self.screen.dialogAlignment
+    }
+    
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.screen.dialogBackgroundView
     }
     
 }
@@ -222,11 +231,21 @@ private extension QScreenContainer {
         var item: QLayoutItem? {
             didSet { self.setNeedUpdate() }
         }
+        let fit: Bool
         
-        init() {
+        init(
+            fit: Bool
+        ) {
+            self.fit = fit
         }
         
         func layout(bounds: QRect) -> QSize {
+            if self.fit == true {
+                if let item = self.item {
+                    item.frame = bounds
+                }
+                return .zero
+            }
             if let item = self.item {
                 item.frame = bounds
             }
@@ -234,6 +253,12 @@ private extension QScreenContainer {
         }
         
         func size(available: QSize) -> QSize {
+            if self.fit == true {
+                if let item = self.item {
+                    return item.size(available: available)
+                }
+                return .zero
+            }
             return available
         }
         

@@ -4,7 +4,6 @@
 
 import Foundation
 import libQuicklyCore
-import SwiftUI
 
 public extension QCompositionLayout {
     
@@ -51,7 +50,10 @@ extension QCompositionLayout.HStack : IQCompositionLayoutEntity {
     
     @discardableResult
     public func layout(bounds: QRect) -> QSize {
-        let pass = self._sizePass(available: bounds.size)
+        let pass = self._sizePass(available: QSize(
+            width: .infinity,
+            height: bounds.height
+        ))
         switch self.alignment {
         case .top: self._layoutTop(bounds: bounds, pass: pass)
         case .center: self._layoutCenter(bounds: bounds, pass: pass)
@@ -62,7 +64,10 @@ extension QCompositionLayout.HStack : IQCompositionLayoutEntity {
     }
     
     public func size(available: QSize) -> QSize {
-        let pass = self._sizePass(available: available)
+        let pass = self._sizePass(available: QSize(
+            width: .infinity,
+            height: available.height
+        ))
         return pass.bounding
     }
     

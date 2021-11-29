@@ -7,13 +7,19 @@ import libQuicklyCore
 
 public protocol IQScreenDialogable : AnyObject {
     
+    var dialogInset: QInset { get }
     var dialogWidth: QDialogContentContainerSize { get }
     var dialogHeight: QDialogContentContainerSize { get }
     var dialogAlignment: QDialogContentContainerAlignment { get }
+    var dialogBackgroundView: (IQView & IQViewAlphable)? { get }
     
 }
 
 public extension IQScreenDialogable {
+    
+    var dialogInset: QInset {
+        return .zero
+    }
     
     var dialogWidth: QDialogContentContainerSize {
         return .fit
@@ -25,6 +31,10 @@ public extension IQScreenDialogable {
     
     var dialogAlignment: QDialogContentContainerAlignment {
         return .center
+    }
+    
+    var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return nil
     }
     
 }

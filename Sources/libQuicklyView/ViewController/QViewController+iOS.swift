@@ -48,6 +48,7 @@ public class QViewController : UIViewController {
         
         self.container.delegate = self
         self._virtualKeyboard.add(observer: self, priority: .userInitiated)
+        QContainerBarController.shared.add(observer: self)
         
         NotificationCenter.default.addObserver(self, selector: #selector(self._didChangeStatusBarFrame(_:)), name: UIApplication.didChangeStatusBarFrameNotification, object: nil)
     }
@@ -57,6 +58,7 @@ public class QViewController : UIViewController {
     }
     
     deinit {
+        QContainerBarController.shared.remove(observer: self)
         self._virtualKeyboard.remove(observer: self)
         
         NotificationCenter.default.removeObserver(self)
@@ -133,6 +135,14 @@ extension QViewController : IQVirtualKeyboardObserver {
     }
     
     public func didHide(virtualKeyboard: QVirtualKeyboard, info: QVirtualKeyboard.Info) {
+    }
+    
+}
+
+extension QViewController : IQContainerBarControllerObserver {
+    
+    public func changed(containerBarController: QContainerBarController) {
+        self.container.didChangeInsets()
     }
     
 }

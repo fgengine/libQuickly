@@ -100,6 +100,7 @@ final class NativeScrollView : UIScrollView {
         self.delegate = self
         
         self._contentView = UIView(frame: .zero)
+        self._contentView.clipsToBounds = true
         self.addSubview(self._contentView)
         
         self._refreshView = UIRefreshControl()
@@ -367,6 +368,9 @@ extension NativeScrollView : IQLayoutDelegate {
     func setNeedUpdate(_ layout: IQLayout) -> Bool {
         self.needLayoutContent = true
         self.setNeedsLayout()
+        if let customDelegate = self.customDelegate {
+            return customDelegate._isDynamicSize()
+        }
         return false
     }
     

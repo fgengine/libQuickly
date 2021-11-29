@@ -13,6 +13,8 @@ public protocol IQView : IQBaseView {
     var layout: IQLayout? { get }
     var item: QLayoutItem? { set get }
     
+    func loadIfNeeded()
+    
     func appear(to layout: IQLayout)
     
     func visible()

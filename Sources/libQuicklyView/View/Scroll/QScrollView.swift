@@ -20,6 +20,8 @@ protocol ScrollViewDelegate : AnyObject {
     
     func _scrollToTop()
     
+    func _isDynamicSize() -> Bool
+    
 }
 
 public class QScrollView< Layout : IQLayout > : IQScrollView {
@@ -40,6 +42,18 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     public var isHidden: Bool {
         didSet(oldValue) {
             guard self.isHidden != oldValue else { return }
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
+    public var width: QDimensionBehaviour? {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self.setNeedForceLayout()
+        }
+    }
+    public var height: QDimensionBehaviour? {
+        didSet {
             guard self.isLoaded == true else { return }
             self.setNeedForceLayout()
         }
@@ -174,6 +188,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     private var _onScrollToTop: (() -> Void)?
     
     public init(
+        width: QDimensionBehaviour? = .fill,
+        height: QDimensionBehaviour? = .fill,
         direction: QScrollViewDirection = [ .vertical, .bounds ],
         indicatorDirection: QScrollViewDirection = [],
         visibleInset: QInset = .zero,
@@ -188,6 +204,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         isHidden: Bool = false
     ) {
         self.isVisible = false
+        self.width = width
+        self.height = height
         self.direction = direction
         self.indicatorDirection = indicatorDirection
         self.visibleInset = visibleInset
@@ -212,6 +230,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     
     @available(iOS 10.0, *)
     public init(
+        width: QDimensionBehaviour? = .fill,
+        height: QDimensionBehaviour? = .fill,
         direction: QScrollViewDirection = [ .vertical, .bounds ],
         indicatorDirection: QScrollViewDirection = [],
         visibleInset: QInset = .zero,
@@ -227,6 +247,8 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
         isHidden: Bool = false
     ) {
         self.isVisible = false
+        self.width = width
+        self.height = height
         self.direction = direction
         self.indicatorDirection = indicatorDirection
         self.visibleInset = visibleInset
@@ -260,7 +282,22 @@ public class QScrollView< Layout : IQLayout > : IQScrollView {
     
     public func size(available: QSize) -> QSize {
         guard self.isHidden == false else { return .zero }
-        return available
+        if let width = self.width, let height = self.height {
+            return available.apply(width: width, height: height)
+        } else {
+            if let widthBehaviour = self.width, let width = widthBehaviour.value(available.width) {
+                return self.contentLayout.size(available: QSize(
+                    width: width,
+                    height: available.height
+                ))
+            } else if let heightBehaviour = self.height, let height = heightBehaviour.value(available.height) {
+                return self.contentLayout.size(available: QSize(
+                    width: available.width,
+                    height: height
+                ))
+            }
+        }
+        return self.contentLayout.size(available: available)
     }
     
     public func appear(to layout: IQLayout) {
@@ -550,6 +587,10 @@ extension QScrollView : ScrollViewDelegate {
     func _scrollToTop() {
         self._onScrollToTop?()
         self._observer.notify({ $0.scrollToTop(scrollView: self) })
+    }
+    
+    func _isDynamicSize() -> Bool {
+        return (self.width == nil) || (self.height == nil)
     }
     
 }

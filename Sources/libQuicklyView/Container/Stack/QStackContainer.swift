@@ -48,6 +48,7 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
     public var currentContainer: IQStackContentContainer {
         return self._currentItem.container
     }
+    public var hidesGroupBarWhenPushed: Bool
     public var animationVelocity: Float
     #if os(iOS)
     public var interactiveLimit: Float
@@ -59,6 +60,9 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
     #if os(iOS)
     private var _interactiveGesture: IQPanGesture
     private var _interactiveBeginLocation: QPoint?
+    private var _interactiveGroupBottomBar: Bool
+    private var _interactiveGroupBarOldVisibility: Float
+    private var _interactiveGroupBarNewVisibility: Float
     private var _interactiveBackward: Item?
     private var _interactiveCurrent: Item?
     #endif
@@ -69,10 +73,12 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
     
     public init(
         screen: Screen,
-        rootContainer: IQStackContentContainer
+        rootContainer: IQStackContentContainer,
+        hidesGroupBarWhenPushed: Bool = false
     ) {
         self.isPresented = false
         self.screen = screen
+        self.hidesGroupBarWhenPushed = hidesGroupBarWhenPushed
         #if os(iOS)
         self.animationVelocity = UIScreen.main.animationVelocity
         self.interactiveLimit = Float(UIScreen.main.bounds.width * 0.45)
@@ -96,11 +102,16 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
             )
         )
         #endif
+        self._interactiveGroupBottomBar = false
+        self._interactiveGroupBarOldVisibility = 1
+        self._interactiveGroupBarNewVisibility = 1
         self._items = []
         self._init()
+        QContainerBarController.shared.add(observer: self)
     }
     
     deinit {
+        QContainerBarController.shared.remove(observer: self)
         self.screen.destroy()
     }
     
@@ -114,7 +125,7 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
         }
         if let item = item {
             let top: Float
-            if item.barHidden == false {
+            if item.barHidden == false && QContainerBarController.shared.hidden(.stack) == false {
                 if interactive == true {
                     top = item.barSize * item.barVisibility
                 } else {
@@ -363,6 +374,10 @@ extension QStackContainer : IQGroupContentContainer where Screen : IQScreenGroup
 
 extension QStackContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
     
+    public var dialogInset: QInset {
+        return self.screen.dialogInset
+    }
+    
     public var dialogWidth: QDialogContentContainerSize {
         return self.screen.dialogWidth
     }
@@ -373,6 +388,10 @@ extension QStackContainer : IQDialogContentContainer where Screen : IQScreenDial
     
     public var dialogAlignment: QDialogContentContainerAlignment {
         return self.screen.dialogAlignment
+    }
+    
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.screen.dialogBackgroundView
     }
     
 }
@@ -390,6 +409,17 @@ extension QStackContainer : IQModalContentContainer where Screen : IQScreenModal
         switch self.screen.modalPresentation {
         case .simple: return nil
         case .sheet(let info): return info.backgroundView
+        }
+    }
+    
+}
+
+extension QStackContainer : IQContainerBarControllerObserver {
+    
+    public func changed(containerBarController: QContainerBarController) {
+        let visibility = containerBarController.visibility(.stack)
+        for item in self._items {
+            item.barVisibility = visibility
         }
     }
     
@@ -428,6 +458,14 @@ private extension QStackContainer {
         animated: Bool,
         completion: (() -> Void)?
     ) {
+        let hideBar: Bool
+        let groupBarOldVisibility = QContainerBarController.shared.visibility(.group)
+        let groupBarNewVisibility: Float = 0.0
+        if current === self._rootItem && self.hidesGroupBarWhenPushed == true && groupBarOldVisibility > groupBarNewVisibility {
+            hideBar = true
+        } else {
+            hideBar = false
+        }
         if animated == true {
             if let current = current, let forward = forward {
                 QAnimation.default.run(
@@ -445,6 +483,9 @@ private extension QStackContainer {
                         guard let self = self else { return }
                         self._view.contentLayout.state = .push(current: current.item, forward: forward.item, progress: progress)
                         self._view.contentLayout.updateIfNeeded()
+                        if hideBar == true {
+                            QContainerBarController.shared.set(.group, visibility: groupBarOldVisibility.lerp(groupBarNewVisibility, progress: progress))
+                        }
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
@@ -455,6 +496,9 @@ private extension QStackContainer {
                         }
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
+                        if hideBar == true {
+                            QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                        }
                         completion?()
                     }
                 )
@@ -466,6 +510,9 @@ private extension QStackContainer {
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             } else if let current = current {
                 self._view.contentLayout.state = .empty
@@ -475,11 +522,17 @@ private extension QStackContainer {
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             } else {
                 self._view.contentLayout.state = .empty
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             }
         } else if let current = current, let forward = forward {
@@ -492,6 +545,9 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else if let forward = forward {
             self._view.contentLayout.state = .idle(current: forward.item)
@@ -501,6 +557,9 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else if let current = current {
             self._view.contentLayout.state = .empty
@@ -510,11 +569,17 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else {
             self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         }
     }
@@ -525,6 +590,14 @@ private extension QStackContainer {
         animated: Bool,
         completion: (() -> Void)?
     ) {
+        let hideBar: Bool
+        let groupBarOldVisibility = QContainerBarController.shared.visibility(.group)
+        let groupBarNewVisibility: Float = 1.0
+        if backward === self._rootItem && self.hidesGroupBarWhenPushed == true && groupBarOldVisibility < groupBarNewVisibility {
+            hideBar = true
+        } else {
+            hideBar = false
+        }
         if animated == true {
             if let current = current, let backward = backward {
                 QAnimation.default.run(
@@ -542,6 +615,9 @@ private extension QStackContainer {
                         guard let self = self else { return }
                         self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
                         self._view.contentLayout.updateIfNeeded()
+                        if hideBar == true {
+                            QContainerBarController.shared.set(.group, visibility: groupBarOldVisibility.lerp(groupBarNewVisibility, progress: progress))
+                        }
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
@@ -552,6 +628,9 @@ private extension QStackContainer {
                         }
                         self.setNeedUpdateOrientations()
                         self.setNeedUpdateStatusBar()
+                        if hideBar == true {
+                            QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                        }
                         completion?()
                     }
                 )
@@ -563,6 +642,9 @@ private extension QStackContainer {
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             } else if let current = current {
                 self._view.contentLayout.state = .empty
@@ -572,11 +654,17 @@ private extension QStackContainer {
                 }
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             } else {
                 self._view.contentLayout.state = .empty
                 self.setNeedUpdateOrientations()
                 self.setNeedUpdateStatusBar()
+                if hideBar == true {
+                    QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+                }
                 completion?()
             }
         } else if let current = current, let backward = backward {
@@ -589,6 +677,9 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else if let backward = backward {
             self._view.contentLayout.state = .idle(current: backward.item)
@@ -598,6 +689,9 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else if let current = current {
             self._view.contentLayout.state = .empty
@@ -607,11 +701,17 @@ private extension QStackContainer {
             }
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         } else {
             self._view.contentLayout.state = .empty
             self.setNeedUpdateOrientations()
             self.setNeedUpdateStatusBar()
+            if hideBar == true {
+                QContainerBarController.shared.set(.group, visibility: groupBarNewVisibility)
+            }
             completion?()
         }
     }
@@ -630,6 +730,15 @@ private extension QStackContainer {
         let current = self._items[self._items.count - 1]
         current.container.prepareHide(interactive: true)
         self._interactiveCurrent = current
+        if backward === self._rootItem && self.hidesGroupBarWhenPushed == true {
+            self._interactiveGroupBottomBar = true
+            self._interactiveGroupBarOldVisibility = QContainerBarController.shared.visibility(.group)
+            self._interactiveGroupBarNewVisibility = 1
+        } else {
+            self._interactiveGroupBottomBar = false
+            self._interactiveGroupBarOldVisibility = 1
+            self._interactiveGroupBarNewVisibility = 1
+        }
     }
     
     func _changeInteractiveGesture() {
@@ -639,6 +748,9 @@ private extension QStackContainer {
         let layoutSize = self._view.contentSize
         let progress = max(0, deltaLocation.x / layoutSize.width)
         self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
+        if self._interactiveGroupBottomBar == true {
+            QContainerBarController.shared.set(.group, visibility: self._interactiveGroupBarOldVisibility.lerp(self._interactiveGroupBarNewVisibility, progress: progress))
+        }
     }
 
     func _endInteractiveGesture(_ canceled: Bool) {
@@ -654,6 +766,9 @@ private extension QStackContainer {
                     guard let self = self else { return }
                     self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: progress)
                     self._view.contentLayout.updateIfNeeded()
+                    if self._interactiveGroupBottomBar == true {
+                        QContainerBarController.shared.set(.group, visibility: self._interactiveGroupBarOldVisibility.lerp(self._interactiveGroupBarNewVisibility, progress: progress))
+                    }
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -668,6 +783,9 @@ private extension QStackContainer {
                     guard let self = self else { return }
                     self._view.contentLayout.state = .pop(backward: backward.item, current: current.item, progress: 1 - progress)
                     self._view.contentLayout.updateIfNeeded()
+                    if self._interactiveGroupBottomBar == true {
+                        QContainerBarController.shared.set(.group, visibility: self._interactiveGroupBarOldVisibility.lerp(self._interactiveGroupBarNewVisibility, progress: 1 - progress))
+                    }
                 },
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -687,6 +805,9 @@ private extension QStackContainer {
         self._resetInteractiveAnimation()
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
+        if self._interactiveGroupBottomBar == true {
+            QContainerBarController.shared.set(.group, visibility: self._interactiveGroupBarNewVisibility)
+        }
     }
     
     func _cancelInteractiveAnimation() {
@@ -697,6 +818,9 @@ private extension QStackContainer {
         self._resetInteractiveAnimation()
         self.setNeedUpdateOrientations()
         self.setNeedUpdateStatusBar()
+        if self._interactiveGroupBottomBar == true {
+            QContainerBarController.shared.set(.group, visibility: self._interactiveGroupBarOldVisibility)
+        }
     }
     
     func _resetInteractiveAnimation() {

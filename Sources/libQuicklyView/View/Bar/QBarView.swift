@@ -65,8 +65,8 @@ public class QBarView : IQBarView {
         get { return self._backgroundView.shadow }
     }
     public var alpha: Float {
-        set(value) { self._backgroundView.alpha = value }
-        get { return self._backgroundView.alpha }
+        set(value) { self._view.alpha = value }
+        get { return self._view.alpha }
     }
     
     private var _view: QCustomView< Layout >

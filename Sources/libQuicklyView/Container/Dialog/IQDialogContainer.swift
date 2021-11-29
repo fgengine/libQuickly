@@ -57,9 +57,11 @@ public protocol IQDialogContentContainer : IQContainer, IQContainerParentable {
     
     var dialogContainer: IQDialogContainer? { get }
     
+    var dialogInset: QInset { get }
     var dialogWidth: QDialogContentContainerSize { get }
     var dialogHeight: QDialogContentContainerSize { get }
     var dialogAlignment: QDialogContentContainerAlignment { get }
+    var dialogBackgroundView: (IQView & IQViewAlphable)? { get }
     
 }
 

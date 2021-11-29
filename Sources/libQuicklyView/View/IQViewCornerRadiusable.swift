@@ -19,3 +19,18 @@ public protocol IQViewCornerRadiusable : AnyObject {
     func cornerRadius(_ value: QViewCornerRadius) -> Self
     
 }
+
+extension IQWidgetView where Body : IQViewCornerRadiusable {
+    
+    public var cornerRadius: QViewCornerRadius {
+        set(value) { self.body.cornerRadius = value }
+        get { return self.body.cornerRadius }
+    }
+    
+    @discardableResult
+    public func cornerRadius(_ value: QViewCornerRadius) -> Self {
+        self.body.cornerRadius(value)
+        return self
+    }
+    
+}

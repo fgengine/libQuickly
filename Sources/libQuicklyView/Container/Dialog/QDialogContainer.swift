@@ -105,7 +105,7 @@ public class QDialogContainer : IQDialogContainer {
     ) {
         self.isPresented = false
         #if os(iOS)
-        self.animationVelocity = 700
+        self.animationVelocity = 1200
         self.interactiveLimit = 20
         #endif
         self.contentContainer = contentContainer
@@ -267,6 +267,7 @@ private extension QDialogContainer {
     func _present(dialog: Item, animated: Bool, completion: (() -> Void)?) {
         self._current = dialog
         self._view.contentLayout.dialogItem = dialog
+        self._view.contentLayout.state = .present(progress: 0)
         if let dialogSize = self._view.contentLayout.dialogSize {
             dialog.container.prepareShow(interactive: false)
             if animated == true {
@@ -318,6 +319,7 @@ private extension QDialogContainer {
     
     func _dismiss(dialog: Item, animated: Bool, completion: (() -> Void)?) {
         self._view.contentLayout.dialogItem = dialog
+        self._view.contentLayout.state = .dismiss(progress: 0)
         if let dialogSize = self._view.contentLayout.dialogSize {
             dialog.container.prepareHide(interactive: false)
             if animated == true {
@@ -479,10 +481,16 @@ private extension QDialogContainer {
         
         var container: IQDialogContentContainer
         var item: QLayoutItem
+        var backgroundView: (IQView & IQViewAlphable)?
+        var backgroundItem: QLayoutItem?
 
         init(container: IQDialogContentContainer, available: QSize) {
             self.container = container
             self.item = QLayoutItem(view: container.view)
+            if let backgroundView = container.dialogBackgroundView {
+                self.backgroundView = backgroundView
+                self.backgroundItem = QLayoutItem(view: backgroundView)
+            }
         }
 
     }
@@ -505,7 +513,11 @@ private extension QDialogContainer {
             didSet { self.setNeedUpdate() }
         }
         var dialogItem: Item? {
-            didSet { self.setNeedUpdate() }
+            didSet(oldValue) {
+                guard self.dialogItem !== oldValue else { return }
+                self._dialogSize = nil
+                self.setNeedUpdate()
+            }
         }
         var dialogSize: QSize? {
             self.updateIfNeeded()
@@ -526,7 +538,7 @@ private extension QDialogContainer {
         }
         
         func invalidate(item: QLayoutItem) {
-            if self.dialogItem === item {
+            if self.dialogItem?.item === item {
                 self._dialogSize = nil
             }
         }
@@ -545,24 +557,40 @@ private extension QDialogContainer {
                 contentItem.frame = bounds
             }
             if let dialog = self.dialogItem {
+                if let backgroundItem = dialog.backgroundItem {
+                    backgroundItem.frame = bounds
+                }
+                let availableBounds = bounds.apply(inset: dialog.container.dialogInset)
                 let size: QSize
                 if let dialogSize = self._dialogSize {
                     size = dialogSize
                 } else {
-                    size = self._size(bounds: bounds, dialog: dialog)
+                    size = self._size(bounds: availableBounds, dialog: dialog)
                     self._dialogSize = size
                 }
                 switch self.state {
                 case .idle:
-                    dialog.item.frame = self._idleRect(bounds: bounds, dialog: dialog, size: size)
+                    dialog.item.frame = self._idleRect(bounds: availableBounds, dialog: dialog, size: size)
                 case .present(let progress):
-                    let beginRect = self._presentRect(bounds: bounds, dialog: dialog, size: size)
-                    let endRect = self._idleRect(bounds: bounds, dialog: dialog, size: size)
+                    let beginRect = self._presentRect(bounds: availableBounds, dialog: dialog, size: size)
+                    let endRect = self._idleRect(bounds: availableBounds, dialog: dialog, size: size)
                     dialog.item.frame = beginRect.lerp(endRect, progress: progress)
+                    if let view = dialog.item.view as? IQViewAlphable {
+                        view.alpha = progress
+                    }
+                    if let backgroundView = dialog.backgroundView {
+                        backgroundView.alpha = progress
+                    }
                 case .dismiss(let progress):
-                    let beginRect = self._idleRect(bounds: bounds, dialog: dialog, size: size)
-                    let endRect = self._dismissRect(bounds: bounds, dialog: dialog, size: size)
+                    let beginRect = self._idleRect(bounds: availableBounds, dialog: dialog, size: size)
+                    let endRect = self._dismissRect(bounds: availableBounds, dialog: dialog, size: size)
                     dialog.item.frame = beginRect.lerp(endRect, progress: progress)
+                    if let view = dialog.item.view as? IQViewAlphable {
+                        view.alpha = 1 - progress
+                    }
+                    if let backgroundView = dialog.backgroundView {
+                        backgroundView.alpha = 1 - progress
+                    }
                 }
             }
             return bounds.size
@@ -578,6 +606,9 @@ private extension QDialogContainer {
                 items.append(contentItem)
             }
             if let dialogItem = self.dialogItem {
+                if let backgroundItem = dialogItem.backgroundItem {
+                    items.append(backgroundItem)
+                }
                 items.append(dialogItem.item)
             }
             return items
@@ -600,8 +631,8 @@ private extension QDialogContainer.Layout {
         let width, height: Float
         if dialog.container.dialogWidth == .fit && dialog.container.dialogHeight == .fit {
             let size = dialog.item.size(available: bounds.size)
-            width = size.width
-            height = size.height
+            width = min(size.width, bounds.width)
+            height = min(size.height, bounds.height)
         } else if dialog.container.dialogWidth == .fit {
             switch dialog.container.dialogHeight {
             case .fill(let before, let after): height = bounds.size.height - (before + after)
@@ -609,7 +640,7 @@ private extension QDialogContainer.Layout {
             case .fit: height = bounds.height
             }
             let size = dialog.item.size(available: QSize(width: bounds.size.width, height: height))
-            width = size.width
+            width = min(size.width, bounds.width)
         } else if dialog.container.dialogHeight == .fit {
             switch dialog.container.dialogWidth {
             case .fill(let before, let after): width = bounds.size.width - (before + after)
@@ -617,7 +648,7 @@ private extension QDialogContainer.Layout {
             case .fit: width = bounds.width
             }
             let size = dialog.item.size(available: QSize(width: width, height: bounds.size.height))
-            height = size.height
+            height = min(size.height, bounds.height)
         } else {
             switch dialog.container.dialogWidth {
             case .fill(let before, let after): width = bounds.size.width - (before + after)

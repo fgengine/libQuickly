@@ -112,9 +112,11 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
             self._current = self._items.first
         }
         self._init()
+        QContainerBarController.shared.add(observer: self)
     }
     
     deinit {
+        QContainerBarController.shared.remove(observer: self)
         self.screen.destroy()
     }
     
@@ -122,7 +124,7 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         let inheritedInsets = self.inheritedInsets(interactive: interactive)
         if self._items.contains(where: { $0.container === container }) == true {
             let bottom: Float
-            if self.barHidden == false {
+            if self.barHidden == false && QContainerBarController.shared.hidden(.group) == false {
                 let barSize = self.barSize
                 let barVisibility = self.barVisibility
                 if interactive == true {
@@ -145,6 +147,11 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
     
     public func didChangeInsets() {
         let inheritedInsets = self.inheritedInsets(interactive: true)
+        if self.barHidden == false {
+            self._barView.alpha = self.barVisibility
+        } else {
+            self._barView.alpha = 0
+        }
         self._barView.safeArea(QInset(top: 0, left: inheritedInsets.left, right: inheritedInsets.right, bottom: 0))
         self._view.contentLayout.barOffset = inheritedInsets.bottom
         for item in self._items {
@@ -303,6 +310,10 @@ extension QGroupContainer : IQStackContentContainer where Screen : IQScreenStack
 
 extension QGroupContainer : IQDialogContentContainer where Screen : IQScreenDialogable {
     
+    public var dialogInset: QInset {
+        return self.screen.dialogInset
+    }
+    
     public var dialogWidth: QDialogContentContainerSize {
         return self.screen.dialogWidth
     }
@@ -315,9 +326,21 @@ extension QGroupContainer : IQDialogContentContainer where Screen : IQScreenDial
         return self.screen.dialogAlignment
     }
     
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.screen.dialogBackgroundView
+    }
+    
 }
 
 extension QGroupContainer : IQHamburgerContentContainer {
+}
+
+extension QGroupContainer : IQContainerBarControllerObserver {
+    
+    public func changed(containerBarController: QContainerBarController) {
+        self._view.contentLayout.barVisibility = containerBarController.visibility(.group)
+    }
+    
 }
 
 private extension QGroupContainer {

@@ -10,6 +10,7 @@ public protocol IQStackContainer : IQContainer, IQContainerParentable {
     var rootContainer: IQStackContentContainer { get }
     var containers: [IQStackContentContainer] { get }
     var currentContainer: IQStackContentContainer { get }
+    var hidesGroupBarWhenPushed: Bool { set get }
     var animationVelocity: Float { set get }
     #if os(iOS)
     var interactiveLimit: Float { set get }

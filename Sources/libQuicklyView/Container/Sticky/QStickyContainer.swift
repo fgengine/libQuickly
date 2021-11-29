@@ -8,7 +8,7 @@ import UIKit
 #endif
 import libQuicklyCore
 
-public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
+public class QStickyContainer< Screen : IQStickyScreen, ContentContainer : IQContainer > : IQStickyContainer where ContentContainer : IQContainerParentable {
     
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
@@ -46,11 +46,16 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
         }
         get { return self._overlayView }
     }
+    public private(set) var overlayVisibility: Float {
+        set(value) { self._view.contentLayout.overlayVisibility = value }
+        get { return self._view.contentLayout.overlayVisibility }
+        
+    }
     public private(set) var overlayHidden: Bool {
         set(value) { self._view.contentLayout.overlayHidden = value }
         get { return self._view.contentLayout.overlayHidden }
     }
-    public var contentContainer: IQContainer & IQContainerParentable {
+    public var contentContainer: ContentContainer {
         set(value) {
             guard self._contentContainer !== value else { return }
             if self.isPresented == true {
@@ -74,11 +79,11 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
     
     private var _view: QCustomView< Layout >
     private var _overlayView: IQBarView
-    private var _contentContainer: IQContainer & IQContainerParentable
+    private var _contentContainer: ContentContainer
     
     public init(
         screen: Screen,
-        contentContainer: IQContainer & IQContainerParentable
+        contentContainer: ContentContainer
     ) {
         self.screen = screen
         self.isPresented = false
@@ -86,26 +91,39 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
             contentLayout: Layout(
                 contentItem: QLayoutItem(view: contentContainer.view),
                 overlayItem: QLayoutItem(view: screen.stickyView),
+                overlayVisibility: screen.stickyVisibility,
                 overlayHidden: screen.stickyHidden
             )
         )
         self._overlayView = screen.stickyView
         self._contentContainer = contentContainer
         self._init()
+        QContainerBarController.shared.add(observer: self)
     }
     
     deinit {
+        QContainerBarController.shared.remove(observer: self)
         self.screen.destroy()
     }
     
     public func insets(of container: IQContainer, interactive: Bool) -> QInset {
         let inheritedInsets = self.inheritedInsets(interactive: interactive)
         if self._contentContainer === container, let overlaySize = self._view.contentLayout.overlaySize {
+            let bottom: Float
+            if self.overlayHidden == false && QContainerBarController.shared.hidden(.sticky) == false {
+                if interactive == true {
+                    bottom = overlaySize.height * self.overlayVisibility
+                } else {
+                    bottom = overlaySize.height
+                }
+            } else {
+                bottom = 0
+            }
             return QInset(
                 top: inheritedInsets.top,
                 left: inheritedInsets.left,
                 right: inheritedInsets.right,
-                bottom: inheritedInsets.bottom + overlaySize.height
+                bottom: inheritedInsets.bottom + bottom
             )
         }
         return inheritedInsets
@@ -113,6 +131,11 @@ public class QStickyContainer< Screen : IQStickyScreen > : IQStickyContainer {
     
     public func didChangeInsets() {
         let inheritedInsets = self.inheritedInsets(interactive: true)
+        if self.overlayHidden == false {
+            self._overlayView.alpha = self.overlayVisibility
+        } else {
+            self._overlayView.alpha = 0
+        }
         self._overlayView.safeArea(QInset(top: 0, left: inheritedInsets.left, right: inheritedInsets.right, bottom: 0))
         self._view.contentLayout.overlayInset = inheritedInsets.bottom
         self._contentContainer.didChangeInsets()
@@ -172,6 +195,88 @@ private extension QStickyContainer {
     
 }
 
+extension QStickyContainer : IQRootContentContainer {
+}
+
+extension QStickyContainer : IQGroupContentContainer where ContentContainer : IQGroupContentContainer {
+    
+    public var groupItemView: IQBarItemView {
+        return self.contentContainer.groupItemView
+    }
+    
+}
+
+extension QStickyContainer : IQStackContentContainer where ContentContainer : IQStackContentContainer {
+    
+    public var stackBarView: IQStackBarView {
+        return self.contentContainer.stackBarView
+    }
+    
+    public var stackBarVisibility: Float {
+        return self.contentContainer.stackBarVisibility
+    }
+    
+    public var stackBarHidden: Bool {
+        return self.contentContainer.stackBarHidden
+    }
+    
+}
+
+extension QStickyContainer : IQPageContentContainer where ContentContainer : IQPageContentContainer {
+    
+    public var pageItemView: IQBarItemView {
+        return self.contentContainer.pageItemView
+    }
+    
+}
+
+extension QStickyContainer : IQDialogContentContainer where ContentContainer : IQDialogContentContainer {
+    
+    public var dialogInset: QInset {
+        return self.contentContainer.dialogInset
+    }
+    
+    public var dialogWidth: QDialogContentContainerSize {
+        return self.contentContainer.dialogWidth
+    }
+    
+    public var dialogHeight: QDialogContentContainerSize {
+        return self.contentContainer.dialogHeight
+    }
+    
+    public var dialogAlignment: QDialogContentContainerAlignment {
+        return self.contentContainer.dialogAlignment
+    }
+    
+    public var dialogBackgroundView: (IQView & IQViewAlphable)? {
+        return self.contentContainer.dialogBackgroundView
+    }
+    
+}
+
+extension QStickyContainer : IQModalContentContainer where ContentContainer : IQModalContentContainer {
+    
+    public var modalSheetInset: QInset? {
+        return self.contentContainer.modalSheetInset
+    }
+    
+    public var modalSheetBackgroundView: (IQView & IQViewAlphable)? {
+        return self.contentContainer.modalSheetBackgroundView
+    }
+    
+}
+
+extension QStickyContainer : IQHamburgerContentContainer where ContentContainer : IQHamburgerContentContainer {
+}
+
+extension QStickyContainer : IQContainerBarControllerObserver {
+    
+    public func changed(containerBarController: QContainerBarController) {
+        self._view.contentLayout.overlayVisibility = containerBarController.visibility(.sticky)
+    }
+    
+}
+
 private extension QStickyContainer {
     
     class Layout : IQLayout {
@@ -187,6 +292,9 @@ private extension QStickyContainer {
         var overlayInset: Float {
             didSet { self.setNeedUpdate() }
         }
+        var overlayVisibility: Float {
+            didSet { self.setNeedUpdate() }
+        }
         var overlayHidden: Bool {
             didSet { self.setNeedUpdate() }
         }
@@ -196,11 +304,13 @@ private extension QStickyContainer {
             contentItem: QLayoutItem,
             overlayItem: QLayoutItem,
             overlayInset: Float = 0,
+            overlayVisibility: Float = 0,
             overlayHidden: Bool
         ) {
             self.contentItem = contentItem
             self.overlayItem = overlayItem
             self.overlayInset = overlayInset
+            self.overlayVisibility = overlayVisibility
             self.overlayHidden = overlayHidden
         }
         
@@ -212,7 +322,7 @@ private extension QStickyContainer {
                     bottomLeft: bounds.bottomLeft,
                     size: QSize(
                         width: bounds.size.width,
-                        height: self.overlayInset + overlaySize.height
+                        height: self.overlayInset + (overlaySize.height * self.overlayVisibility)
                     )
                 )
                 self.overlaySize = overlaySize
@@ -233,7 +343,4 @@ private extension QStickyContainer {
         
     }
     
-}
-
-extension QStickyContainer : IQRootContentContainer {
 }

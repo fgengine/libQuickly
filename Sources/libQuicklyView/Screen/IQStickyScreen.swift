@@ -10,11 +10,16 @@ public protocol IQStickyScreen : IQScreen {
     associatedtype StickyBar : IQBarView
     
     var stickyView: StickyBar { get }
+    var stickyVisibility: Float { get }
     var stickyHidden: Bool { get }
     
 }
 
 public extension IQStickyScreen {
+    
+    var stickyVisibility: Float {
+        return 1
+    }
     
     var stickyHidden: Bool {
         return false
