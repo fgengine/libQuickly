@@ -16,6 +16,18 @@ public struct QStringJsonCoder : IQJsonValueCoder {
     
 }
 
+public struct QNonEmptyStringJsonDecoder : IQJsonValueDecoder {
+    
+    public static func decode(_ value: IQJsonValue) throws -> String {
+        let string = try QStringJsonCoder.decode(value)
+        if string.isEmpty == true {
+            throw QJsonError.cast
+        }
+        return string
+    }
+    
+}
+
 extension String : IQJsonCoderAlias {
     
     public typealias JsonDecoder = QStringJsonCoder
