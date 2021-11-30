@@ -30,8 +30,13 @@ public class QStateLayout< State : Equatable & Hashable > : IQLayout {
     public var alignments: [State : Alignment] {
         return self.data.mapValues({ $0.alignment })
     }
-    public var items: [State : QLayoutItem?] {
-        return self.data.mapValues({ $0.item })
+    public var items: [State : QLayoutItem] {
+        var result: [State : QLayoutItem] = [:]
+        for data in self.data {
+            guard let item = data.value.item else { continue }
+            result[data.key] = item
+        }
+        return result
     }
     public private(set) var data: [State : Data]
     
