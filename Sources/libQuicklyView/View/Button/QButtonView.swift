@@ -681,7 +681,7 @@ private extension QButtonView.Layout {
             }
         case .right:
             let offset = imageInset.left + textSize.width + textInset.right
-            let baseline = max(imageSize.width, textSize.width) / 2
+            let baseline = max(imageSize.height, textSize.height) / 2
             image = QRect(
                 x: offset,
                 y: baseline - (imageSize.height / 2),
@@ -706,7 +706,7 @@ private extension QButtonView.Layout {
             }
         case .bottom:
             let offset = imageInset.top + textSize.height + textInset.bottom
-            let baseline = max(imageSize.height, textSize.height) / 2
+            let baseline = max(imageSize.width, textSize.width) / 2
             image = QRect(
                 x: baseline - (imageSize.width / 2),
                 y: offset,
