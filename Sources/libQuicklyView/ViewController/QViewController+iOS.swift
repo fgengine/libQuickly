@@ -36,6 +36,7 @@ public class QViewController : UIViewController {
     }
     
     private var _virtualKeyboard: QVirtualKeyboard
+    private var _virtualKeyboardAnimationTask: IQAnimationTask?
     
     public init(
         container: IQRootContainer
@@ -58,6 +59,9 @@ public class QViewController : UIViewController {
     }
     
     deinit {
+        self._virtualKeyboardAnimationTask?.cancel()
+        self._virtualKeyboardAnimationTask = nil
+        
         QContainerBarController.shared.remove(observer: self)
         self._virtualKeyboard.remove(observer: self)
         
@@ -198,13 +202,15 @@ private extension QViewController {
     
     func _updateVirtualKeyboardHeight(duration: TimeInterval, height: Float) {
         guard abs(self.virtualKeyboardHeight - height) > .leastNonzeroMagnitude else { return }
-        QAnimation.default.run(
+        self._virtualKeyboardAnimationTask?.cancel()
+        self._virtualKeyboardAnimationTask = QAnimation.default.run(
             duration: duration,
             processing: { [unowned self] progress in
                 self.virtualKeyboardHeight = self.virtualKeyboardHeight.lerp(height, progress: progress)
             },
             completion: { [unowned self] in
                 self.virtualKeyboardHeight = height
+                self._virtualKeyboardAnimationTask = nil
             }
         )
     }
