@@ -15,7 +15,7 @@ public class QAppTrackingPermission : IQPermission {
         if #available(iOS 14.5, *) {
             switch ATTrackingManager.trackingAuthorizationStatus {
             case .notDetermined: return .notDetermined
-            case .restricted: return .authorized
+            case .restricted: return .denied
             case .denied: return .denied
             case .authorized: return .authorized
             @unknown default: return .denied
