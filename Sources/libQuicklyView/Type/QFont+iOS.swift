@@ -38,6 +38,12 @@ public struct QFont : Equatable {
 
 public extension QFont {
     
+    @inlinable
+    var lineHeight: Float {
+        return Float(self.native.lineHeight)
+    }
+    
+    @inlinable
     func withSize(_ size: Float) -> QFont {
         return QFont(self.native.withSize(CGFloat(size)))
     }
