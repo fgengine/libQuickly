@@ -36,8 +36,8 @@ public extension QCompositionLayout.Fill {
 
 extension QCompositionLayout.Fill : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        return self.entity.items
+    public func invalidate(item: QLayoutItem) {
+        self.entity.invalidate(item: item)
     }
     
     @discardableResult
@@ -85,6 +85,10 @@ extension QCompositionLayout.Fill : IQCompositionLayoutEntity {
         case .both:
             return available
         }
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        return self.entity.items(bounds: bounds)
     }
     
 }

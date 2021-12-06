@@ -42,8 +42,8 @@ public extension QCompositionLayout.Position {
 
 extension QCompositionLayout.Position : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        return self.entity.items
+    public func invalidate(item: QLayoutItem) {
+        self.entity.invalidate(item: item)
     }
     
     @discardableResult
@@ -64,6 +64,10 @@ extension QCompositionLayout.Position : IQCompositionLayoutEntity {
     
     public func size(available: QSize) -> QSize {
         return self.entity.size(available: available)
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        return self.entity.items(bounds: bounds)
     }
     
 }

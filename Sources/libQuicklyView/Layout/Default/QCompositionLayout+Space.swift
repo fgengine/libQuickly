@@ -35,8 +35,7 @@ public extension QCompositionLayout.Space {
 
 extension QCompositionLayout.Space : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        return []
+    public func invalidate(item: QLayoutItem) {
     }
     
     @discardableResult
@@ -52,6 +51,10 @@ extension QCompositionLayout.Space : IQCompositionLayoutEntity {
         case .horizontal: return QSize(width: self.space, height: 0)
         case .vertical: return QSize(width: 0, height: self.space)
         }
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        return []
     }
     
 }

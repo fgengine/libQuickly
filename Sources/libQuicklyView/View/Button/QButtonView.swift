@@ -189,6 +189,7 @@ public class QButtonView : IQButtonView {
     }
     
     public func size(available: QSize) -> QSize {
+        guard self.isHidden == false else { return .zero }
         let size: QSize
         if let width = self.width, let height = self.height {
             size = available.apply(width: width, height: height)

@@ -29,9 +29,7 @@ public extension QCompositionLayout {
 
 extension QCompositionLayout.View : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        guard self.item.isHidden == false else { return [] }
-        return [ self.item ]
+    public func invalidate(item: QLayoutItem) {
     }
     
     @discardableResult
@@ -42,6 +40,11 @@ extension QCompositionLayout.View : IQCompositionLayoutEntity {
     
     public func size(available: QSize) -> QSize {
         return self.item.size(available: available)
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        guard self.item.isHidden == false else { return [] }
+        return [ self.item ]
     }
     
 }

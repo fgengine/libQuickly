@@ -26,12 +26,9 @@ public extension QCompositionLayout {
 
 extension QCompositionLayout.Bubble : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        let items = self.content.items
-        if items.isEmpty == true {
-            return []
-        }
-        return self.bubble.items + items
+    public func invalidate(item: QLayoutItem) {
+        self.content.invalidate(item: item)
+        self.bubble.invalidate(item: item)
     }
     
     @discardableResult
@@ -50,6 +47,14 @@ extension QCompositionLayout.Bubble : IQCompositionLayoutEntity {
             return size
         }
         return size
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        let items = self.content.items(bounds: bounds)
+        if items.isEmpty == true {
+            return []
+        }
+        return self.bubble.items(bounds: bounds) + items
     }
     
 }

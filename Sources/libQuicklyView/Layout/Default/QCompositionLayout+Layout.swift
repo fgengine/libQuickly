@@ -7,31 +7,37 @@ import libQuicklyCore
 
 public extension QCompositionLayout {
     
-    struct None {
+    struct Layout {
         
-        public init() {
+        public let layout: IQLayout
+        
+        public init(
+            _ layout: IQLayout
+        ) {
+            self.layout = layout
         }
         
     }
     
 }
 
-extension QCompositionLayout.None : IQCompositionLayoutEntity {
+extension QCompositionLayout.Layout : IQCompositionLayoutEntity {
     
     public func invalidate(item: QLayoutItem) {
+        self.layout.invalidate(item: item)
     }
     
     @discardableResult
     public func layout(bounds: QRect) -> QSize {
-        return .zero
+        return self.layout.layout(bounds: bounds)
     }
     
     public func size(available: QSize) -> QSize {
-        return .zero
+        return self.layout.size(available: available)
     }
     
     public func items(bounds: QRect) -> [QLayoutItem] {
-        return []
+        return self.layout.items(bounds: bounds)
     }
     
 }

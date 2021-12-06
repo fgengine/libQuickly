@@ -26,12 +26,9 @@ public extension QCompositionLayout {
 
 extension QCompositionLayout.Overlay : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        let items = self.content.items
-        if items.isEmpty == true {
-            return []
-        }
-        return items + self.overlay.items
+    public func invalidate(item: QLayoutItem) {
+        self.content.invalidate(item: item)
+        self.overlay.invalidate(item: item)
     }
     
     @discardableResult
@@ -50,6 +47,14 @@ extension QCompositionLayout.Overlay : IQCompositionLayoutEntity {
             return size
         }
         return size
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        let items = self.content.items(bounds: bounds)
+        if items.isEmpty == true {
+            return []
+        }
+        return items + self.overlay.items(bounds: bounds)
     }
     
 }

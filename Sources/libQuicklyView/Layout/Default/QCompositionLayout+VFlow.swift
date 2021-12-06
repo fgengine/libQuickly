@@ -42,12 +42,10 @@ public extension QCompositionLayout.VFlow {
 
 extension QCompositionLayout.VFlow : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        var items: [QLayoutItem] = []
+    public func invalidate(item: QLayoutItem) {
         for entity in self.entities {
-            items.append(contentsOf: entity.items)
+            entity.invalidate(item: item)
         }
-        return items
     }
     
     @discardableResult
@@ -125,6 +123,14 @@ extension QCompositionLayout.VFlow : IQCompositionLayoutEntity {
             width: available.width,
             height: line
         )
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        var items: [QLayoutItem] = []
+        for entity in self.entities {
+            items.append(contentsOf: entity.items(bounds: bounds))
+        }
+        return items
     }
     
 }

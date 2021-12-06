@@ -32,16 +32,10 @@ public extension QCompositionLayout {
 
 extension QCompositionLayout.HAccessory : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        var items: [QLayoutItem] = []
-        if let leading = self.leading {
-            items.append(contentsOf: leading.items)
-        }
-        if let trailing = self.trailing {
-            items.append(contentsOf: trailing.items)
-        }
-        items.append(contentsOf: self.center.items)
-        return items
+    public func invalidate(item: QLayoutItem) {
+        self.leading?.invalidate(item: item)
+        self.center.invalidate(item: item)
+        self.trailing?.invalidate(item: item)
     }
     
     @discardableResult
@@ -120,6 +114,18 @@ extension QCompositionLayout.HAccessory : IQCompositionLayoutEntity {
             width: available.width,
             height: max(leadingSize.height, centerSize.height, trailingSize.height)
         )
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        var items: [QLayoutItem] = []
+        if let leading = self.leading {
+            items.append(contentsOf: leading.items(bounds: bounds))
+        }
+        if let trailing = self.trailing {
+            items.append(contentsOf: trailing.items(bounds: bounds))
+        }
+        items.append(contentsOf: self.center.items(bounds: bounds))
+        return items
     }
     
 }

@@ -54,12 +54,10 @@ private extension QCompositionLayout.VGrid {
 
 extension QCompositionLayout.VGrid : IQCompositionLayoutEntity {
     
-    public var items: [QLayoutItem] {
-        var items: [QLayoutItem] = []
+    public func invalidate(item: QLayoutItem) {
         for entity in self.entities {
-            items.append(contentsOf: entity.items)
+            entity.invalidate(item: item)
         }
-        return items
     }
     
     @discardableResult
@@ -78,6 +76,14 @@ extension QCompositionLayout.VGrid : IQCompositionLayoutEntity {
             height: .infinity
         ))
         return pass.bounding
+    }
+    
+    public func items(bounds: QRect) -> [QLayoutItem] {
+        var items: [QLayoutItem] = []
+        for entity in self.entities {
+            items.append(contentsOf: entity.items(bounds: bounds))
+        }
+        return items
     }
     
 }
