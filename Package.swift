@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "libQuickly",
     platforms: [
-        .iOS(.v9),
+        .iOS(.v10),
         .macOS(.v10_12)
     ],
     products: [
@@ -24,9 +24,11 @@ let package = Package(
         .library(name: "libQuicklyView", type: .static, targets: [ "libQuicklyView" ]),
         .library(name: "libQuicklyRemoteImageView", type: .static, targets: [ "libQuicklyRemoteImageView" ]),
         .library(name: "libQuicklyLog", type: .static, targets: [ "libQuicklyLog" ]),
-        .library(name: "libQuicklyLogUI", type: .static, targets: [ "libQuicklyLogUI" ])
+        .library(name: "libQuicklyLogUI", type: .static, targets: [ "libQuicklyLogUI" ]),
+        .library(name: "libQuicklyInAppPurchase", type: .static, targets: [ "libQuicklyInAppPurchase" ])
     ],
     dependencies: [
+        .package(name: "TPInAppReceipt", url: "https://github.com/tikhop/TPInAppReceipt.git", .upToNextMajor(from: "3.0.0")),
     ],
     targets: [
         .target(name: "libQuicklyCore"),
@@ -43,6 +45,7 @@ let package = Package(
         .target(name: "libQuicklyView", dependencies: [ .target(name: "libQuicklyCore"), .target(name: "libQuicklyObserver") ]),
         .target(name: "libQuicklyRemoteImageView", dependencies: [ .target(name: "libQuicklyApi"), .target(name: "libQuicklyView") ]),
         .target(name: "libQuicklyLog", dependencies: [ .target(name: "libQuicklyCore") ]),
-        .target(name: "libQuicklyLogUI", dependencies: [ .target(name: "libQuicklyLog"), .target(name: "libQuicklyObserver"), .target(name: "libQuicklyView") ])
+        .target(name: "libQuicklyLogUI", dependencies: [ .target(name: "libQuicklyLog"), .target(name: "libQuicklyObserver"), .target(name: "libQuicklyView") ]),
+        .target(name: "libQuicklyInAppPurchase", dependencies: [ .target(name: "libQuicklyCore"), .target(name: "libQuicklyObserver"), .product(name: "TPInAppReceipt", package: "TPInAppReceipt") ])
     ]
 )
