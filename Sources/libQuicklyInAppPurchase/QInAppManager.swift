@@ -338,8 +338,6 @@ extension QInAppManager : SKPaymentTransactionObserver {
                     }
                 case .restored:
                     if let purchase = self._purchases.first(where: { $0.id == transaction.payment.productIdentifier }) {
-                        let payment = purchase.payment(transaction: transaction)
-                        payment.set(status: .purchased)
                         for restorePurchase in self._restorePurchases {
                             restorePurchase.restore(purchase: purchase)
                         }
