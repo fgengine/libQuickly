@@ -222,9 +222,9 @@ private extension QInAppManager {
                     let durationDelta = expirationDate.timeIntervalSince1970 - purchaseDate.timeIntervalSince1970
                     let correctExpirationDate: Date
                     if durationDelta > 60 * 60 * 24 {
-                        correctExpirationDate = expirationDate.addingTimeInterval(60 * 5)
+                        correctExpirationDate = expirationDate.addingTimeInterval(60 * 60)
                     } else {
-                        correctExpirationDate = expirationDate.addingTimeInterval(5)
+                        correctExpirationDate = expirationDate.addingTimeInterval(60)
                     }
                     purchase.set(status: .subcription(QInAppPurchase.Status.Subcription(
                         date: purchaseDate,

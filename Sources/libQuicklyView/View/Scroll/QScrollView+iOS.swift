@@ -100,7 +100,6 @@ final class NativeScrollView : UIScrollView {
         self.delegate = self
         
         self._contentView = UIView(frame: .zero)
-        self._contentView.clipsToBounds = true
         self.addSubview(self._contentView)
         
         self._refreshView = UIRefreshControl()
