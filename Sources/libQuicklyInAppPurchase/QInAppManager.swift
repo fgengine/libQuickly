@@ -257,7 +257,6 @@ private extension QInAppManager {
             self._stopReverifyTimer()
         } catch {
             self._stopReverifyTimer()
-            self._verifyReceiptIfNeeded()
         }
     }
     
@@ -375,7 +374,7 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
         DispatchQueue.main.async(execute: {
-            self._verifyReceiptIfNeeded()
+            self._doVerifyReceipt()
         })
     }
     
@@ -397,7 +396,7 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueue(_ queue: SKPaymentQueue, didRevokeEntitlementsForProductIdentifiers productIdentifiers: [String]) {
         DispatchQueue.main.async(execute: {
-            self._verifyReceiptIfNeeded()
+            self._doVerifyReceipt()
         })
 
     }
