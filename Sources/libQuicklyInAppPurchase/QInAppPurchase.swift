@@ -36,7 +36,12 @@ public class QInAppPurchase {
     @discardableResult
     public func load() -> QInAppProduct {
         if let product = self.product {
-            return product
+            switch product.status {
+            case .unknown, .loading, .success:
+                return product
+            case .failure, .missing:
+                break
+            }
         }
         let product = QInAppProduct(purchase: self)
         self.product = product
