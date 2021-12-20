@@ -74,6 +74,12 @@ public struct QColor : Equatable {
     }
     
     @inlinable
+    @available(iOS 13.0, *)
+    public init(dynamicProvider: @escaping (UITraitCollection) -> QColor) {
+        self.native = UIColor(dynamicProvider: { return dynamicProvider($0).native })
+    }
+    
+    @inlinable
     public init(_ native: UIColor) {
         self.native = native
     }
