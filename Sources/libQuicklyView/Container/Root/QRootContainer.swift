@@ -138,6 +138,13 @@ public class QRootContainer : IQRootContainer {
         return self.contentContainer.activate()
     }
     
+    public func didChangeAppearance() {
+        if let overlayContainer = self.overlayContainer {
+            overlayContainer.didChangeAppearance()
+        }
+        self.contentContainer.didChangeAppearance()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.overlayContainer?.prepareShow(interactive: interactive)

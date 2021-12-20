@@ -117,12 +117,13 @@ public final class QListLayout : IQLayout {
     }
     
     public func animate(
+        delay: TimeInterval = 0,
         duration: TimeInterval,
         ease: IQAnimationEase = QAnimation.Ease.Linear(),
         perform: @escaping (_ layout: QListLayout) -> Void,
         completion: (() -> Void)? = nil
     ) {
-        let animation = Animation(duration: duration, ease: ease, perform: perform, completion: completion)
+        let animation = Animation(delay: delay, duration: duration, ease: ease, perform: perform, completion: completion)
         self._animations.append(animation)
         if self._animations.count == 1 {
             self._animate(animation: animation)
@@ -264,17 +265,20 @@ private extension QListLayout {
     
     class Animation {
         
+        let delay: TimeInterval
         let duration: TimeInterval
         let ease: IQAnimationEase
         let perform: (_ layout: QListLayout) -> Void
         let completion: (() -> Void)?
         
         public init(
+            delay: TimeInterval,
             duration: TimeInterval,
             ease: IQAnimationEase,
             perform: @escaping (_ layout: QListLayout) -> Void,
             completion: (() -> Void)?
         ) {
+            self.delay = delay
             self.duration = duration
             self.ease = ease
             self.perform = perform
@@ -340,6 +344,7 @@ private extension QListLayout {
         self.isAnimating = true
         animation.perform(self)
         QAnimation.default.run(
+            delay: animation.delay,
             duration: animation.duration,
             ease: animation.ease,
             processing: { [unowned self] progress in

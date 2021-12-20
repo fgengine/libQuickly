@@ -70,6 +70,17 @@ public extension QInAppPayment {
     
 }
 
+public extension QInAppPayment {
+    
+    var error: Error? {
+        switch self.status {
+        case .failure(let error): return error
+        default: return nil
+        }
+    }
+    
+}
+
 extension QInAppPayment {
     
     func set(status: Status) {

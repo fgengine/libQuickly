@@ -226,6 +226,16 @@ public class QHamburgerContainer : IQHamburgerContainer {
         }
     }
     
+    public func didChangeAppearance() {
+        self._contentContainer.didChangeAppearance()
+        if let container = self._leadingContainer {
+            container.didChangeAppearance()
+        }
+        if let container = self._trailingContainer {
+            container.didChangeAppearance()
+        }
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self._contentContainer.prepareShow(interactive: interactive)

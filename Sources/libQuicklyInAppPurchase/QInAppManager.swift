@@ -12,15 +12,21 @@ class QInAppManager : NSObject {
     private var _queue: SKPaymentQueue
     private var _verifyReceiptTask: DispatchWorkItem?
     private var _reverifyTimer: DispatchWorkItem?
-    private var _purchases: [QInAppPurchase]
-    private var _restorePurchases: [QInAppRestorePurchase]
+    private var _purchases: [QInAppPurchase] {
+        return self._weakPurchases.compactMap({ $0.value })
+    }
+    private var _weakPurchases: [QWeakObject< QInAppPurchase >]
+    private var _restoreControllers: [QInAppRestoreController] {
+        return self._weakRestoreControllers.compactMap({ $0.value })
+    }
+    private var _weakRestoreControllers: [QWeakObject< QInAppRestoreController >]
     private var _productsTask: DispatchWorkItem?
     private var _productsQueries: [ProductsQuery]
     
     override init() {
         self._queue = SKPaymentQueue.default()
-        self._purchases = []
-        self._restorePurchases = []
+        self._weakPurchases = []
+        self._weakRestoreControllers = []
         self._productsQueries = []
         super.init()
         self._queue.add(self)
@@ -78,28 +84,26 @@ extension QInAppManager {
 extension QInAppManager {
     
     func register(_ purchase: QInAppPurchase) {
-        if self._purchases.contains(where: { $0.id == purchase.id }) == false {
-            self._purchases.append(purchase)
-            self._verifyReceiptIfNeeded()
-        }
+        self._weakPurchases.append(QWeakObject(purchase))
+        self._verifyReceiptIfNeeded()
     }
 
     func unregister(_ purchase: QInAppPurchase) {
-        if let index = self._purchases.firstIndex(where: { $0.id == purchase.id }) {
-            self._purchases.remove(at: index)
-        }
+        self._weakPurchases.removeAll(where: {
+            guard let existPurchase = $0.value else { return true }
+            return existPurchase === purchase
+        })
     }
     
-    func register(_ restorePurchase: QInAppRestorePurchase) {
-        if self._restorePurchases.contains(where: { $0 === restorePurchase }) == false {
-            self._restorePurchases.append(restorePurchase)
-        }
+    func register(_ controller: QInAppRestoreController) {
+        self._weakRestoreControllers.append(QWeakObject(controller))
     }
     
-    func unregister(_ restorePurchase: QInAppRestorePurchase) {
-        if let index = self._restorePurchases.firstIndex(where: { $0 === restorePurchase }) {
-            self._restorePurchases.remove(at: index)
-        }
+    func unregister(_ controller: QInAppRestoreController) {
+        self._weakRestoreControllers.removeAll(where: {
+            guard let existController = $0.value else { return true }
+            return existController === controller
+        })
     }
 
     func load(product: QInAppProduct) {
@@ -185,8 +189,8 @@ private extension QInAppManager {
     }
     
     func _finishRestorePurchases(error: Error?) {
-        for restorePurchase in self._restorePurchases {
-            restorePurchase.finish(error: error)
+        for restoreController in self._restoreControllers {
+            restoreController.finish(error: error)
         }
     }
     
@@ -222,9 +226,9 @@ private extension QInAppManager {
                     let durationDelta = expirationDate.timeIntervalSince1970 - purchaseDate.timeIntervalSince1970
                     let correctExpirationDate: Date
                     if durationDelta > 60 * 60 * 24 {
-                        correctExpirationDate = expirationDate.addingTimeInterval(60 * 60)
+                        correctExpirationDate = expirationDate.addingTimeInterval(purchase.config.production.extraExpirationInterval)
                     } else {
-                        correctExpirationDate = expirationDate.addingTimeInterval(60)
+                        correctExpirationDate = expirationDate.addingTimeInterval(purchase.config.sandbox.extraExpirationInterval)
                     }
                     purchase.set(status: .subcription(QInAppPurchase.Status.Subcription(
                         date: purchaseDate,
@@ -335,13 +339,14 @@ extension QInAppManager : SKPaymentTransactionObserver {
                         payment.set(status: .purchased)
                         queue.finishTransaction(transaction)
                     }
+                    queue.finishTransaction(transaction)
                 case .restored:
                     if let purchase = self._purchases.first(where: { $0.id == transaction.payment.productIdentifier }) {
-                        for restorePurchase in self._restorePurchases {
-                            restorePurchase.restore(purchase: purchase)
+                        for controller in self._restoreControllers {
+                            controller.restore(purchase: purchase)
                         }
-                        queue.finishTransaction(transaction)
                     }
+                    queue.finishTransaction(transaction)
                 case .deferred:
                     if let purchase = self._purchases.first(where: { $0.id == transaction.payment.productIdentifier }) {
                         let payment = purchase.payment(transaction: transaction)
@@ -374,7 +379,7 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
         DispatchQueue.main.async(execute: {
-            self._doVerifyReceipt()
+            self._verifyReceiptIfNeeded()
         })
     }
     
@@ -388,7 +393,7 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         DispatchQueue.main.async(execute: {
-            self._doVerifyReceipt()
+            self._verifyReceiptIfNeeded()
             self._finishRestorePurchases(error: nil)
         })
     }
@@ -396,9 +401,8 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueue(_ queue: SKPaymentQueue, didRevokeEntitlementsForProductIdentifiers productIdentifiers: [String]) {
         DispatchQueue.main.async(execute: {
-            self._doVerifyReceipt()
+            self._verifyReceiptIfNeeded()
         })
-
     }
     
 }

@@ -165,6 +165,14 @@ public class QStackContainer< Screen : IQStackScreen > : IQStackContainer, IQCon
         return self._rootItem.container.activate()
     }
     
+    public func didChangeAppearance() {
+        self.screen.didChangeAppearance()
+        for item in self._items.reversed() {
+            item.container.didChangeAppearance()
+        }
+        self._rootItem.container.didChangeAppearance()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.screen.prepareShow(interactive: interactive)

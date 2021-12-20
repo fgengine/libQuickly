@@ -15,6 +15,10 @@ public protocol IQPageBarView : IQBarView {
     
     var delegate: IQPageBarViewDelegate? { set get }
     
+    var leadingView: IQView? { get }
+    
+    var trailingView: IQView? { get }
+
     var indicatorView: IQView { get }
     
     var itemInset: QInset { get }
@@ -24,6 +28,12 @@ public protocol IQPageBarView : IQBarView {
     var itemViews: [IQBarItemView] { get }
     
     var selectedItemView: IQBarItemView? { get }
+    
+    @discardableResult
+    func leadingView(_ value: IQView?) -> Self
+    
+    @discardableResult
+    func trailingView(_ value: IQView?) -> Self
     
     @discardableResult
     func indicatorView(_ value: IQView) -> Self

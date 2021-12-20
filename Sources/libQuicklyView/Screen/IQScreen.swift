@@ -14,6 +14,8 @@ public protocol IQScreen : AnyObject {
     func destroy()
     
     func activate() -> Bool
+    
+    func didChangeAppearance()
 
     func prepareShow(interactive: Bool)
     func finishShow(interactive: Bool)
@@ -43,6 +45,9 @@ public extension IQScreen {
     
     func activate() -> Bool {
         return false
+    }
+    
+    func didChangeAppearance() {
     }
     
     func prepareShow(interactive: Bool) {

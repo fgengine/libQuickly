@@ -157,8 +157,8 @@ public class QPushContainer : IQPushContainer {
     }
     
     public func activate() -> Bool {
-        if let current = self._current?.container {
-            if current.activate() == true {
+        if let current = self._current {
+            if current.container.activate() == true {
                 return true
             }
         }
@@ -166,6 +166,15 @@ public class QPushContainer : IQPushContainer {
             return contentContainer.activate()
         }
         return false
+    }
+    
+    public func didChangeAppearance() {
+        for container in self.containers {
+            container.didChangeAppearance()
+        }
+        if let contentContainer = self.contentContainer {
+            contentContainer.didChangeAppearance()
+        }
     }
     
     public func prepareShow(interactive: Bool) {

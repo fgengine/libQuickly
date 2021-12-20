@@ -16,14 +16,19 @@ public protocol IQInAppPurchaseObserver : AnyObject {
 public class QInAppPurchase {
     
     public let id: String
+    public let config: Config
     public private(set) var status: Status
     public private(set) var product: QInAppProduct?
     public private(set) var payment: QInAppPayment?
     
     private var _observer: QObserver< IQInAppPurchaseObserver >
     
-    public init(id: String) {
+    public init(
+        id: String,
+        config: Config = Config()
+    ) {
         self.id = id
+        self.config = config
         self.status = .unknown
         self._observer = QObserver()
         QInAppManager.shared.register(self)
@@ -31,22 +36,6 @@ public class QInAppPurchase {
     
     deinit {
         QInAppManager.shared.unregister(self)
-    }
-    
-    @discardableResult
-    public func load() -> QInAppProduct {
-        if let product = self.product {
-            switch product.status {
-            case .unknown, .loading, .success:
-                return product
-            case .failure, .missing:
-                break
-            }
-        }
-        let product = QInAppProduct(purchase: self)
-        self.product = product
-        QInAppManager.shared.load(product: product)
-        return product
     }
     
     public func add(observer: IQInAppPurchaseObserver, priority: QObserverPriority) {
@@ -60,6 +49,33 @@ public class QInAppPurchase {
 }
 
 public extension QInAppPurchase {
+    
+    struct Config {
+        
+        public let production: ConfigVariant
+        public let sandbox: ConfigVariant
+        
+        public init(
+            production: ConfigVariant = ConfigVariant(extraExpirationInterval: 60 * 60),
+            sandbox: ConfigVariant = ConfigVariant(extraExpirationInterval: 60)
+        ) {
+            self.production = production
+            self.sandbox = sandbox
+        }
+        
+    }
+    
+    struct ConfigVariant {
+        
+        public let extraExpirationInterval: TimeInterval
+        
+        public init(
+            extraExpirationInterval: TimeInterval
+        ) {
+            self.extraExpirationInterval = extraExpirationInterval
+        }
+        
+    }
 
     enum Status : Equatable {
         case unknown
@@ -99,6 +115,23 @@ public extension QInAppPurchase {
 
 extension QInAppPurchase {
     
+    @discardableResult
+    func load() -> QInAppProduct {
+        if let product = self.product {
+            switch product.status {
+            case .unknown, .loading, .success:
+                return product
+            case .failure, .missing:
+                break
+            }
+        }
+        let product = QInAppProduct(purchase: self)
+        self.product = product
+        QInAppManager.shared.load(product: product)
+        return product
+    }
+    
+    @discardableResult
     func buy(
         product: QInAppProduct,
         options: QInAppPayment.Options
@@ -117,6 +150,7 @@ extension QInAppPurchase {
         return payment
     }
     
+    @discardableResult
     func payment(transaction: SKPaymentTransaction) -> QInAppPayment {
         if let payment = self.payment {
             return payment

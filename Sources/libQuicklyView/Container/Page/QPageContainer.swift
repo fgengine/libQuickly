@@ -183,10 +183,17 @@ public class QPageContainer< Screen : IQPageScreen > : IQPageContainer, IQContai
         if self.screen.activate() == true {
             return true
         }
-        if let container = self._current?.container {
-            return container.activate()
+        if let current = self._current {
+            return current.container.activate()
         }
         return false
+    }
+    
+    public func didChangeAppearance() {
+        self.screen.didChangeAppearance()
+        for item in self._items {
+            item.container.didChangeAppearance()
+        }
     }
     
     public func prepareShow(interactive: Bool) {

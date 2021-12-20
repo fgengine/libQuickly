@@ -163,10 +163,17 @@ public class QGroupContainer< Screen : IQGroupScreen > : IQGroupContainer, IQCon
         if self.screen.activate() == true {
             return true
         }
-        if let current = self._current?.container {
-            return current.activate()
+        if let current = self._current {
+            return current.container.activate()
         }
         return false
+    }
+    
+    public func didChangeAppearance() {
+        self.screen.didChangeAppearance()
+        for item in self._items {
+            item.container.didChangeAppearance()
+        }
     }
     
     public func prepareShow(interactive: Bool) {

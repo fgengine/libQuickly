@@ -96,6 +96,10 @@ public class QStateContainer : IQStateContainer {
         return container.activate()
     }
     
+    public func didChangeAppearance() {
+        self.container?.didChangeAppearance()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.container?.prepareShow(interactive: interactive)

@@ -116,6 +116,18 @@ public class QBookContainer< Screen : IQBookScreen > : IQBookContainer {
         return false
     }
     
+    public func didChangeAppearance() {
+        if let item = self._backward {
+            item.container.didChangeAppearance()
+        }
+        if let item = self._current {
+            item.container.didChangeAppearance()
+        }
+        if let item = self._forward {
+            item.container.didChangeAppearance()
+        }
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.screen.prepareShow(interactive: interactive)

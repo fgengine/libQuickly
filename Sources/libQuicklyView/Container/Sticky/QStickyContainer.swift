@@ -145,6 +145,11 @@ public class QStickyContainer< Screen : IQStickyScreen, ContentContainer : IQCon
         return self._contentContainer.activate()
     }
     
+    public func didChangeAppearance() {
+        self.screen.didChangeAppearance()
+        self._contentContainer.didChangeAppearance()
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.screen.prepareShow(interactive: interactive)

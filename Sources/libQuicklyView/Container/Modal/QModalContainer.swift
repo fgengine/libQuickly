@@ -160,6 +160,15 @@ public class QModalContainer : IQModalContainer {
         return false
     }
     
+    public func didChangeAppearance() {
+        for container in self.containers {
+            container.didChangeAppearance()
+        }
+        if let contentContainer = self.contentContainer {
+            contentContainer.didChangeAppearance()
+        }
+    }
+    
     public func prepareShow(interactive: Bool) {
         self.didChangeInsets()
         self.contentContainer?.prepareShow(interactive: interactive)

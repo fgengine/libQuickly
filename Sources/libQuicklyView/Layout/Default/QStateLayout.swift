@@ -153,6 +153,7 @@ public class QStateLayout< State : Equatable & Hashable > : IQLayout {
     }
     
     public func animate(
+        delay: TimeInterval = 0,
         duration: TimeInterval,
         ease: IQAnimationEase = QAnimation.Ease.Linear(),
         transition: Transition,
@@ -161,6 +162,7 @@ public class QStateLayout< State : Equatable & Hashable > : IQLayout {
     ) {
         let fromState = self.state
         QAnimation.default.run(
+            delay: delay,
             duration: duration,
             ease: ease,
             processing: { [unowned self] progress in

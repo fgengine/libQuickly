@@ -31,6 +31,8 @@ public protocol IQContainer : AnyObject {
     
     func activate() -> Bool
     
+    func didChangeAppearance()
+    
     func prepareShow(interactive: Bool)
     func finishShow(interactive: Bool)
     func cancelShow(interactive: Bool)

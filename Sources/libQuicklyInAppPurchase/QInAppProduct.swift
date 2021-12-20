@@ -15,16 +15,6 @@ public class QInAppProduct {
         self.status = .unknown
     }
     
-    @discardableResult
-    public func buy(
-        options: QInAppPayment.Options
-    ) -> QInAppPayment {
-        return self.purchase.buy(
-            product: self,
-            options: options
-        )
-    }
-    
 }
 
 public extension QInAppProduct {
@@ -44,6 +34,13 @@ public extension QInAppProduct {
     var skProduct: SKProduct? {
         switch self.status {
         case .success(let skProduct): return skProduct
+        default: return nil
+        }
+    }
+    
+    var error: Error? {
+        switch self.status {
+        case .failure(let error): return error
         default: return nil
         }
     }

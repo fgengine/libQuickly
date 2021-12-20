@@ -98,6 +98,11 @@ public class QViewController : UIViewController {
         self._updateSafeArea()
     }
     
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self.container.didChangeAppearance()
+    }
+    
 }
 
 extension QViewController : IQRootContainerDelegate {

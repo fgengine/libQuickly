@@ -30,6 +30,7 @@ public class QAnimation {
     
     @discardableResult
     public func run(
+        delay: TimeInterval = 0,
         duration: TimeInterval,
         elapsed: TimeInterval = 0,
         ease: IQAnimationEase = Ease.Linear(),
@@ -38,6 +39,7 @@ public class QAnimation {
         completion: @escaping () -> Void
     ) -> IQAnimationTask {
         let task = Task(
+            delay: delay,
             duration: duration,
             elapsed: elapsed,
             ease: ease,
@@ -65,6 +67,7 @@ private extension QAnimation {
     
     class Task : IQAnimationTask {
         
+        var delay: TimeInterval
         var duration: TimeInterval
         var elapsed: TimeInterval
         var ease: IQAnimationEase
@@ -78,6 +81,7 @@ private extension QAnimation {
         
         @inlinable
         init(
+            delay: TimeInterval,
             duration: TimeInterval,
             elapsed: TimeInterval,
             ease: IQAnimationEase,
@@ -85,6 +89,7 @@ private extension QAnimation {
             processing: @escaping (_ progress: Float) -> Void,
             completion: @escaping () -> Void
         ) {
+            self.delay = delay
             self.duration = duration
             self.elapsed = elapsed
             self.ease = ease
@@ -98,13 +103,14 @@ private extension QAnimation {
         
         @inlinable
         func update(_ delta: TimeInterval) {
-            if self.isRunning == false {
-                self.isRunning = true
-                self.preparing?()
-            }
-            if self.isCanceled == false {
-                self.elapsed += delta
-                let rawProgress = Float(min(self.elapsed / self.duration, 1))
+            guard self.isCanceled == false else { return }
+            self.elapsed += delta
+            if self.elapsed > self.delay {
+                if self.isRunning == false {
+                    self.isRunning = true
+                    self.preparing?()
+                }
+                let rawProgress = Float(min((self.elapsed - self.delay) / self.duration, 1))
                 let easeProgress = self.ease.perform(rawProgress)
                 self.processing(easeProgress)
                 if self.elapsed >= self.duration && self.isCompletion == false {
