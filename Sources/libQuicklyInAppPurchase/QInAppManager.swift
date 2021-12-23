@@ -393,7 +393,7 @@ extension QInAppManager : SKPaymentTransactionObserver {
     @objc
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         DispatchQueue.main.async(execute: {
-            self._verifyReceiptIfNeeded()
+            self._doVerifyReceipt()
             self._finishRestorePurchases(error: nil)
         })
     }
