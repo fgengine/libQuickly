@@ -110,7 +110,11 @@ private extension QNotificationPermission {
     }
     
     func _didResignActive(_ notification: Notification) {
-        self._resignState = self.status
+        switch self.status {
+        case .authorized: self._resignState = .authorized
+        case .denied: self._resignState = .denied
+        default: self._resignState = nil
+        }
     }
     
 }
