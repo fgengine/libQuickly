@@ -34,7 +34,6 @@ public class QWebView : IQWebView {
     public var isHidden: Bool {
         didSet(oldValue) {
             guard self.isHidden != oldValue else { return }
-            guard self.isLoaded == true else { return }
             self.setNeedForceLayout()
         }
     }

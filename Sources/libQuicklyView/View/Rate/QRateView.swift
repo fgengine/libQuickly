@@ -23,7 +23,6 @@ public class QRateView : IQRateView {
     public var isHidden: Bool {
         didSet(oldValue) {
             guard self.isHidden != oldValue else { return }
-            guard self.isLoaded == true else { return }
             self.setNeedForceLayout()
         }
     }
