@@ -5,6 +5,7 @@
 import Foundation
 import CoreImage
 import libQuicklyCore
+import libQuicklyView
 
 public struct QQRCode {
     

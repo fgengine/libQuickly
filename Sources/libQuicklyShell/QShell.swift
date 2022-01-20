@@ -6,6 +6,8 @@ import Foundation
 import Dispatch
 import libQuicklyCore
 
+#if os(macOS)
+
 public class QShell {
     
     public typealias OnData = (_ data: Data) -> Void
@@ -183,3 +185,5 @@ private extension QShell {
     }
     
 }
+
+#endif
