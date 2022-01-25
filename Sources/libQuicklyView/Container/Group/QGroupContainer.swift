@@ -374,17 +374,16 @@ private extension QGroupContainer {
     ) {
         if animated == true {
             if let current = current, let forward = forward {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                    forward.container.prepareShow(interactive: false)
-                }
                 QAnimation.default.run(
                     duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
                         self._view.contentLayout.state = .forward(current: current.groupItem, next: forward.groupItem, progress: progress)
-                        self._view.contentLayout.updateIfNeeded()
+                        if self.isPresented == true {
+                            current.container.prepareHide(interactive: false)
+                            forward.container.prepareShow(interactive: false)
+                        }
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
@@ -484,17 +483,16 @@ private extension QGroupContainer {
     ) {
         if animated == true {
             if let current = current, let backward = backward {
-                if self.isPresented == true {
-                    current.container.prepareHide(interactive: false)
-                    backward.container.prepareShow(interactive: false)
-                }
                 QAnimation.default.run(
                     duration: TimeInterval(self._view.contentSize.width / self.animationVelocity),
                     ease: QAnimation.Ease.QuadraticInOut(),
                     processing: { [weak self] progress in
                         guard let self = self else { return }
                         self._view.contentLayout.state = .backward(current: current.groupItem, next: backward.groupItem, progress: progress)
-                        self._view.contentLayout.updateIfNeeded()
+                        if self.isPresented == true {
+                            current.container.prepareHide(interactive: false)
+                            backward.container.prepareShow(interactive: false)
+                        }
                     },
                     completion: { [weak self] in
                         guard let self = self else { return }
