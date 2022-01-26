@@ -13,7 +13,6 @@ public class QModalContainer : IQModalContainer {
     public unowned var parent: IQContainer? {
         didSet(oldValue) {
             guard self.parent !== oldValue else { return }
-            guard self.isPresented == true else { return }
             self.didChangeInsets()
         }
     }
