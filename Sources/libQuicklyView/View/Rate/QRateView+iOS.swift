@@ -164,13 +164,12 @@ private extension NativeRateView {
     func _state(item: UInt) -> QRateViewState? {
         guard let firstState = self._states.first else { return nil }
         guard let lastState = self._states.last else { return nil }
-        let rate = Float(item) - self._rating
-        if rate >= 1 {
+        if self._rating <= Float(item) {
             return firstState
-        }
-        if rate <= 0 {
+        } else if self._rating >= Float(item + 1) {
             return lastState
         }
+        let rate = self._rating - self._rating.rounded(.towardZero)
         let start = self._states.startIndex + 1
         let end = self._states.endIndex - 1
         var nearestState = firstState
@@ -214,7 +213,7 @@ private extension NativeRateView {
                 width: CGFloat(self._itemSize.width),
                 height: CGFloat(self._itemSize.height)
             )
-            if let state = self._state(item: UInt(index + 1)) {
+            if let state = self._state(item: UInt(index)) {
                 layer.contents = state.image.native.cgImage
             }
             origin.x += self._itemSize.width + self._itemSpacing
@@ -224,7 +223,7 @@ private extension NativeRateView {
     func _update() {
         let layers = self.layer.sublayers ?? []
         for (index, layer) in layers.enumerated() {
-            if let state = self._state(item: UInt(index + 1)) {
+            if let state = self._state(item: UInt(index)) {
                 layer.contents = state.image.native.cgImage
             } else {
                 layer.contents = nil
