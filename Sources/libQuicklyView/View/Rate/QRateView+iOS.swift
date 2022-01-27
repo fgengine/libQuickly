@@ -80,6 +80,7 @@ final class NativeRateView : UIView {
             self._update()
         }
     }
+    private var _layers: [CALayer]
     
     override init(frame: CGRect) {
         self._itemSize = .zero
@@ -87,6 +88,7 @@ final class NativeRateView : UIView {
         self._numberOfItem = 0
         self._states = []
         self._rating = 0
+        self._layers = []
         
         super.init(frame: frame)
         
@@ -100,6 +102,12 @@ final class NativeRateView : UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         self._layout()
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self._layout(rebuild: true)
+        self._update()
     }
     
 }
@@ -182,20 +190,25 @@ private extension NativeRateView {
         return nearestState
     }
     
-    func _layout() {
-        var layers = self.layer.sublayers ?? []
-        let numberOfItem = Int(self._numberOfItem)
-        if layers.count > numberOfItem {
-            for index in (numberOfItem..<layers.count).reversed() {
-                let layer = layers[index]
-                layers.remove(at: index)
+    func _layout(rebuild: Bool = false) {
+        if rebuild == true {
+            for layer in self._layers {
                 layer.removeFromSuperlayer()
             }
-        } else if layers.count < numberOfItem {
-            for _ in layers.count..<numberOfItem {
+            self._layers.removeAll()
+        }
+        let numberOfItem = Int(self._numberOfItem)
+        if self._layers.count > numberOfItem {
+            for index in (numberOfItem..<self._layers.count).reversed() {
+                let layer = self._layers[index]
+                self._layers.remove(at: index)
+                layer.removeFromSuperlayer()
+            }
+        } else if self._layers.count < numberOfItem {
+            for _ in self._layers.count..<numberOfItem {
                 let layer = CALayer()
                 layer.contentsGravity = .resizeAspect
-                layers.append(layer)
+                self._layers.append(layer)
                 self.layer.addSublayer(layer)
             }
         }
@@ -206,7 +219,7 @@ private extension NativeRateView {
             x: boundsCenter.x - (contentSize.width / 2),
             y: boundsCenter.y - (contentSize.height / 2)
         )
-        for (index, layer) in layers.enumerated() {
+        for (index, layer) in self._layers.enumerated() {
             layer.frame = CGRect(
                 x: CGFloat(origin.x),
                 y: CGFloat(origin.y),
@@ -214,21 +227,28 @@ private extension NativeRateView {
                 height: CGFloat(self._itemSize.height)
             )
             if let state = self._state(item: UInt(index)) {
-                layer.contents = state.image.native.cgImage
+                self._update(layer: layer, state: state)
             }
             origin.x += self._itemSize.width + self._itemSpacing
         }
     }
     
     func _update() {
-        let layers = self.layer.sublayers ?? []
-        for (index, layer) in layers.enumerated() {
+        for (index, layer) in self._layers.enumerated() {
             if let state = self._state(item: UInt(index)) {
-                layer.contents = state.image.native.cgImage
-            } else {
-                layer.contents = nil
+                self._update(layer: layer, state: state)
             }
         }
+    }
+    
+    func _update(layer: CALayer, state: QRateViewState) {
+        let image: UIImage
+        if let imageAsset = state.image.native.imageAsset {
+            image = imageAsset.image(with: self.traitCollection)
+        } else {
+            image = state.image.native
+        }
+        layer.contents = image.cgImage
     }
     
 }
