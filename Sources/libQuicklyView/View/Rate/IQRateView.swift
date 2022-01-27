@@ -5,6 +5,13 @@
 import Foundation
 import libQuicklyCore
 
+public enum QRateViewRounding {
+    
+    case up
+    case down
+    
+}
+
 public struct QRateViewState {
     
     public let image: QImage
@@ -28,6 +35,8 @@ public protocol IQRateView : IQView, IQViewColorable, IQViewBorderable, IQViewCo
     
     var numberOfItem: UInt { set get }
     
+    var rounding: QRateViewRounding { set get }
+    
     var states: [QRateViewState] { set get }
     
     var rating: Float { set get }
@@ -40,6 +49,9 @@ public protocol IQRateView : IQView, IQViewColorable, IQViewBorderable, IQViewCo
     
     @discardableResult
     func numberOfItem(_ value: UInt) -> Self
+    
+    @discardableResult
+    func rounding(_ value: QRateViewRounding) -> Self
     
     @discardableResult
     func states(_ value: [QRateViewState]) -> Self

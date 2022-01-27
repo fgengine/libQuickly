@@ -64,6 +64,12 @@ final class NativeRateView : UIView {
             self.setNeedsLayout()
         }
     }
+    private var _rounding: QRateViewRounding {
+        didSet {
+            guard self._rounding != oldValue else { return }
+            self._update()
+        }
+    }
     private var _numberOfItem: UInt {
         didSet(oldValue) {
             guard self._numberOfItem != oldValue else { return }
@@ -77,6 +83,7 @@ final class NativeRateView : UIView {
     }
     private var _rating: Float {
         didSet {
+            guard self._rating != oldValue else { return }
             self._update()
         }
     }
@@ -86,6 +93,7 @@ final class NativeRateView : UIView {
         self._itemSize = .zero
         self._itemSpacing = 0
         self._numberOfItem = 0
+        self._rounding = .down
         self._states = []
         self._rating = 0
         self._layers = []
@@ -119,6 +127,7 @@ extension NativeRateView {
         self.update(itemSize: view.itemSize)
         self.update(itemSpacing: view.itemSpacing)
         self.update(numberOfItem: view.numberOfItem)
+        self.update(rounding: view.rounding)
         self.update(states: view.states)
         self.update(rating: view.rating)
         self.update(color: view.color)
@@ -139,6 +148,10 @@ extension NativeRateView {
     
     func update(numberOfItem: UInt) {
         self._numberOfItem = numberOfItem
+    }
+    
+    func update(rounding: QRateViewRounding) {
+        self._rounding = rounding
     }
     
     func update(states: [QRateViewState]) {
@@ -178,13 +191,19 @@ private extension NativeRateView {
             return lastState
         }
         let rate = self._rating - self._rating.rounded(.towardZero)
-        let start = self._states.startIndex + 1
-        let end = self._states.endIndex - 1
-        var nearestState = firstState
-        for index in start..<end {
-            let state = self._states[index]
-            if state.rate <= rate {
-                nearestState = state
+        var nearestState: QRateViewState?
+        switch self._rounding {
+        case .up:
+            for state in self._states.reversed() {
+                if state.rate >= rate {
+                    nearestState = state
+                }
+            }
+        case .down:
+            for state in self._states {
+                if state.rate <= rate {
+                    nearestState = state
+                }
             }
         }
         return nearestState

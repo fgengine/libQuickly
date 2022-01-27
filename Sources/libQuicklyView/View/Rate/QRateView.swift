@@ -47,6 +47,12 @@ public class QRateView : IQRateView {
             self.setNeedForceLayout()
         }
     }
+    public var rounding: QRateViewRounding {
+        didSet {
+            guard self.isLoaded == true else { return }
+            self._view.update(rounding: self.rounding)
+        }
+    }
     public var states: [QRateViewState] {
         set(value) {
             guard self.isLoaded == true else { return }
@@ -109,6 +115,7 @@ public class QRateView : IQRateView {
         itemSize: QSize,
         itemSpacing: Float,
         numberOfItem: UInt,
+        rounding: QRateViewRounding = .down,
         states: [QRateViewState],
         rating: Float,
         color: QColor? = nil,
@@ -122,6 +129,7 @@ public class QRateView : IQRateView {
         self.itemSize = itemSize
         self.itemSpacing = itemSpacing
         self.numberOfItem = numberOfItem
+        self.rounding = rounding
         self._states = Self._sort(states: states)
         self.rating = rating
         self.color = color
@@ -195,6 +203,12 @@ public class QRateView : IQRateView {
     @discardableResult
     public func numberOfItem(_ value: UInt) -> Self {
         self.numberOfItem = value
+        return self
+    }
+    
+    @discardableResult
+    public func rounding(_ value: QRateViewRounding) -> Self {
+        self.rounding = value
         return self
     }
     
