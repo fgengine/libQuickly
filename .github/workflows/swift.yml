@@ -1,0 +1,17 @@
+name: Swift
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create xcframework
+      uses: unsignedapps/swift-create-xcframework@v2.1.0
